@@ -1,7 +1,5 @@
 # Kenbu (見聞)
 
-*Observation Haki for your infrastructure*
-
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Author: D3vn0mi](https://img.shields.io/badge/Author-D3vn0mi-purple.svg)](https://github.com/d3vn0mi)
 
@@ -244,5 +242,3 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 ## Author
 
 **D3vn0mi** — [github.com/d3vn0mi](https://github.com/d3vn0mi)
-
-Built with Observation Haki. Stay vigilant.
