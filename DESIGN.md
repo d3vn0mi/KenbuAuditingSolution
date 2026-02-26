@@ -504,64 +504,32 @@ Same as above but with Status and Findings columns pre-filled from AuditResult r
 
 ## 12. Implementation Phases
 
-### Phase 1: Foundation (MVP)
+### Phase 1: Foundation (MVP) — Complete
+
 1. Project scaffolding (Flask app factory, config, requirements)
-2. Database models + migrations
+2. Database models (User, Platform, Benchmark, BenchmarkSection, Check, AuditSession, AuditResult)
 3. Seed data system (YAML parser + loader)
 4. Basic auth (login/logout/register)
-5. Dashboard page
-6. Benchmark listing and detail views
-7. Platform listing and detail views
-8. Check detail view
-9. Basic TailwindCSS layout
+5. Dashboard with stats and quick-access platform grid
+6. Benchmark listing and detail views with accordion sections
+7. Platform listing and detail views grouped by OS family
+8. Check detail view with copy-to-clipboard, breadcrumbs
+9. TailwindCSS layout with HTMX interactivity
 
-### Phase 2: Core Features
-10. YAML seed data for all 8 platforms (30+ checks each)
-11. Excel export for benchmarks
-12. HTMX search and filtering
+### Phase 2: Core Features — Complete
+
+10. YAML seed data for all 8 platforms (635+ checks total)
+11. Excel export for benchmarks (cover sheet, formatted checklist, dropdowns)
+12. HTMX search and filtering (keyword, platform, level, scored)
 13. Audit session management (create, track, complete)
-14. Audit result tracking per check
-15. Excel export for audit sessions
+14. Audit result tracking per check (pass/fail/N/A with HTMX inline updates)
+15. Excel export for audit sessions (with summary sheet, compliance stats, pie chart)
 
-### Phase 3: Enhancement
-16. Summary statistics and charts
-17. Advanced search with filters
-18. Bulk operations (mark multiple checks)
-19. Print-friendly CSS for checks
+### Future Phases
 
-### Future: Complete CIS Coverage
-- Expand each platform from 30+ to full CIS benchmark (200-400 checks)
-- Add YAML files incrementally per section
-- Community contribution workflow for adding checks
-- Version tracking when CIS releases updated benchmarks
-- Additional benchmarks beyond CIS (NIST, DISA STIG, etc.)
-- Additional platforms as needed
-
----
-
-## 13. Expanding to Full CIS Coverage (Roadmap)
-
-### Strategy for scaling from 30 to 400+ checks per asset:
-
-1. **Modular YAML files**: Split each platform into per-section YAML files:
-   ```
-   data/benchmarks/debian_12/
-   ├── 01_initial_setup.yaml
-   ├── 02_services.yaml
-   ├── 03_network.yaml
-   ├── 04_logging.yaml
-   ├── 05_access_auth.yaml
-   └── 06_maintenance.yaml
-   ```
-
-2. **Priority order for expansion**:
-   - Phase A: L1 Scored checks (highest priority, most impactful)
-   - Phase B: L2 Scored checks
-   - Phase C: L1 Not Scored checks
-   - Phase D: L2 Not Scored checks
-
-3. **Automated validation**: Script to validate YAML structure and required fields
-
-4. **Version control**: Track which CIS benchmark version each check maps to
-
-5. **Delta tracking**: When CIS releases new benchmark version, flag added/removed/changed checks
+See the **Roadmap** section in [README.md](README.md#roadmap) for the complete product roadmap covering:
+- v1.1: Audit experience improvements (evidence, bulk operations, comparison)
+- v1.2: Full CIS L1 Scored coverage (2,000+ checks)
+- v2.0: Multi-framework support (NIST, DISA STIG, ISO 27001, PCI DSS) + RBAC + REST API
+- v2.1: Professional reporting (PDF, compliance scoring, drift detection)
+- v3.0: Enterprise features (SSO, automated scanning, offline mode, multi-tenancy)
