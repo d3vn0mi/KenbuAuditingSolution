@@ -1,11 +1,12 @@
-# CIS Auditor - Product Design Document
+# Kenbu (見聞) - Product Design Document
 
 ## 1. Overview
 
-**CIS Auditor** is a Python web application that serves as a reference and checklist
-tool for security auditors performing CIS benchmark compliance audits. It is **not**
-an automated scanner — it provides auditors with the knowledge of *what* to check,
-*how* to verify it (commands or GUI steps), and *what the expected outcome* should be.
+**Kenbu** is a Python web application that serves as a reference and checklist
+tool for security auditors performing benchmark compliance audits. Starting with CIS
+and expanding to NIST, DISA STIG, ISO 27001, and PCI DSS. It is **not** an automated
+scanner — it provides auditors with the knowledge of *what* to check, *how* to verify
+it (commands or GUI steps), and *what the expected outcome* should be.
 
 Auditors can browse checks by benchmark or by asset type, and export tailored Excel
 checklists to carry during on-site audits.
@@ -147,7 +148,7 @@ checked_at      DATETIME
 ## 5. Project Structure
 
 ```
-cis-auditor/
+kenbu/
 ├── app/
 │   ├── __init__.py              # Flask app factory
 │   ├── config.py                # Configuration (dev/prod/test)

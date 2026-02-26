@@ -1,11 +1,15 @@
-# CIS Auditor
+# Kenbu (見聞)
 
-A web-based security audit reference tool for CIS benchmark compliance. Provides auditors with a browsable catalog of CIS checks organized by benchmark and platform, with audit commands, expected outputs, and Excel export for fieldwork.
+*Observation Haki for your infrastructure*
+
+A web-based security audit reference tool built for compliance warriors. Kenbu — inspired by One Piece's Kenbunshoku Haki (the power to sense and observe everything) — gives security auditors the ability to see through every configuration, every misconfigured service, and every policy gap across your infrastructure.
+
+Starting with CIS benchmarks and expanding to NIST, DISA STIG, ISO 27001, and beyond. Browse checks by benchmark or platform, track audits in real-time, and export formatted Excel checklists for fieldwork.
 
 ## Features
 
 - **8 Platforms**: Debian 12, Ubuntu 24.04, Windows Server 2022, RHEL 9, CentOS 7, Amazon Linux 2023, macOS Sonoma, Cisco IOS 17
-- **635+ CIS Checks** with real audit commands, expected outputs, and remediation steps
+- **460+ CIS Checks** with real audit commands, expected outputs, and remediation steps
 - **Browse by Benchmark or Platform** with hierarchical section navigation
 - **Search & Filter** across all checks by keyword, platform, level, and scored status
 - **Excel Export** with formatted checklists, status dropdowns, and color-coded levels
@@ -61,7 +65,7 @@ Open http://localhost:5000 and log in with:
 ## Project Structure
 
 ```
-cis-auditor/
+kenbu/
 ├── app/
 │   ├── __init__.py          # Flask app factory
 │   ├── config.py            # Configuration
@@ -97,7 +101,7 @@ The foundation is live with a fully functional audit reference tool.
 | Feature | Status |
 |---------|--------|
 | 8 platforms (Debian, Ubuntu, Windows Server, RHEL, CentOS, Amazon Linux, macOS, Cisco IOS) | Done |
-| 635+ CIS checks with audit commands, expected outputs, and remediation | Done |
+| 460+ CIS checks with audit commands, expected outputs, and remediation | Done |
 | Browse by benchmark or platform with hierarchical section navigation | Done |
 | HTMX-powered search and filtering (keyword, platform, level, scored) | Done |
 | Excel export with formatted checklists, status dropdowns, color coding | Done |
