@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}New Audit Session - CIS Auditor{% endblock %}
+{% block content %}
+<nav class="flex mb-4" aria-label="Breadcrumb">
+    <ol class="flex items-center space-x-2 text-sm text-gray-500">
+        <li><a href="{{ url_for('audits.list_audits') }}" class="hover:text-gray-700">Audits</a></li>
+        <li><span class="mx-1">/</span></li>
+        <li class="text-gray-900 font-medium">New Session</li>
+    </ol>
+</nav>
+
+<div class="max-w-2xl">
+    <h1 class="text-2xl font-bold text-gray-900 mb-6">Create Audit Session</h1>
+
+    <div class="bg-white shadow rounded-lg p-6">
+        <form method="POST" class="space-y-6" hx-boost="false">
+            <div>
+                <label for="benchmark_id" class="block text-sm font-medium text-gray-700">Benchmark</label>
+                <select name="benchmark_id" id="benchmark_id" required
+                        class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 sm:text-sm">
+                    <option value="">Select a benchmark...</option>
+                    {% for benchmark in benchmarks %}
+                    <option value="{{ benchmark.id }}" {% if request.args.get('benchmark_id', type=int) == benchmark.id %}selected{% endif %}>
+                        {{ benchmark.name }} (v{{ benchmark.version }}) - {{ benchmark.total_checks }} checks
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label for="target_name" class="block text-sm font-medium text-gray-700">Target System Name</label>
+                <input type="text" name="target_name" id="target_name" placeholder="e.g., PROD-WEB-01"
+                       class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 sm:text-sm">
+                <p class="mt-1 text-xs text-gray-500">Hostname or descriptive name of the system being audited.</p>
+            </div>
+
+            <div>
+                <label for="target_ip" class="block text-sm font-medium text-gray-700">Target IP Address</label>
+                <input type="text" name="target_ip" id="target_ip" placeholder="e.g., 192.168.1.100"
+                       class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 sm:text-sm">
+            </div>
+
+            <div>
+                <label for="notes" class="block text-sm font-medium text-gray-700">Notes</label>
+                <textarea name="notes" id="notes" rows="3" placeholder="Any additional notes about this audit..."
+                          class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 sm:text-sm"></textarea>
+            </div>
+
+            <div class="flex justify-end space-x-3">
+                <a href="{{ url_for('audits.list_audits') }}" class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Cancel</a>
+                <button type="submit" class="inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500">
+                    Create Session
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

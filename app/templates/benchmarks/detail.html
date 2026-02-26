@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}{{ benchmark.name }} - CIS Auditor{% endblock %}
+{% block content %}
+<!-- Header -->
+<div class="mb-6 flex items-center justify-between">
+    <div>
+        <nav class="flex mb-2" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-2 text-sm text-gray-500">
+                <li><a href="{{ url_for('benchmarks.list_benchmarks') }}" class="hover:text-gray-700">Benchmarks</a></li>
+                <li><span class="mx-1">/</span></li>
+                <li class="text-gray-900 font-medium">{{ benchmark.name }}</li>
+            </ol>
+        </nav>
+        <h1 class="text-2xl font-bold text-gray-900">{{ benchmark.name }}</h1>
+        <div class="mt-2 flex items-center space-x-4 text-sm text-gray-500">
+            <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-600/20">{{ benchmark.platform.name }}</span>
+            <span>Version {{ benchmark.version }}</span>
+            {% if benchmark.release_date %}
+            <span>Released {{ benchmark.release_date }}</span>
+            {% endif %}
+            <span>{{ benchmark.total_checks }} checks</span>
+        </div>
+    </div>
+    <div class="flex space-x-3">
+        <a href="{{ url_for('export.export_benchmark', benchmark_id=benchmark.id) }}" hx-boost="false"
+           class="inline-flex items-center rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500">
+            <svg class="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+            Export to Excel
+        </a>
+        <a href="{{ url_for('audits.new_audit') }}?benchmark_id={{ benchmark.id }}"
+           class="inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500">
+            Start Audit
+        </a>
+    </div>
+</div>
+
+{% if benchmark.description %}
+<div class="bg-white shadow rounded-lg p-4 mb-6">
+    <p class="text-sm text-gray-700">{{ benchmark.description }}</p>
+</div>
+{% endif %}
+
+<!-- Sections Accordion -->
+<div class="space-y-2">
+    {% for section in sections %}
+    {% set section_checks = section.total_checks %}
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <button onclick="toggleSection('section-{{ section.id }}')"
+                class="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-gray-50 focus:outline-none">
+            <div class="flex items-center space-x-3">
+                <span class="text-sm font-mono text-gray-500 bg-gray-100 px-2 py-0.5 rounded">{{ section.number }}</span>
+                <span class="text-sm font-semibold text-gray-900">{{ section.title }}</span>
+            </div>
+            <div class="flex items-center space-x-3">
+                <span class="text-xs text-gray-500">{{ section_checks }} checks</span>
+                <svg id="chevron-{{ section.id }}" class="h-5 w-5 text-gray-400 transform transition-transform" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                </svg>
+            </div>
+        </button>
+        <div id="section-{{ section.id }}" class="hidden border-t border-gray-200">
+            <!-- Child sections -->
+            {% for child in section.children.all()|sort(attribute='sort_order') %}
+            <div class="border-b border-gray-100 last:border-0">
+                <a href="{{ url_for('benchmarks.section', benchmark_id=benchmark.id, section_id=child.id) }}"
+                   class="flex items-center justify-between px-6 py-3 pl-12 hover:bg-gray-50">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-xs font-mono text-gray-400">{{ child.number }}</span>
+                        <span class="text-sm text-gray-700">{{ child.title }}</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xs text-gray-500">{{ child.total_checks }} checks</span>
+                        <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                        </svg>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+
+            <!-- Direct checks in this section -->
+            {% for check in section.checks.all()|sort(attribute='sort_order') %}
+            <a href="{{ url_for('checks.detail', check_id=check.id) }}"
+               class="flex items-center justify-between px-6 py-3 pl-12 hover:bg-gray-50 border-b border-gray-100 last:border-0">
+                <div class="flex items-center space-x-3">
+                    <span class="text-xs font-mono text-gray-400">{{ check.check_number }}</span>
+                    <span class="text-sm text-gray-700">{{ check.title }}</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {% if check.level == 1 %}bg-blue-100 text-blue-700{% else %}bg-yellow-100 text-yellow-700{% endif %}">L{{ check.level }}</span>
+                    {% if check.scored %}<span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700">Scored</span>{% endif %}
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+function toggleSection(id) {
+    const el = document.getElementById(id);
+    const chevron = document.getElementById('chevron-' + id.replace('section-', ''));
+    el.classList.toggle('hidden');
+    chevron.classList.toggle('rotate-180');
+}
+</script>
+{% endblock %}

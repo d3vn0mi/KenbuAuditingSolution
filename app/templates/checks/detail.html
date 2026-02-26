@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}{{ check.check_number }} {{ check.title }} - CIS Auditor{% endblock %}
+{% block content %}
+<!-- Breadcrumb -->
+<nav class="flex mb-4" aria-label="Breadcrumb">
+    <ol class="flex items-center space-x-2 text-sm text-gray-500">
+        <li><a href="{{ url_for('benchmarks.list_benchmarks') }}" class="hover:text-gray-700">Benchmarks</a></li>
+        <li><span class="mx-1">/</span></li>
+        <li><a href="{{ url_for('benchmarks.detail', benchmark_id=benchmark.id) }}" class="hover:text-gray-700">{{ benchmark.name }}</a></li>
+        {% for crumb in breadcrumb %}
+        <li><span class="mx-1">/</span></li>
+        <li><a href="{{ url_for('benchmarks.section', benchmark_id=benchmark.id, section_id=crumb.id) }}" class="hover:text-gray-700">{{ crumb.number }}</a></li>
+        {% endfor %}
+        <li><span class="mx-1">/</span></li>
+        <li class="text-gray-900 font-medium">{{ check.check_number }}</li>
+    </ol>
+</nav>
+
+<!-- Header -->
+<div class="mb-6">
+    <div class="flex items-start justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">{{ check.check_number }} {{ check.title }}</h1>
+            <div class="mt-2 flex items-center space-x-3">
+                <span class="inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium {% if check.level == 1 %}bg-blue-100 text-blue-700 ring-1 ring-inset ring-blue-600/20{% else %}bg-yellow-100 text-yellow-700 ring-1 ring-inset ring-yellow-600/20{% endif %}">
+                    Level {{ check.level }}
+                </span>
+                <span class="inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium {% if check.scored %}bg-green-100 text-green-700 ring-1 ring-inset ring-green-600/20{% else %}bg-gray-100 text-gray-600 ring-1 ring-inset ring-gray-500/20{% endif %}">
+                    {{ 'Scored' if check.scored else 'Not Scored' }}
+                </span>
+                <span class="inline-flex items-center rounded-md bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700">
+                    {{ benchmark.platform.name }}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Main content -->
+    <div class="lg:col-span-2 space-y-6">
+        <!-- Description -->
+        {% if check.description %}
+        <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-3">Description</h2>
+            <p class="text-sm text-gray-700 whitespace-pre-line">{{ check.description }}</p>
+        </div>
+        {% endif %}
+
+        <!-- Rationale -->
+        {% if check.rationale %}
+        <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-3">Rationale</h2>
+            <p class="text-sm text-gray-700 whitespace-pre-line">{{ check.rationale }}</p>
+        </div>
+        {% endif %}
+
+        <!-- Audit Command -->
+        {% if check.audit_command %}
+        <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-3">Audit Command</h2>
+            <div class="code-block relative">
+                <button class="copy-btn absolute top-2 right-2 p-1.5 rounded-md bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white transition-colors" title="Copy to clipboard">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9.75a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" />
+                    </svg>
+                </button>
+                <pre class="bg-gray-900 text-gray-100 rounded-lg p-4 overflow-x-auto text-sm"><code>{{ check.audit_command.strip() }}</code></pre>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- GUI Steps -->
+        {% if check.audit_steps %}
+        <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-3">GUI Steps</h2>
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p class="text-sm text-blue-900 whitespace-pre-line">{{ check.audit_steps.strip() }}</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Expected Output -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-3">Expected Output</h2>
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <pre class="text-sm text-green-900 whitespace-pre-wrap">{{ check.expected_output.strip() }}</pre>
+            </div>
+        </div>
+
+        <!-- Remediation -->
+        {% if check.remediation %}
+        <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-3">Remediation</h2>
+            <div class="code-block relative">
+                <button class="copy-btn absolute top-2 right-2 p-1.5 rounded-md bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white transition-colors" title="Copy to clipboard">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9.75a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" />
+                    </svg>
+                </button>
+                <pre class="bg-amber-50 border border-amber-200 rounded-lg p-4 overflow-x-auto text-sm"><code class="text-amber-900">{{ check.remediation.strip() }}</code></pre>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Sidebar -->
+    <div class="space-y-6">
+        <!-- Quick Info -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h3 class="text-sm font-semibold text-gray-900 mb-3">Check Details</h3>
+            <dl class="space-y-3 text-sm">
+                <div>
+                    <dt class="text-gray-500">Check Number</dt>
+                    <dd class="font-mono text-gray-900">{{ check.check_number }}</dd>
+                </div>
+                <div>
+                    <dt class="text-gray-500">Benchmark</dt>
+                    <dd><a href="{{ url_for('benchmarks.detail', benchmark_id=benchmark.id) }}" class="text-primary-600 hover:text-primary-500">{{ benchmark.name }}</a></dd>
+                </div>
+                <div>
+                    <dt class="text-gray-500">Platform</dt>
+                    <dd><a href="{{ url_for('platforms.detail', slug=benchmark.platform.slug) }}" class="text-primary-600 hover:text-primary-500">{{ benchmark.platform.name }}</a></dd>
+                </div>
+                <div>
+                    <dt class="text-gray-500">Section</dt>
+                    <dd><a href="{{ url_for('benchmarks.section', benchmark_id=benchmark.id, section_id=section.id) }}" class="text-primary-600 hover:text-primary-500">{{ section.number }} {{ section.title }}</a></dd>
+                </div>
+                <div>
+                    <dt class="text-gray-500">Level</dt>
+                    <dd>{{ check.level }} {% if check.level == 1 %}(Essential){% else %}(Advanced){% endif %}</dd>
+                </div>
+                <div>
+                    <dt class="text-gray-500">Scored</dt>
+                    <dd>{{ 'Yes' if check.scored else 'No' }}</dd>
+                </div>
+            </dl>
+        </div>
+
+        <!-- References -->
+        {% if check.references %}
+        <div class="bg-white shadow rounded-lg p-6">
+            <h3 class="text-sm font-semibold text-gray-900 mb-3">References</h3>
+            <p class="text-sm text-gray-700 whitespace-pre-line">{{ check.references }}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

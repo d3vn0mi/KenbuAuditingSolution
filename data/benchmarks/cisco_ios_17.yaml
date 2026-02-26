@@ -1,0 +1,979 @@
+benchmark:
+  name: "CIS Cisco IOS 17 Benchmark"
+  version: "2.0.0"
+  platform: "cisco-ios-17"
+  release_date: "2024-02-01"
+  description: "Security configuration benchmark for Cisco IOS XE 17"
+  url: "https://www.cisecurity.org/benchmark/cisco"
+
+sections:
+  - number: "1"
+    title: "Management Plane"
+    children:
+      - number: "1.1"
+        title: "Local Authentication, Authorization and Accounting (AAA) Rules"
+        checks:
+          - number: "1.1.1"
+            title: "Enable 'aaa new-model'"
+            description: "Ensure that the AAA new-model is enabled on the device. AAA new-model enables the use of TACACS+ and RADIUS for authentication, authorization, and accounting."
+            rationale: "AAA new-model provides a scalable framework for configuring access control on the router. Without AAA, the router relies on less secure line-based or local authentication methods that do not scale and are difficult to manage."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include aaa new-model
+            expected_output: |
+              aaa new-model
+            remediation: |
+              configure terminal
+              aaa new-model
+              end
+
+          - number: "1.1.2"
+            title: "Enable 'aaa authentication login'"
+            description: "Ensure that AAA authentication is configured for login sessions. This defines the authentication method list used when users attempt to log in to the device."
+            rationale: "Configuring AAA authentication for login ensures that users are authenticated through a centralized authentication service such as TACACS+ or RADIUS before gaining access to the device, reducing the risk of unauthorized access."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include aaa authentication login
+            expected_output: |
+              aaa authentication login default group tacacs+ local
+            remediation: |
+              configure terminal
+              aaa authentication login default group tacacs+ local
+              end
+
+          - number: "1.1.3"
+            title: "Enable 'aaa authentication enable default'"
+            description: "Ensure that AAA authentication is configured for enable mode access. This defines how privilege level escalation is authenticated."
+            rationale: "Without AAA authentication for enable mode, an attacker who gains user-level access may attempt to escalate privileges using weak or default enable passwords. AAA ensures centralized control over privilege escalation."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include aaa authentication enable
+            expected_output: |
+              aaa authentication enable default group tacacs+ enable
+            remediation: |
+              configure terminal
+              aaa authentication enable default group tacacs+ enable
+              end
+
+          - number: "1.1.4"
+            title: "Set 'login authentication' for line con 0"
+            description: "Ensure that a login authentication method list is applied to the console line (con 0) to enforce AAA-based authentication for console access."
+            rationale: "The console port provides direct physical access to the device. Without proper authentication on the console line, anyone with physical access could gain full control of the router."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | section line con 0
+            expected_output: |
+              line con 0
+               login authentication default
+            remediation: |
+              configure terminal
+              line con 0
+              login authentication default
+              end
+
+          - number: "1.1.5"
+            title: "Set 'login authentication' for line tty"
+            description: "Ensure that a login authentication method list is applied to all TTY lines to enforce AAA-based authentication for auxiliary and async connections."
+            rationale: "TTY lines may be used for out-of-band modem access. Without authentication, these lines could be exploited by an attacker to gain unauthorized access to the device."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | section line tty
+            expected_output: |
+              line tty 0 4
+               login authentication default
+            remediation: |
+              configure terminal
+              line tty 0 4
+              login authentication default
+              end
+
+          - number: "1.1.6"
+            title: "Set 'login authentication' for line vty"
+            description: "Ensure that a login authentication method list is applied to all VTY lines to enforce AAA-based authentication for remote management sessions."
+            rationale: "VTY lines handle remote access via SSH or Telnet. Without proper authentication, an attacker could remotely connect and attempt to access the device without valid credentials."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | section line vty
+            expected_output: |
+              line vty 0 4
+               login authentication default
+              line vty 5 15
+               login authentication default
+            remediation: |
+              configure terminal
+              line vty 0 4
+              login authentication default
+              line vty 5 15
+              login authentication default
+              end
+
+      - number: "1.2"
+        title: "Access Rules"
+        checks:
+          - number: "1.2.1"
+            title: "Set 'privilege 1' for local users"
+            description: "Ensure that local user accounts are configured with the minimum privilege level (level 1) to limit the initial access granted upon login."
+            rationale: "Assigning privilege level 1 to local users ensures they start with the least amount of privileges necessary. Users can then be granted elevated privileges through AAA authorization as needed, following the principle of least privilege."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include username
+            expected_output: |
+              username admin privilege 1 secret 0 <removed>
+            remediation: |
+              configure terminal
+              username admin privilege 1 secret <password>
+              end
+
+          - number: "1.2.2"
+            title: "Set 'transport input ssh' for line vty connections"
+            description: "Ensure that only SSH is allowed as the transport input protocol on all VTY lines. Telnet transmits data including credentials in clear text."
+            rationale: "Telnet is an insecure protocol that transmits all data, including usernames and passwords, in clear text. Restricting VTY access to SSH only ensures that all remote management sessions are encrypted."
+            level: 1
+            scored: true
+            audit_command: |
+              show line vty 0 4 | include Allowed
+            expected_output: |
+              Allowed input transports are ssh
+            remediation: |
+              configure terminal
+              line vty 0 4
+              transport input ssh
+              line vty 5 15
+              transport input ssh
+              end
+
+          - number: "1.2.3"
+            title: "Set 'no exec' on line aux 0"
+            description: "Ensure that the EXEC process is disabled on the auxiliary port to prevent interactive command execution through the AUX line."
+            rationale: "The auxiliary port can be used for out-of-band management through a modem connection. Disabling the EXEC process on this port prevents unauthorized users from gaining interactive CLI access through the auxiliary line."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | section line aux 0
+            expected_output: |
+              line aux 0
+               no exec
+            remediation: |
+              configure terminal
+              line aux 0
+              no exec
+              end
+
+          - number: "1.2.4"
+            title: "Create 'access-list' for use with line vty"
+            description: "Ensure that an access control list (ACL) is created to restrict which IP addresses can connect to the VTY lines for remote management."
+            rationale: "Without an ACL on VTY lines, any IP address can attempt to connect to the device remotely. An ACL limits management access to trusted administrator workstations or management networks only."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include access-list 10
+            expected_output: |
+              access-list 10 permit 10.0.0.0 0.0.0.255
+              access-list 10 deny any log
+            remediation: |
+              configure terminal
+              access-list 10 permit 10.0.0.0 0.0.0.255
+              access-list 10 deny any log
+              end
+
+          - number: "1.2.5"
+            title: "Set 'access-class' for line vty"
+            description: "Ensure that the VTY access class is applied to restrict inbound connections to the VTY lines using the previously defined ACL."
+            rationale: "Applying an access class to VTY lines enforces IP-based filtering on incoming management connections. This limits remote access to only authorized networks, reducing the attack surface for brute-force and unauthorized access attempts."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | section line vty
+            expected_output: |
+              line vty 0 4
+               access-class 10 in
+              line vty 5 15
+               access-class 10 in
+            remediation: |
+              configure terminal
+              line vty 0 4
+              access-class 10 in
+              line vty 5 15
+              access-class 10 in
+              end
+
+          - number: "1.2.6"
+            title: "Set 'exec-timeout' to less than or equal to 10 minutes on line aux 0"
+            description: "Ensure that the EXEC timeout on the auxiliary line is set to 10 minutes or less to automatically disconnect idle sessions."
+            rationale: "An unattended auxiliary console session could be exploited by an unauthorized user. Setting an exec-timeout ensures idle sessions are terminated within a reasonable period, reducing the window of opportunity for session hijacking."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | section line aux 0
+            expected_output: |
+              line aux 0
+               exec-timeout 10 0
+            remediation: |
+              configure terminal
+              line aux 0
+              exec-timeout 10 0
+              end
+
+          - number: "1.2.7"
+            title: "Set 'exec-timeout' to less than or equal to 10 minutes for line con 0"
+            description: "Ensure that the EXEC timeout on the console line is set to 10 minutes or less to automatically disconnect idle console sessions."
+            rationale: "Unattended console sessions pose a significant security risk, especially in environments where physical access is not strictly controlled. Setting an exec-timeout ensures idle sessions are automatically terminated."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | section line con 0
+            expected_output: |
+              line con 0
+               exec-timeout 10 0
+            remediation: |
+              configure terminal
+              line con 0
+              exec-timeout 10 0
+              end
+
+          - number: "1.2.8"
+            title: "Set 'exec-timeout' to less than or equal to 10 minutes for line vty"
+            description: "Ensure that the EXEC timeout on all VTY lines is set to 10 minutes or less to automatically disconnect idle remote sessions."
+            rationale: "Idle remote management sessions left open can be exploited through session hijacking. Setting an exec-timeout ensures that VTY sessions are automatically closed after a period of inactivity."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | section line vty
+            expected_output: |
+              line vty 0 4
+               exec-timeout 10 0
+              line vty 5 15
+               exec-timeout 10 0
+            remediation: |
+              configure terminal
+              line vty 0 4
+              exec-timeout 10 0
+              line vty 5 15
+              exec-timeout 10 0
+              end
+
+      - number: "1.3"
+        title: "Banner Rules"
+        checks:
+          - number: "1.3.1"
+            title: "Set the 'banner login'"
+            description: "Ensure that a login banner is configured to display a legal notice or warning message before users authenticate to the device."
+            rationale: "A login banner serves as a legal warning to unauthorized users. In many jurisdictions, the absence of a warning banner may limit the organization's ability to prosecute unauthorized access. The banner should clearly state that access is restricted to authorized personnel only."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | begin banner login
+            expected_output: |
+              banner login ^
+              Authorized access only. All activity is monitored and logged.
+              Unauthorized access is prohibited and will be prosecuted.
+              ^
+            remediation: |
+              configure terminal
+              banner login # Authorized access only. All activity is monitored and logged. Unauthorized access is prohibited and will be prosecuted. #
+              end
+
+          - number: "1.3.2"
+            title: "Set the 'banner motd'"
+            description: "Ensure that a Message of the Day (MOTD) banner is configured to display a warning message before any login prompt is presented."
+            rationale: "The MOTD banner is the first banner displayed when a user connects to the device, even before the login prompt. It serves as an additional legal notice and can help deter unauthorized access attempts."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | begin banner motd
+            expected_output: |
+              banner motd ^
+              NOTICE: This system is for authorized use only.
+              ^
+            remediation: |
+              configure terminal
+              banner motd # NOTICE: This system is for authorized use only. #
+              end
+
+      - number: "1.4"
+        title: "Password Rules"
+        checks:
+          - number: "1.4.1"
+            title: "Set 'password' for 'enable secret'"
+            description: "Ensure that an enable secret password is configured using a strong hashing algorithm. The enable secret uses type 5 (MD5) or higher encryption by default."
+            rationale: "The enable secret password controls access to privilege level 15, which provides full administrative control of the device. Without an enable secret, or with a weak one, an attacker who gains user-level access could escalate to full administrative privileges."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include enable secret
+            expected_output: |
+              enable secret 9 <hash>
+            remediation: |
+              configure terminal
+              enable algorithm-type scrypt secret <password>
+              end
+
+          - number: "1.4.2"
+            title: "Enable 'service password-encryption'"
+            description: "Ensure that service password-encryption is enabled to obfuscate plaintext passwords in the running configuration."
+            rationale: "Without service password-encryption, many passwords in the configuration file are stored in clear text. While the type 7 encryption used by this command is reversible, it provides a basic layer of protection against casual observation of passwords when viewing or sharing configurations."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include service password-encryption
+            expected_output: |
+              service password-encryption
+            remediation: |
+              configure terminal
+              service password-encryption
+              end
+
+          - number: "1.4.3"
+            title: "Set 'username secret' for all local users"
+            description: "Ensure that local user accounts are configured using the 'secret' keyword rather than 'password' to apply stronger hashing to stored credentials."
+            rationale: "The 'password' keyword stores credentials with weak type 7 encoding, which is easily reversible. The 'secret' keyword stores credentials with type 5 (MD5) or higher encryption, providing significantly better protection against credential theft from configuration files."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include username
+            expected_output: |
+              username admin privilege 1 secret 9 <hash>
+            remediation: |
+              configure terminal
+              username admin algorithm-type scrypt secret <password>
+              end
+
+          - number: "1.4.4"
+            title: "Set minimum password length to 10 or greater"
+            description: "Ensure that the minimum password length is set to 10 characters or greater to enforce strong password policies on the device."
+            rationale: "Short passwords are susceptible to brute-force and dictionary attacks. Enforcing a minimum password length of 10 characters increases the computational effort required to crack passwords, improving overall security posture."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include security passwords min-length
+            expected_output: |
+              security passwords min-length 10
+            remediation: |
+              configure terminal
+              security passwords min-length 10
+              end
+
+      - number: "1.5"
+        title: "SNMP Rules"
+        checks:
+          - number: "1.5.1"
+            title: "Disable 'SNMP' if not in use"
+            description: "Ensure that SNMP is disabled if it is not required for network management. If SNMP is needed, ensure that only SNMPv3 with authentication and encryption is used."
+            rationale: "SNMPv1 and SNMPv2c use community strings transmitted in clear text, which can be intercepted to gain read or write access to network device configurations. If SNMP is not needed, it should be completely disabled to reduce the attack surface."
+            level: 1
+            scored: true
+            audit_command: |
+              show snmp community
+            expected_output: |
+              No SNMP community strings configured
+            remediation: |
+              configure terminal
+              no snmp-server community public
+              no snmp-server community private
+              no snmp-server enable traps
+              end
+
+          - number: "1.5.2"
+            title: "Disable private and public SNMP community strings"
+            description: "Ensure that the default SNMP community strings 'public' and 'private' are not configured on the device."
+            rationale: "The default community strings 'public' (read-only) and 'private' (read-write) are well-known and commonly targeted by attackers. Using these defaults allows trivial unauthorized access to device information and potentially device configuration changes."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include snmp-server community
+            expected_output: |
+              No matching lines found
+            remediation: |
+              configure terminal
+              no snmp-server community public
+              no snmp-server community private
+              end
+
+          - number: "1.5.3"
+            title: "Enable SNMPv3 with 'authPriv' if SNMP is required"
+            description: "Ensure that if SNMP is required, it is configured using SNMPv3 with authentication and privacy (authPriv) security level."
+            rationale: "SNMPv3 with authPriv provides both authentication and encryption of SNMP messages, protecting against unauthorized access and eavesdropping. This is the most secure SNMP configuration available and should be used when SNMP is operationally required."
+            level: 1
+            scored: true
+            audit_command: |
+              show snmp user
+            expected_output: |
+              User name: snmpv3user
+              Engine ID: <local>
+              Authentication Protocol: SHA256
+              Privacy Protocol: AES256
+              Group-name: snmpv3group
+            remediation: |
+              configure terminal
+              snmp-server group snmpv3group v3 priv
+              snmp-server user snmpv3user snmpv3group v3 auth sha256 <auth-password> priv aes 256 <priv-password>
+              end
+
+      - number: "1.6"
+        title: "SSH Rules"
+        checks:
+          - number: "1.6.1"
+            title: "Set SSH version 2"
+            description: "Ensure that only SSH version 2 is enabled on the device. SSH version 1 has known cryptographic weaknesses and should not be used."
+            rationale: "SSH version 1 has well-documented vulnerabilities including susceptibility to man-in-the-middle attacks and weak session key generation. SSH version 2 provides significantly improved security through stronger encryption algorithms and better key exchange mechanisms."
+            level: 1
+            scored: true
+            audit_command: |
+              show ip ssh
+            expected_output: |
+              SSH Enabled - version 2.0
+            remediation: |
+              configure terminal
+              ip ssh version 2
+              end
+
+          - number: "1.6.2"
+            title: "Set SSH timeout to 60 seconds or less"
+            description: "Ensure that the SSH timeout for authentication is configured to 60 seconds or less to limit the time window for brute-force attacks."
+            rationale: "A longer SSH authentication timeout gives attackers more time to complete authentication attempts. Reducing the timeout to 60 seconds or less helps mitigate brute-force login attacks and reduces the consumption of VTY line resources by half-open SSH sessions."
+            level: 1
+            scored: true
+            audit_command: |
+              show ip ssh
+            expected_output: |
+              Authentication timeout: 60 secs
+            remediation: |
+              configure terminal
+              ip ssh time-out 60
+              end
+
+          - number: "1.6.3"
+            title: "Set SSH authentication retries to 3 or less"
+            description: "Ensure that the maximum number of SSH authentication retries is set to 3 or less to limit brute-force attack effectiveness."
+            rationale: "Allowing too many authentication retries per SSH connection gives attackers more chances to guess credentials within a single session. Limiting retries to 3 or fewer reduces the effectiveness of brute-force attacks and forces reconnection between attempts."
+            level: 1
+            scored: true
+            audit_command: |
+              show ip ssh
+            expected_output: |
+              Authentication retries: 3
+            remediation: |
+              configure terminal
+              ip ssh authentication-retries 3
+              end
+
+          - number: "1.6.4"
+            title: "Disable 'ip http server'"
+            description: "Ensure that the HTTP server is disabled on the device. The HTTP web interface transmits data including credentials in clear text."
+            rationale: "The HTTP server on Cisco IOS provides a web-based management interface that transmits all data in clear text, including authentication credentials. This service should be disabled in favor of SSH-based management to protect sensitive information from eavesdropping."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include ip http server
+            expected_output: |
+              no ip http server
+            remediation: |
+              configure terminal
+              no ip http server
+              end
+
+          - number: "1.6.5"
+            title: "Disable 'ip http secure-server' if not in use"
+            description: "Ensure that the HTTPS server is disabled unless it is specifically required for device management."
+            rationale: "If HTTPS-based management is not required, the secure HTTP server should be disabled to reduce the attack surface. Even though HTTPS encrypts traffic, the web interface may have vulnerabilities that could be exploited if left enabled unnecessarily."
+            level: 2
+            scored: true
+            audit_command: |
+              show running-config | include ip http secure-server
+            expected_output: |
+              no ip http secure-server
+            remediation: |
+              configure terminal
+              no ip http secure-server
+              end
+
+  - number: "2"
+    title: "Control Plane"
+    children:
+      - number: "2.1"
+        title: "Global Service Rules"
+        checks:
+          - number: "2.1.1"
+            title: "Disable 'ip source-route'"
+            description: "Ensure that IP source routing is disabled on the device. IP source routing allows a sender to specify the route a packet should take through the network."
+            rationale: "IP source routing can be exploited by attackers to bypass security controls and direct traffic through unintended paths. An attacker could use source routing to redirect traffic through a compromised host for eavesdropping or to circumvent firewall rules."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include ip source-route
+            expected_output: |
+              no ip source-route
+            remediation: |
+              configure terminal
+              no ip source-route
+              end
+
+          - number: "2.1.2"
+            title: "Disable 'ip finger' service"
+            description: "Ensure that the finger service is disabled on the device. The finger service can reveal user information to remote hosts."
+            rationale: "The finger service provides information about users logged into the device, which can be used by attackers for reconnaissance. This service is rarely needed and should be disabled to limit information disclosure."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include ip finger
+            expected_output: |
+              no ip finger
+            remediation: |
+              configure terminal
+              no ip finger
+              end
+
+          - number: "2.1.3"
+            title: "Enable 'service tcp-keepalives-in'"
+            description: "Ensure that TCP keepalives for inbound connections are enabled to detect and clean up stale sessions."
+            rationale: "Without TCP keepalives, orphaned or stale TCP sessions may persist indefinitely, consuming device resources including VTY lines. Enabling TCP keepalives on inbound connections ensures that dead sessions are detected and terminated, freeing resources."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include service tcp-keepalives-in
+            expected_output: |
+              service tcp-keepalives-in
+            remediation: |
+              configure terminal
+              service tcp-keepalives-in
+              end
+
+          - number: "2.1.4"
+            title: "Enable 'service tcp-keepalives-out'"
+            description: "Ensure that TCP keepalives for outbound connections are enabled to detect and clean up stale sessions."
+            rationale: "Without TCP keepalives on outbound connections, sessions initiated from the router may persist after the remote end has become unreachable. Enabling outbound TCP keepalives ensures these sessions are cleaned up properly."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include service tcp-keepalives-out
+            expected_output: |
+              service tcp-keepalives-out
+            remediation: |
+              configure terminal
+              service tcp-keepalives-out
+              end
+
+          - number: "2.1.5"
+            title: "Disable CDP on external interfaces"
+            description: "Ensure that Cisco Discovery Protocol (CDP) is disabled on all interfaces that connect to external or untrusted networks."
+            rationale: "CDP broadcasts detailed information about the device including model, IOS version, IP addresses, and connected interfaces. This information can be invaluable to an attacker for network reconnaissance and planning targeted attacks against the infrastructure."
+            level: 1
+            scored: true
+            audit_command: |
+              show cdp interface
+            expected_output: |
+              CDP is not enabled on any external-facing interface
+            remediation: |
+              configure terminal
+              interface GigabitEthernet0/0
+              no cdp enable
+              end
+
+          - number: "2.1.6"
+            title: "Disable 'ip bootp server'"
+            description: "Ensure that the BOOTP server service is disabled on the device. The BOOTP server allows the router to act as a BOOTP relay."
+            rationale: "The BOOTP server service is rarely needed on modern networks and could be exploited to provide unauthorized network configuration to rogue devices. Disabling this service reduces the attack surface of the device."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include ip bootp server
+            expected_output: |
+              no ip bootp server
+            remediation: |
+              configure terminal
+              no ip bootp server
+              end
+
+          - number: "2.1.7"
+            title: "Enable 'ip dhcp snooping'"
+            description: "Ensure that DHCP snooping is enabled to protect against rogue DHCP server attacks and DHCP-related man-in-the-middle attacks."
+            rationale: "DHCP snooping validates DHCP messages and builds a binding table of valid IP-to-MAC address mappings. Without DHCP snooping, an attacker can deploy a rogue DHCP server to redirect traffic or perform denial-of-service attacks against legitimate network clients."
+            level: 2
+            scored: true
+            audit_command: |
+              show running-config | include ip dhcp snooping
+            expected_output: |
+              ip dhcp snooping
+            remediation: |
+              configure terminal
+              ip dhcp snooping
+              ip dhcp snooping vlan 1-4094
+              end
+
+      - number: "2.2"
+        title: "Logging Rules"
+        checks:
+          - number: "2.2.1"
+            title: "Enable 'logging on'"
+            description: "Ensure that logging is globally enabled on the device to capture system messages and security events."
+            rationale: "Logging is essential for security monitoring, incident response, and forensic analysis. Without logging enabled, critical security events such as failed authentication attempts, configuration changes, and interface state changes are not recorded."
+            level: 1
+            scored: true
+            audit_command: |
+              show logging
+            expected_output: |
+              Syslog logging: enabled
+            remediation: |
+              configure terminal
+              logging on
+              end
+
+          - number: "2.2.2"
+            title: "Enable 'logging buffered'"
+            description: "Ensure that buffered logging is enabled to store log messages in the device's memory buffer for local review."
+            rationale: "Buffered logging provides a local copy of log messages that can be reviewed even if the remote syslog server is unavailable. This is critical for real-time troubleshooting and ensures that important security events are not lost."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include logging buffered
+            expected_output: |
+              logging buffered 64000 informational
+            remediation: |
+              configure terminal
+              logging buffered 64000 informational
+              end
+
+          - number: "2.2.3"
+            title: "Set 'logging console critical'"
+            description: "Ensure that console logging severity is set to critical to prevent excessive log messages from disrupting console operations."
+            rationale: "Excessive console logging can impact device performance and make it difficult for administrators to work on the console. Setting the console logging level to critical ensures that only the most important messages are displayed, while all messages are still captured in the buffer and sent to the syslog server."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include logging console
+            expected_output: |
+              logging console critical
+            remediation: |
+              configure terminal
+              logging console critical
+              end
+
+          - number: "2.2.4"
+            title: "Set 'logging trap informational' or higher"
+            description: "Ensure that the logging trap level is set to informational or higher to send sufficiently detailed log messages to the syslog server."
+            rationale: "Setting the logging trap level to informational ensures that a comprehensive set of log messages is sent to the remote syslog server, including security-relevant events. A level lower than informational may miss critical events needed for security monitoring and incident response."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include logging trap
+            expected_output: |
+              logging trap informational
+            remediation: |
+              configure terminal
+              logging trap informational
+              end
+
+          - number: "2.2.5"
+            title: "Set syslog server host"
+            description: "Ensure that at least one remote syslog server is configured to receive log messages from the device for centralized log collection and analysis."
+            rationale: "Centralized logging to an external syslog server ensures that logs are preserved even if the device is compromised or rebooted. Remote log storage also enables correlation of events across multiple network devices and supports security monitoring and compliance requirements."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include logging host
+            expected_output: |
+              logging host 10.0.0.100
+            remediation: |
+              configure terminal
+              logging host 10.0.0.100
+              end
+
+          - number: "2.2.6"
+            title: "Enable 'service timestamps' for logging"
+            description: "Ensure that timestamps are enabled on all log messages with datetime and millisecond precision to support accurate log correlation."
+            rationale: "Without timestamps, log messages cannot be correlated with other events or across multiple devices. Accurate timestamps with millisecond precision and timezone information are essential for incident investigation and forensic analysis."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include service timestamps
+            expected_output: |
+              service timestamps debug datetime msec show-timezone
+              service timestamps log datetime msec show-timezone
+            remediation: |
+              configure terminal
+              service timestamps debug datetime msec show-timezone
+              service timestamps log datetime msec show-timezone
+              end
+
+          - number: "2.2.7"
+            title: "Enable 'logging source-interface'"
+            description: "Ensure that a logging source interface is configured to use a consistent and reliable IP address for all syslog messages sent to remote servers."
+            rationale: "Using a loopback interface as the source for syslog messages ensures that log messages can always be identified as coming from this device, regardless of which physical interface the traffic traverses. This also simplifies firewall and syslog server configurations."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include logging source-interface
+            expected_output: |
+              logging source-interface Loopback0
+            remediation: |
+              configure terminal
+              logging source-interface Loopback0
+              end
+
+      - number: "2.3"
+        title: "NTP Rules"
+        checks:
+          - number: "2.3.1"
+            title: "Set 'ntp authenticate'"
+            description: "Ensure that NTP authentication is enabled to validate the identity of NTP time sources before synchronizing the device clock."
+            rationale: "Without NTP authentication, an attacker could set up a rogue NTP server to manipulate the device's clock. Incorrect time can undermine log correlation, certificate validation, time-based access controls, and other security mechanisms that depend on accurate timekeeping."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include ntp authenticate
+            expected_output: |
+              ntp authenticate
+            remediation: |
+              configure terminal
+              ntp authenticate
+              end
+
+          - number: "2.3.2"
+            title: "Set 'ntp authentication-key'"
+            description: "Ensure that NTP authentication keys are configured to provide cryptographic verification of NTP time sources."
+            rationale: "NTP authentication keys are required for the device to verify that NTP updates are coming from a trusted time source. Without authentication keys, the device cannot validate NTP messages, making it vulnerable to time manipulation attacks."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include ntp authentication-key
+            expected_output: |
+              ntp authentication-key 1 md5 <key-hash>
+            remediation: |
+              configure terminal
+              ntp authentication-key 1 md5 <ntp-key>
+              end
+
+          - number: "2.3.3"
+            title: "Set 'ntp trusted-key'"
+            description: "Ensure that NTP trusted keys are configured to specify which authentication keys are valid for NTP server verification."
+            rationale: "The ntp trusted-key command specifies which authentication keys are accepted for validating NTP time sources. Without trusted keys defined, the NTP authentication mechanism is incomplete and the device may accept time updates from unauthorized sources."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include ntp trusted-key
+            expected_output: |
+              ntp trusted-key 1
+            remediation: |
+              configure terminal
+              ntp trusted-key 1
+              end
+
+      - number: "2.4"
+        title: "Loopback Rules"
+        checks:
+          - number: "2.4.1"
+            title: "Create a single 'loopback' interface for management"
+            description: "Ensure that a loopback interface is configured and used as the source for all management traffic including logging, NTP, SNMP, and TACACS+."
+            rationale: "A loopback interface provides a stable, always-up interface that can be used as the source for management traffic. Unlike physical interfaces, a loopback interface does not go down due to physical link failures, ensuring continuous reachability of the device for management purposes."
+            level: 1
+            scored: true
+            audit_command: |
+              show ip interface brief | include Loopback
+            expected_output: |
+              Loopback0       10.0.0.1        YES NVRAM  up                    up
+            remediation: |
+              configure terminal
+              interface Loopback0
+              ip address 10.0.0.1 255.255.255.255
+              no shutdown
+              end
+
+      - number: "2.5"
+        title: "AAA Authorization and Accounting Rules"
+        checks:
+          - number: "2.5.1"
+            title: "Enable 'aaa authorization exec'"
+            description: "Ensure that AAA authorization is configured for EXEC sessions to control the privilege level and commands available to authenticated users."
+            rationale: "AAA authorization for EXEC sessions ensures that users are granted only the privileges they are authorized to have, based on their identity. Without authorization, all authenticated users may receive the same level of access, violating the principle of least privilege."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include aaa authorization exec
+            expected_output: |
+              aaa authorization exec default group tacacs+ local
+            remediation: |
+              configure terminal
+              aaa authorization exec default group tacacs+ local
+              end
+
+          - number: "2.5.2"
+            title: "Enable 'aaa accounting' for commands and connections"
+            description: "Ensure that AAA accounting is configured to record user commands and connection events for audit and compliance purposes."
+            rationale: "AAA accounting creates an audit trail of user actions on the device, including commands executed and connection events. This information is essential for security monitoring, incident investigation, and compliance with regulatory requirements."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include aaa accounting
+            expected_output: |
+              aaa accounting exec default start-stop group tacacs+
+              aaa accounting commands 15 default start-stop group tacacs+
+              aaa accounting connection default start-stop group tacacs+
+            remediation: |
+              configure terminal
+              aaa accounting exec default start-stop group tacacs+
+              aaa accounting commands 15 default start-stop group tacacs+
+              aaa accounting connection default start-stop group tacacs+
+              end
+
+  - number: "3"
+    title: "Data Plane"
+    children:
+      - number: "3.1"
+        title: "Routing Rules"
+        checks:
+          - number: "3.1.1"
+            title: "Set 'ip verify unicast source reachable-via'"
+            description: "Ensure that unicast Reverse Path Forwarding (uRPF) is enabled on external-facing interfaces to validate that the source address of incoming packets is reachable via the receiving interface."
+            rationale: "uRPF helps prevent IP spoofing attacks by verifying that the source address of each incoming packet is reachable through the interface on which the packet was received. Without uRPF, attackers can send packets with spoofed source addresses to evade access controls or perform reflection attacks."
+            level: 1
+            scored: true
+            audit_command: |
+              show ip interface GigabitEthernet0/0 | include verify
+            expected_output: |
+              IP verify source reachable-via RX
+            remediation: |
+              configure terminal
+              interface GigabitEthernet0/0
+              ip verify unicast source reachable-via rx
+              end
+
+      - number: "3.2"
+        title: "Border Router Filtering"
+        checks:
+          - number: "3.2.1"
+            title: "Set 'no ip directed-broadcast' on all interfaces"
+            description: "Ensure that IP directed broadcasts are disabled on all interfaces to prevent the device from being used in Smurf amplification attacks."
+            rationale: "IP directed broadcasts allow a single packet to be broadcast to all hosts on a target subnet. Attackers can exploit this in Smurf attacks by sending ICMP echo requests to a broadcast address with a spoofed source, causing all hosts on the subnet to respond to the victim."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | section interface | include directed-broadcast
+            expected_output: |
+              no ip directed-broadcast
+            remediation: |
+              configure terminal
+              interface GigabitEthernet0/0
+              no ip directed-broadcast
+              end
+
+          - number: "3.2.2"
+            title: "Set 'no ip proxy-arp' on external interfaces"
+            description: "Ensure that IP proxy ARP is disabled on all external-facing interfaces to prevent the router from responding to ARP requests on behalf of hosts on other subnets."
+            rationale: "Proxy ARP allows the router to respond to ARP requests for hosts on other subnets, which can be exploited by attackers to intercept traffic or perform man-in-the-middle attacks. Disabling proxy ARP on external interfaces limits this attack vector."
+            level: 1
+            scored: true
+            audit_command: |
+              show ip interface GigabitEthernet0/0 | include Proxy ARP
+            expected_output: |
+              Proxy ARP is disabled
+            remediation: |
+              configure terminal
+              interface GigabitEthernet0/0
+              no ip proxy-arp
+              end
+
+          - number: "3.2.3"
+            title: "Set ingress ACL on external interfaces"
+            description: "Ensure that ingress access control lists are applied to all external-facing interfaces to filter inbound traffic and block known malicious or bogon address ranges."
+            rationale: "Ingress filtering on external interfaces is a fundamental network security control that blocks traffic with invalid, spoofed, or known-malicious source addresses from entering the network. This prevents reconnaissance, spoofing, and various network-based attacks."
+            level: 1
+            scored: true
+            audit_command: |
+              show ip access-lists INGRESS_FILTER
+            expected_output: |
+              Extended IP access list INGRESS_FILTER
+                  10 deny ip 10.0.0.0 0.255.255.255 any log
+                  20 deny ip 172.16.0.0 0.15.255.255 any log
+                  30 deny ip 192.168.0.0 0.0.255.255 any log
+                  40 deny ip 127.0.0.0 0.255.255.255 any log
+                  50 deny ip 0.0.0.0 0.255.255.255 any log
+                  60 permit ip any any
+            remediation: |
+              configure terminal
+              ip access-list extended INGRESS_FILTER
+              10 deny ip 10.0.0.0 0.255.255.255 any log
+              20 deny ip 172.16.0.0 0.15.255.255 any log
+              30 deny ip 192.168.0.0 0.0.255.255 any log
+              40 deny ip 127.0.0.0 0.255.255.255 any log
+              50 deny ip 0.0.0.0 0.255.255.255 any log
+              60 permit ip any any
+              exit
+              interface GigabitEthernet0/0
+              ip access-group INGRESS_FILTER in
+              end
+
+          - number: "3.2.4"
+            title: "Set egress ACL on external interfaces"
+            description: "Ensure that egress access control lists are applied to external-facing interfaces to filter outbound traffic and prevent internal addresses from leaking to external networks."
+            rationale: "Egress filtering prevents spoofed traffic from leaving the network and helps contain compromised internal hosts from launching attacks using spoofed source addresses. It also prevents information leakage about internal network address schemes."
+            level: 2
+            scored: true
+            audit_command: |
+              show ip access-lists EGRESS_FILTER
+            expected_output: |
+              Extended IP access list EGRESS_FILTER
+                  10 permit ip 10.0.0.0 0.255.255.255 any
+                  20 deny ip any any log
+            remediation: |
+              configure terminal
+              ip access-list extended EGRESS_FILTER
+              10 permit ip 10.0.0.0 0.255.255.255 any
+              20 deny ip any any log
+              exit
+              interface GigabitEthernet0/0
+              ip access-group EGRESS_FILTER out
+              end
+
+      - number: "3.3"
+        title: "Neighbor Authentication"
+        checks:
+          - number: "3.3.1"
+            title: "Enable OSPF authentication"
+            description: "Ensure that OSPF neighbor authentication is enabled using message-digest (MD5) or SHA-based HMAC authentication to validate routing updates."
+            rationale: "Without routing protocol authentication, an attacker can inject false routing information into the OSPF domain by establishing unauthorized neighbor relationships. This can lead to traffic interception, black-holing, or denial-of-service attacks against network infrastructure."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | section router ospf
+            expected_output: |
+              router ospf 1
+               area 0 authentication message-digest
+            remediation: |
+              configure terminal
+              router ospf 1
+              area 0 authentication message-digest
+              exit
+              interface GigabitEthernet0/0
+              ip ospf message-digest-key 1 md5 <ospf-key>
+              end
+
+          - number: "3.3.2"
+            title: "Enable EIGRP authentication"
+            description: "Ensure that EIGRP neighbor authentication is enabled using key chains to validate routing updates from EIGRP neighbors."
+            rationale: "Without authentication, an attacker can inject false EIGRP routing updates by establishing unauthorized neighbor relationships. EIGRP authentication ensures that only authorized routers can participate in the routing domain and exchange routing information."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | section key chain
+            expected_output: |
+              key chain EIGRP_KEY
+               key 1
+                key-string <key-hash>
+            remediation: |
+              configure terminal
+              key chain EIGRP_KEY
+              key 1
+              key-string <eigrp-key>
+              exit
+              exit
+              interface GigabitEthernet0/0
+              ip authentication mode eigrp 1 md5
+              ip authentication key-chain eigrp 1 EIGRP_KEY
+              end

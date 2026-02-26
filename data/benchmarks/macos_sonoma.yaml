@@ -1,0 +1,1036 @@
+benchmark:
+  name: "CIS Apple macOS 14 Sonoma Benchmark"
+  version: "1.0.0"
+  platform: "macos-sonoma"
+  release_date: "2024-01-15"
+  description: "Security configuration benchmark for Apple macOS 14 (Sonoma)"
+  url: "https://www.cisecurity.org/benchmark/apple_os"
+
+sections:
+  # ---------------------------------------------------------------------------
+  # Section 1 - Install Updates, Patches and Additional Security Software
+  # ---------------------------------------------------------------------------
+  - number: "1"
+    title: "Install Updates, Patches and Additional Security Software"
+    checks:
+      - number: "1.1"
+        title: "Ensure All Apple-provided Software Is Current"
+        description: "Verify that all Apple-provided software including the operating system is up to date with the latest patches and security fixes."
+        rationale: "Running outdated software exposes the system to known vulnerabilities that attackers can exploit. Apple regularly releases security patches to address discovered flaws."
+        level: 1
+        scored: true
+        audit_command: |
+          softwareupdate -l
+        audit_steps: |
+          1. Open System Settings
+          2. Navigate to General > Software Update
+          3. Verify that the system shows "macOS is up to date" or no available updates
+        expected_output: |
+          No new software available.
+        remediation: |
+          Run the following command to install all available updates:
+            sudo softwareupdate -ia
+          Alternatively, open System Settings > General > Software Update and install all available updates.
+
+      - number: "1.2"
+        title: "Ensure Auto Update Is Enabled"
+        description: "Ensure that the automatic software update feature is enabled so the system regularly checks for and installs updates."
+        rationale: "Automatic updates ensure that critical security patches are applied in a timely manner without relying on manual intervention."
+        level: 1
+        scored: true
+        audit_command: |
+          defaults read /Library/Preferences/com.apple.SoftwareUpdate AutomaticCheckEnabled
+        audit_steps: |
+          1. Open System Settings
+          2. Navigate to General > Software Update
+          3. Click the info icon (i) next to Automatic Updates
+          4. Verify "Check for updates" is enabled
+        expected_output: |
+          1
+        remediation: |
+          Run the following command to enable automatic update checking:
+            sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticCheckEnabled -bool true
+          Alternatively, enable "Check for updates" in System Settings > General > Software Update > Automatic Updates.
+
+      - number: "1.3"
+        title: "Ensure Download New Updates When Available Is Enabled"
+        description: "Ensure that the system is configured to automatically download new updates when they become available."
+        rationale: "Automatically downloading updates ensures that patches are ready to install as soon as possible, reducing the window of vulnerability."
+        level: 1
+        scored: true
+        audit_command: |
+          defaults read /Library/Preferences/com.apple.SoftwareUpdate AutomaticDownload
+        audit_steps: |
+          1. Open System Settings
+          2. Navigate to General > Software Update
+          3. Click the info icon (i) next to Automatic Updates
+          4. Verify "Download new updates when available" is enabled
+        expected_output: |
+          1
+        remediation: |
+          Run the following command to enable automatic download of updates:
+            sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticDownload -bool true
+
+      - number: "1.4"
+        title: "Ensure Installation of App Update Is Enabled"
+        description: "Ensure that the automatic installation of application updates from the App Store is enabled."
+        rationale: "Automatically installing app updates ensures that security fixes in third-party applications distributed through the App Store are applied promptly."
+        level: 1
+        scored: true
+        audit_command: |
+          defaults read /Library/Preferences/com.apple.commerce AutoUpdate
+        audit_steps: |
+          1. Open System Settings
+          2. Navigate to General > Software Update
+          3. Click the info icon (i) next to Automatic Updates
+          4. Verify "Install App Updates" is enabled
+        expected_output: |
+          1
+        remediation: |
+          Run the following command to enable automatic App Store updates:
+            sudo defaults write /Library/Preferences/com.apple.commerce AutoUpdate -bool true
+
+      - number: "1.5"
+        title: "Ensure System Data Files and Security Updates Are Downloaded Automatically"
+        description: "Ensure that system data files and security updates such as XProtect and MRT are configured to install automatically."
+        rationale: "System data files include critical security components like XProtect malware definitions and MRT (Malware Removal Tool) updates. These must be installed automatically to maintain protection against newly discovered threats."
+        level: 1
+        scored: true
+        audit_command: |
+          defaults read /Library/Preferences/com.apple.SoftwareUpdate ConfigDataInstall
+          defaults read /Library/Preferences/com.apple.SoftwareUpdate CriticalUpdateInstall
+        audit_steps: |
+          1. Open System Settings
+          2. Navigate to General > Software Update
+          3. Click the info icon (i) next to Automatic Updates
+          4. Verify "Install Security Responses and system files" is enabled
+        expected_output: |
+          ConfigDataInstall: 1
+          CriticalUpdateInstall: 1
+        remediation: |
+          Run the following commands to enable automatic system data and security update installation:
+            sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate ConfigDataInstall -bool true
+            sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate CriticalUpdateInstall -bool true
+
+      - number: "1.6"
+        title: "Ensure Install of macOS Updates Is Enabled"
+        description: "Ensure the system is configured to automatically install macOS updates including minor operating system patches."
+        rationale: "Automatically installing macOS updates ensures that operating system level security patches are applied without delay, reducing the attack surface."
+        level: 1
+        scored: true
+        audit_command: |
+          defaults read /Library/Preferences/com.apple.SoftwareUpdate AutomaticallyInstallMacOSUpdates
+        audit_steps: |
+          1. Open System Settings
+          2. Navigate to General > Software Update
+          3. Click the info icon (i) next to Automatic Updates
+          4. Verify "Install macOS updates" is enabled
+        expected_output: |
+          1
+        remediation: |
+          Run the following command to enable automatic macOS update installation:
+            sudo defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticallyInstallMacOSUpdates -bool true
+
+      - number: "1.7"
+        title: "Ensure Software Update Deferment Is Not Enabled"
+        description: "Verify that software update deferrals are not configured to delay the installation of critical updates beyond their default schedule."
+        rationale: "Deferring software updates delays the application of security patches, leaving the system vulnerable to known exploits for an extended period."
+        level: 1
+        scored: true
+        audit_command: |
+          defaults read /Library/Preferences/com.apple.SoftwareUpdate InactiveUpdates 2>/dev/null
+          profiles -P -o stdout 2>/dev/null | grep -i 'enforcedSoftwareUpdateDelay\|forceDelayedSoftwareUpdates'
+        audit_steps: |
+          1. Open System Settings
+          2. Navigate to General > Software Update
+          3. Verify no deferral message is displayed
+        expected_output: |
+          No deferment-related keys should be set. The profiles command should return no matching results.
+        remediation: |
+          Remove any MDM configuration profiles that enforce software update deferment. If the deferment was set locally:
+            sudo defaults delete /Library/Preferences/com.apple.SoftwareUpdate InactiveUpdates
+
+  # ---------------------------------------------------------------------------
+  # Section 2 - System Preferences
+  # ---------------------------------------------------------------------------
+  - number: "2"
+    title: "System Preferences"
+    checks:
+      - number: "2.1.1"
+        title: "Ensure Bluetooth Is Disabled If No Devices Are Paired"
+        description: "If no Bluetooth devices are used with the system, Bluetooth should be disabled to reduce the attack surface."
+        rationale: "Bluetooth provides a wireless communication channel that can be exploited by nearby attackers for unauthorized access, data theft, or denial of service attacks if left enabled unnecessarily."
+        level: 1
+        scored: true
+        audit_command: |
+          defaults read /Library/Preferences/com.apple.Bluetooth ControllerPowerState
+          system_profiler SPBluetoothDataType | grep -i "bluetooth power"
+        audit_steps: |
+          1. Open System Settings
+          2. Navigate to Bluetooth
+          3. Verify Bluetooth is turned off if no devices are paired
+        expected_output: |
+          ControllerPowerState = 0 (if no devices are paired)
+          Bluetooth Power: Off
+        remediation: |
+          If no Bluetooth peripherals are in use, disable Bluetooth:
+            sudo defaults write /Library/Preferences/com.apple.Bluetooth ControllerPowerState -int 0
+            sudo killall -HUP bluetoothd
+          Alternatively, open System Settings > Bluetooth and toggle Bluetooth off.
+
+      - number: "2.1.2"
+        title: "Ensure Show Bluetooth Status in Menu Bar Is Enabled"
+        description: "The Bluetooth status indicator should be displayed in the menu bar for quick visibility into the Bluetooth state."
+        rationale: "Displaying Bluetooth status in the menu bar allows the user to quickly see whether Bluetooth is active and take action if it has been enabled unexpectedly."
+        level: 1
+        scored: true
+        audit_command: |
+          defaults read com.apple.controlcenter "NSStatusItem Visible Bluetooth" 2>/dev/null
+        audit_steps: |
+          1. Open System Settings
+          2. Navigate to Control Center
+          3. Find the Bluetooth section
+          4. Verify "Show in Menu Bar" is enabled
+        expected_output: |
+          1
+        remediation: |
+          Enable the Bluetooth menu bar icon:
+            defaults write com.apple.controlcenter "NSStatusItem Visible Bluetooth" -bool true
+          Alternatively, open System Settings > Control Center and set Bluetooth to "Show in Menu Bar."
+
+      - number: "2.2.1"
+        title: "Ensure Set Time and Date Automatically Is Enabled"
+        description: "The system clock should be configured to synchronize automatically with a network time server."
+        rationale: "Accurate time is essential for reliable logging, authentication protocol integrity (such as Kerberos), certificate validation, and forensic analysis. Manual time settings are prone to drift and manipulation."
+        level: 1
+        scored: true
+        audit_command: |
+          systemsetup -getusingnetworktime
+          systemsetup -getnetworktimeserver
+        audit_steps: |
+          1. Open System Settings
+          2. Navigate to General > Date & Time
+          3. Verify "Set time and date automatically" is enabled
+          4. Verify an appropriate NTP server is configured
+        expected_output: |
+          Network Time: On
+          Network Time Server: time.apple.com (or an organization-approved NTP server)
+        remediation: |
+          Enable network time synchronization:
+            sudo systemsetup -setusingnetworktime on
+            sudo systemsetup -setnetworktimeserver time.apple.com
+
+      - number: "2.3.1"
+        title: "Ensure Screen Sharing Is Disabled"
+        description: "The built-in screen sharing service should be disabled unless there is a documented business need."
+        rationale: "Screen sharing allows remote users to view and control the desktop. If enabled unnecessarily it provides a direct avenue for unauthorized remote access."
+        level: 1
+        scored: true
+        audit_command: |
+          launchctl print-disabled system | grep com.apple.screensharing
+        audit_steps: |
+          1. Open System Settings
+          2. Navigate to General > Sharing
+          3. Verify Screen Sharing is turned off
+        expected_output: |
+          "com.apple.screensharing" => disabled
+        remediation: |
+          Disable screen sharing:
+            sudo launchctl disable system/com.apple.screensharing
+          Alternatively, open System Settings > General > Sharing and turn off Screen Sharing.
+
+      - number: "2.3.2"
+        title: "Ensure File Sharing Is Disabled"
+        description: "Apple File Sharing (AFP/SMB) should be disabled when not required for business operations."
+        rationale: "File sharing services expose the system to network-based attacks and unauthorized file access. Disabling these services reduces the attack surface."
+        level: 1
+        scored: true
+        audit_command: |
+          launchctl print-disabled system | grep com.apple.smbd
+        audit_steps: |
+          1. Open System Settings
+          2. Navigate to General > Sharing
+          3. Verify File Sharing is turned off
+        expected_output: |
+          "com.apple.smbd" => disabled
+        remediation: |
+          Disable file sharing:
+            sudo launchctl disable system/com.apple.smbd
+          Alternatively, open System Settings > General > Sharing and turn off File Sharing.
+
+      - number: "2.3.3"
+        title: "Ensure Remote Login Is Disabled"
+        description: "The SSH remote login service should be disabled unless there is an explicit operational requirement."
+        rationale: "Remote login via SSH provides command-line access to the system over the network. While SSH is encrypted, an enabled service increases the attack surface and may be targeted by brute-force or credential-stuffing attacks."
+        level: 1
+        scored: true
+        audit_command: |
+          systemsetup -getremotelogin
+          launchctl print-disabled system | grep com.openssh.sshd
+        audit_steps: |
+          1. Open System Settings
+          2. Navigate to General > Sharing
+          3. Verify Remote Login is turned off
+        expected_output: |
+          Remote Login: Off
+          "com.openssh.sshd" => disabled
+        remediation: |
+          Disable remote login:
+            sudo systemsetup -setremotelogin off
+          Alternatively, open System Settings > General > Sharing and turn off Remote Login.
+
+      - number: "2.3.4"
+        title: "Ensure Remote Management Is Disabled"
+        description: "Apple Remote Desktop (ARD) remote management should be disabled unless actively used for IT administration."
+        rationale: "Remote management provides extensive control over the system including screen observation, command execution, and file transfer. Leaving it enabled when not in use creates significant security risk."
+        level: 1
+        scored: true
+        audit_command: |
+          /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -activate -configure -access -off 2>/dev/null
+          launchctl print-disabled system | grep com.apple.RemoteDesktop
+        audit_steps: |
+          1. Open System Settings
+          2. Navigate to General > Sharing
+          3. Verify Remote Management is turned off
+        expected_output: |
+          "com.apple.RemoteDesktop.agent" => disabled
+        remediation: |
+          Disable remote management:
+            sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -deactivate -configure -access -off
+          Alternatively, open System Settings > General > Sharing and turn off Remote Management.
+
+      - number: "2.3.5"
+        title: "Ensure Printer Sharing Is Disabled"
+        description: "The system should not share its printers with other computers on the network unless explicitly required."
+        rationale: "Printer sharing exposes a network service that can be exploited for information disclosure or as an attack vector into the system."
+        level: 1
+        scored: true
+        audit_command: |
+          cupsctl | grep _share_printers
+        audit_steps: |
+          1. Open System Settings
+          2. Navigate to General > Sharing
+          3. Verify Printer Sharing is turned off
+        expected_output: |
+          _share_printers=0
+        remediation: |
+          Disable printer sharing:
+            sudo cupsctl --no-share-printers
+          Alternatively, open System Settings > General > Sharing and turn off Printer Sharing.
+
+      - number: "2.3.6"
+        title: "Ensure AirDrop Is Disabled When Not Actively Transferring Files"
+        description: "AirDrop should be disabled when not in active use to prevent unsolicited file transfers and device discovery."
+        rationale: "AirDrop broadcasts the system presence over Bluetooth and Wi-Fi. Leaving it enabled exposes the device to unwanted content delivery and potential social engineering attacks."
+        level: 1
+        scored: true
+        audit_command: |
+          defaults read com.apple.NetworkBrowser DisableAirDrop 2>/dev/null
+        audit_steps: |
+          1. Open Finder
+          2. Select AirDrop from the sidebar
+          3. Verify "Allow me to be discovered by" is set to "No One"
+        expected_output: |
+          1
+        remediation: |
+          Disable AirDrop:
+            defaults write com.apple.NetworkBrowser DisableAirDrop -bool true
+
+      - number: "2.4.1"
+        title: "Ensure Gatekeeper Is Enabled"
+        description: "Gatekeeper must be enabled to restrict which applications can be installed and executed based on their code signing and notarization status."
+        rationale: "Gatekeeper is a critical macOS security feature that prevents the execution of unverified and potentially malicious applications. Disabling it removes a key layer of defense against malware."
+        level: 1
+        scored: true
+        audit_command: |
+          spctl --status
+        audit_steps: |
+          1. Open System Settings
+          2. Navigate to Privacy & Security
+          3. Under the "Security" section, verify "App Store and identified developers" or "App Store" is selected for "Allow applications downloaded from"
+        expected_output: |
+          assessments enabled
+        remediation: |
+          Enable Gatekeeper:
+            sudo spctl --master-enable
+
+      - number: "2.4.2"
+        title: "Ensure FileVault Is Enabled"
+        description: "FileVault full-disk encryption must be enabled to protect data at rest on the startup volume."
+        rationale: "Without full-disk encryption, an attacker with physical access to the machine can mount the disk and read all data. FileVault uses XTS-AES-128 encryption to protect the entire startup volume."
+        level: 1
+        scored: true
+        audit_command: |
+          fdesetup status
+        audit_steps: |
+          1. Open System Settings
+          2. Navigate to Privacy & Security
+          3. Scroll to the FileVault section
+          4. Verify FileVault is turned on
+        expected_output: |
+          FileVault is On.
+        remediation: |
+          Enable FileVault:
+            sudo fdesetup enable
+          Follow the prompts to set up a recovery key. Ensure the recovery key is stored securely.
+          Alternatively, open System Settings > Privacy & Security > FileVault and click "Turn On."
+
+      - number: "2.4.3"
+        title: "Ensure Firewall Is Enabled"
+        description: "The built-in application-level firewall must be enabled to control incoming network connections."
+        rationale: "The macOS application firewall provides a layer of defense by blocking unauthorized incoming connections. It limits which applications and services can accept inbound network traffic."
+        level: 1
+        scored: true
+        audit_command: |
+          /usr/libexec/ApplicationFirewall/socketfilterfw --getglobalstate
+        audit_steps: |
+          1. Open System Settings
+          2. Navigate to Network > Firewall
+          3. Verify the Firewall is turned on
+        expected_output: |
+          Firewall is enabled. (State = 1)
+        remediation: |
+          Enable the firewall:
+            sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setglobalstate on
+          Alternatively, open System Settings > Network > Firewall and turn it on.
+
+      - number: "2.4.4"
+        title: "Ensure Firewall Stealth Mode Is Enabled"
+        description: "Firewall stealth mode should be enabled so the system does not respond to probing requests such as ICMP ping."
+        rationale: "Stealth mode prevents the system from responding to unsolicited network probes, making it harder for attackers to discover and fingerprint the system during network reconnaissance."
+        level: 1
+        scored: true
+        audit_command: |
+          /usr/libexec/ApplicationFirewall/socketfilterfw --getstealthmode
+        audit_steps: |
+          1. Open System Settings
+          2. Navigate to Network > Firewall
+          3. Click Options
+          4. Verify "Enable stealth mode" is checked
+        expected_output: |
+          Stealth mode enabled
+        remediation: |
+          Enable firewall stealth mode:
+            sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setstealthmode on
+
+      - number: "2.5.1"
+        title: "Ensure System Integrity Protection Is Enabled"
+        description: "System Integrity Protection (SIP) must be enabled to protect critical system files and directories from modification."
+        rationale: "SIP restricts the root account from modifying protected system files, frameworks, and directories. Disabling SIP removes a fundamental security boundary and allows malware running as root to tamper with the operating system."
+        level: 1
+        scored: true
+        audit_command: |
+          csrutil status
+        audit_steps: |
+          1. Open Terminal
+          2. Run: csrutil status
+          3. Verify the output shows SIP is enabled
+        expected_output: |
+          System Integrity Protection status: enabled.
+        remediation: |
+          SIP must be enabled from macOS Recovery:
+            1. Restart the Mac and hold Command+R to enter Recovery Mode (or hold the power button on Apple Silicon)
+            2. Open Terminal from the Utilities menu
+            3. Run: csrutil enable
+            4. Restart the system
+
+      - number: "2.5.2"
+        title: "Ensure Apple Mobile File Integrity (AMFI) Is Enabled"
+        description: "Apple Mobile File Integrity must be enabled to enforce code signing validation for all executables."
+        rationale: "AMFI works alongside SIP to ensure that only properly signed code is allowed to run. Disabling AMFI allows unsigned or improperly signed code to execute, which can be leveraged by malware."
+        level: 1
+        scored: true
+        audit_command: |
+          nvram -p | grep amfi
+        audit_steps: |
+          1. Open Terminal
+          2. Run: nvram -p | grep amfi
+          3. Verify that no boot-args disabling AMFI are present
+        expected_output: |
+          No output (amfi should not appear in NVRAM boot arguments). If output appears, it should NOT contain "amfi_get_out_of_my_way=1".
+        remediation: |
+          If AMFI has been disabled via boot arguments, remove the flag:
+            sudo nvram boot-args=""
+          Then restart the system.
+
+  # ---------------------------------------------------------------------------
+  # Section 3 - Logging and Auditing
+  # ---------------------------------------------------------------------------
+  - number: "3"
+    title: "Logging and Auditing"
+    checks:
+      - number: "3.1"
+        title: "Ensure Security Auditing Is Enabled"
+        description: "The OpenBSM security auditing subsystem (auditd) must be enabled to record security-relevant events."
+        rationale: "Security auditing provides a detailed log of system activity that is essential for intrusion detection, forensic analysis, and compliance. Without auditing, malicious activity may go undetected."
+        level: 1
+        scored: true
+        audit_command: |
+          launchctl list | grep com.apple.auditd
+        audit_steps: |
+          1. Open Terminal
+          2. Run: sudo launchctl list | grep com.apple.auditd
+          3. Verify the auditd service is loaded and running
+        expected_output: |
+          A line containing "com.apple.auditd" should be present, indicating the audit daemon is running (e.g., PID followed by status 0 and com.apple.auditd).
+        remediation: |
+          Enable security auditing:
+            sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.auditd.plist
+
+      - number: "3.2"
+        title: "Ensure Security Auditing Flags Are Configured Properly"
+        description: "The audit control configuration must include appropriate flags to capture security-relevant events such as login/logout, administrative actions, and failed access attempts."
+        rationale: "Proper audit flag configuration ensures that important security events are captured. Insufficient flags may leave gaps in the audit trail that an attacker could exploit."
+        level: 2
+        scored: true
+        audit_command: |
+          grep "^flags:" /etc/security/audit_control
+        audit_steps: |
+          1. Open Terminal
+          2. Run: grep "^flags:" /etc/security/audit_control
+          3. Verify the flags include at least lo, aa, and -all (or equivalent comprehensive flags)
+        expected_output: |
+          flags:lo,aa,-all
+        remediation: |
+          Edit the audit control file to set appropriate flags:
+            sudo nano /etc/security/audit_control
+          Set the flags line to:
+            flags:lo,aa,-all
+          Then restart the audit daemon:
+            sudo audit -s
+
+      - number: "3.3"
+        title: "Ensure install.log Is Retained for 365 or More Days"
+        description: "The install.log file must be configured for long-term retention to support audit and forensic review."
+        rationale: "The install.log records all software installation activity. Retaining this log for at least 365 days ensures that historical installation activity is available for security investigations and compliance audits."
+        level: 1
+        scored: true
+        audit_command: |
+          grep -i "install.log" /etc/asl/com.apple.install
+          grep -i ttl /etc/asl/com.apple.install 2>/dev/null
+        audit_steps: |
+          1. Open Terminal
+          2. Run: cat /etc/asl/com.apple.install
+          3. Verify the ttl (time to live) value is set to 365 or greater
+        expected_output: |
+          The ttl value should be 365 or greater (e.g., ttl=365).
+        remediation: |
+          Edit the ASL configuration for install.log:
+            sudo nano /etc/asl/com.apple.install
+          Ensure the ttl value is set to at least 365:
+            ttl=365
+
+      - number: "3.4"
+        title: "Ensure Firewall Logging Is Enabled and Configured"
+        description: "The application firewall must be configured to log connection attempts for security monitoring."
+        rationale: "Firewall logging provides visibility into blocked and allowed connections, enabling the detection of unauthorized access attempts, port scanning, and other network-based attacks."
+        level: 1
+        scored: true
+        audit_command: |
+          /usr/libexec/ApplicationFirewall/socketfilterfw --getloggingmode
+        audit_steps: |
+          1. Open Terminal
+          2. Run the audit command above
+          3. Verify that logging mode is set to "on" (throttled or detailed)
+        expected_output: |
+          Log mode is on
+        remediation: |
+          Enable firewall logging:
+            sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setloggingmode on
+          For detailed logging:
+            sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setloggingopt detail
+
+      - number: "3.5"
+        title: "Ensure Access to Audit Records Is Controlled"
+        description: "Audit log files and directories must have restrictive permissions to prevent unauthorized reading, modification, or deletion."
+        rationale: "If audit records can be modified or deleted by unauthorized users, attackers can cover their tracks and destroy evidence of compromise."
+        level: 1
+        scored: true
+        audit_command: |
+          ls -le /etc/security/audit_control
+          ls -le /var/audit/
+        audit_steps: |
+          1. Open Terminal
+          2. Run: ls -le /etc/security/audit_control
+          3. Run: ls -le /var/audit/
+          4. Verify that audit files are owned by root and not world-readable
+        expected_output: |
+          /etc/security/audit_control should be owned by root:wheel with permissions no more permissive than 440.
+          /var/audit/ files should be owned by root:wheel with permissions no more permissive than 440.
+        remediation: |
+          Set proper permissions on audit configuration and log files:
+            sudo chown root:wheel /etc/security/audit_control
+            sudo chmod 440 /etc/security/audit_control
+            sudo chown -R root:wheel /var/audit/
+            sudo chmod -R 440 /var/audit/
+
+      - number: "3.6"
+        title: "Ensure Unified Logging Is Configured"
+        description: "macOS Unified Logging should be configured to capture relevant system and security events with an appropriate retention period."
+        rationale: "The Unified Logging system is the primary logging mechanism on macOS Sonoma. Ensuring it captures and retains relevant events supports security monitoring and incident response."
+        level: 2
+        scored: false
+        audit_command: |
+          log config --status
+          log show --predicate 'subsystem == "com.apple.securityd"' --last 1h --info 2>/dev/null | head -5
+        audit_steps: |
+          1. Open Console application
+          2. Verify that log entries are being generated
+          3. Check that security-related subsystems are logging at the appropriate level
+        expected_output: |
+          The log config command should show active logging configurations. Security subsystem logs should be present.
+        remediation: |
+          Configure Unified Logging persistence if needed:
+            sudo log config --mode "level:info" --subsystem com.apple.securityd
+          Consult Apple documentation for organization-specific log configuration.
+
+  # ---------------------------------------------------------------------------
+  # Section 4 - Network Configuration
+  # ---------------------------------------------------------------------------
+  - number: "4"
+    title: "Network Configuration"
+    checks:
+      - number: "4.1"
+        title: "Ensure Bonjour Advertising Services Is Disabled"
+        description: "Bonjour multicast advertising should be disabled to prevent the system from broadcasting its available services to the local network."
+        rationale: "Bonjour advertising exposes system services to all devices on the local network, providing reconnaissance information that attackers can use to identify targets and plan attacks."
+        level: 2
+        scored: true
+        audit_command: |
+          defaults read /Library/Preferences/com.apple.mDNSResponder.plist NoMulticastAdvertisements 2>/dev/null
+        audit_steps: |
+          1. Open Terminal
+          2. Run the audit command above
+          3. Verify the value is 1 (advertising disabled)
+        expected_output: |
+          1
+        remediation: |
+          Disable Bonjour advertising:
+            sudo defaults write /Library/Preferences/com.apple.mDNSResponder.plist NoMulticastAdvertisements -bool true
+          Then restart the mDNSResponder:
+            sudo killall -HUP mDNSResponder
+
+      - number: "4.2"
+        title: "Ensure Wi-Fi Status in Menu Bar Is Enabled"
+        description: "The Wi-Fi status indicator should be displayed in the menu bar so users can monitor their connection state."
+        rationale: "Displaying Wi-Fi status in the menu bar enables the user to quickly identify the network they are connected to, detect unexpected network changes, and verify that Wi-Fi is disabled when using a wired connection."
+        level: 1
+        scored: true
+        audit_command: |
+          defaults read com.apple.controlcenter "NSStatusItem Visible WiFi" 2>/dev/null
+        audit_steps: |
+          1. Open System Settings
+          2. Navigate to Control Center
+          3. Verify Wi-Fi is set to "Show in Menu Bar"
+        expected_output: |
+          1
+        remediation: |
+          Show Wi-Fi in the menu bar:
+            defaults write com.apple.controlcenter "NSStatusItem Visible WiFi" -bool true
+
+      - number: "4.3"
+        title: "Ensure HTTP Server (httpd) Is Disabled"
+        description: "The built-in Apache HTTP server must not be running unless explicitly required."
+        rationale: "Running an HTTP server exposes the system to web-based attacks and increases the attack surface. The built-in Apache server should be disabled on workstations."
+        level: 1
+        scored: true
+        audit_command: |
+          launchctl print-disabled system | grep org.apache.httpd
+        audit_steps: |
+          1. Open Terminal
+          2. Run the audit command above
+          3. Verify the httpd service is disabled
+        expected_output: |
+          "org.apache.httpd" => disabled
+        remediation: |
+          Disable the HTTP server:
+            sudo launchctl disable system/org.apache.httpd
+            sudo apachectl stop
+
+      - number: "4.4"
+        title: "Ensure NFS Server Is Disabled"
+        description: "The NFS (Network File System) server daemon must not be running unless explicitly required for file sharing."
+        rationale: "NFS is an older network file sharing protocol that lacks strong authentication and encryption by default. Running an NFS server unnecessarily exposes the system to network-based attacks."
+        level: 1
+        scored: true
+        audit_command: |
+          launchctl print-disabled system | grep com.apple.nfsd
+          cat /etc/exports 2>/dev/null
+        audit_steps: |
+          1. Open Terminal
+          2. Run: launchctl print-disabled system | grep com.apple.nfsd
+          3. Run: cat /etc/exports
+          4. Verify the NFS daemon is disabled and no exports are defined
+        expected_output: |
+          "com.apple.nfsd" => disabled
+          The /etc/exports file should not exist or should be empty.
+        remediation: |
+          Disable the NFS server:
+            sudo launchctl disable system/com.apple.nfsd
+            sudo nfsd disable
+          Remove any NFS exports:
+            sudo rm /etc/exports
+
+      - number: "4.5"
+        title: "Ensure Internet Sharing Is Disabled"
+        description: "Internet Sharing must be disabled to prevent the Mac from acting as a network gateway or router."
+        rationale: "Internet Sharing can turn the Mac into a NAT gateway, potentially bridging secure and insecure networks. This can bypass network security controls and expose internal resources."
+        level: 1
+        scored: true
+        audit_command: |
+          defaults read /Library/Preferences/SystemConfiguration/com.apple.nat NAT 2>/dev/null | grep -i enabled
+        audit_steps: |
+          1. Open System Settings
+          2. Navigate to General > Sharing
+          3. Verify Internet Sharing is turned off
+        expected_output: |
+          Enabled = 0; or the key should not exist.
+        remediation: |
+          Disable Internet Sharing:
+            sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.nat NAT -dict Enabled -int 0
+          Alternatively, open System Settings > General > Sharing and turn off Internet Sharing.
+
+  # ---------------------------------------------------------------------------
+  # Section 5 - System Access, Authentication and Authorization
+  # ---------------------------------------------------------------------------
+  - number: "5"
+    title: "System Access, Authentication and Authorization"
+    checks:
+      - number: "5.1.1"
+        title: "Ensure Login Window Displays as Name and Password"
+        description: "The login window should display username and password fields instead of a list of user accounts."
+        rationale: "Displaying a list of user accounts in the login window reveals valid usernames to anyone with physical access, making brute-force and targeted attacks easier."
+        level: 1
+        scored: true
+        audit_command: |
+          defaults read /Library/Preferences/com.apple.loginwindow SHOWFULLNAME
+        audit_steps: |
+          1. Open System Settings
+          2. Navigate to Lock Screen
+          3. Under "Login window shows," verify it is set to "Name and password"
+        expected_output: |
+          1
+        remediation: |
+          Configure the login window to show name and password fields:
+            sudo defaults write /Library/Preferences/com.apple.loginwindow SHOWFULLNAME -bool true
+
+      - number: "5.1.2"
+        title: "Ensure Password Hints Are Disabled"
+        description: "Password hints must not be displayed on the login window after failed login attempts."
+        rationale: "Password hints can reveal information about the user password to anyone with physical access to the system, making it easier for an attacker to guess or crack the password."
+        level: 1
+        scored: true
+        audit_command: |
+          defaults read /Library/Preferences/com.apple.loginwindow RetriesUntilHint
+        audit_steps: |
+          1. Open System Settings
+          2. Navigate to Lock Screen
+          3. Verify "Show password hints" is disabled
+        expected_output: |
+          0
+        remediation: |
+          Disable password hints on the login window:
+            sudo defaults write /Library/Preferences/com.apple.loginwindow RetriesUntilHint -int 0
+
+      - number: "5.1.3"
+        title: "Ensure Guest Account Is Disabled"
+        description: "The guest account must be disabled to prevent unauthenticated access to the system."
+        rationale: "The guest account allows anyone to use the computer without credentials. While guest sessions are sandboxed and temporary, they still provide access to network resources and can be used as a foothold for further attacks."
+        level: 1
+        scored: true
+        audit_command: |
+          defaults read /Library/Preferences/com.apple.loginwindow GuestEnabled
+        audit_steps: |
+          1. Open System Settings
+          2. Navigate to Users & Groups
+          3. Click on the Guest User account
+          4. Verify "Allow guests to log in to this computer" is turned off
+        expected_output: |
+          0
+        remediation: |
+          Disable the guest account:
+            sudo defaults write /Library/Preferences/com.apple.loginwindow GuestEnabled -bool false
+
+      - number: "5.1.4"
+        title: "Ensure Show Password Hints Is Disabled"
+        description: "The system must not display password hints for user accounts at the login window."
+        rationale: "Password hints displayed at the login window provide clues that can help an attacker guess a user password, reducing the effective strength of the password."
+        level: 1
+        scored: true
+        audit_command: |
+          defaults read /Library/Preferences/com.apple.loginwindow AdminHostInfo 2>/dev/null
+        audit_steps: |
+          1. Open System Settings
+          2. Navigate to Lock Screen
+          3. Verify "Show password hints" is not enabled
+        expected_output: |
+          The AdminHostInfo key should not be set, or should not contain password-hint-related values.
+        remediation: |
+          Disable login window hints:
+            sudo defaults delete /Library/Preferences/com.apple.loginwindow AdminHostInfo 2>/dev/null
+
+      - number: "5.2"
+        title: "Ensure an Inactivity Interval of 20 Minutes or Less for the Screen Saver Is Enabled"
+        description: "The screen saver must activate after no more than 20 minutes of user inactivity."
+        rationale: "An idle system left unlocked provides an opportunity for unauthorized physical access. Activating the screen saver after a defined inactivity period is the first step in securing an unattended workstation."
+        level: 1
+        scored: true
+        audit_command: |
+          defaults -currentHost read com.apple.screensaver idleTime 2>/dev/null
+        audit_steps: |
+          1. Open System Settings
+          2. Navigate to Lock Screen
+          3. Verify "Start Screen Saver when inactive" is set to 20 minutes or less
+        expected_output: |
+          A value of 1200 or less (time in seconds; 1200 seconds = 20 minutes).
+        remediation: |
+          Set the screen saver idle time to 20 minutes (1200 seconds) or less:
+            defaults -currentHost write com.apple.screensaver idleTime -int 1200
+
+      - number: "5.3"
+        title: "Ensure Screen Saver Corners Are Secure"
+        description: "Verify that no hot corners are configured to disable the screen saver, which would allow bypassing the lock screen."
+        rationale: "Hot corners can be configured to disable the screen saver. If an attacker can walk up to an unattended machine and move the mouse to a corner that disables the screen saver, they gain access without authentication."
+        level: 2
+        scored: true
+        audit_command: |
+          defaults read com.apple.dock wvous-tl-corner 2>/dev/null
+          defaults read com.apple.dock wvous-tr-corner 2>/dev/null
+          defaults read com.apple.dock wvous-bl-corner 2>/dev/null
+          defaults read com.apple.dock wvous-br-corner 2>/dev/null
+        audit_steps: |
+          1. Open System Settings
+          2. Navigate to Desktop & Dock
+          3. Click "Hot Corners..." at the bottom
+          4. Verify no corner is set to "Disable Screen Saver" (value 6)
+        expected_output: |
+          None of the four corners should be set to 6 (Disable Screen Saver).
+          Value 6 = Disable Screen Saver.
+        remediation: |
+          Remove any hot corner that disables the screen saver. For example, to reset the top-left corner:
+            defaults write com.apple.dock wvous-tl-corner -int 0
+          Repeat for each corner as needed (wvous-tl-corner, wvous-tr-corner, wvous-bl-corner, wvous-br-corner).
+          Then restart the Dock:
+            killall Dock
+
+      - number: "5.4"
+        title: "Ensure a Password Is Required to Wake the Computer from Sleep or Screen Saver"
+        description: "A password must be required immediately when the system wakes from sleep or the screen saver is dismissed."
+        rationale: "Without requiring a password on wake, an attacker with physical access can simply wake the system to gain full access to the logged-in user session."
+        level: 1
+        scored: true
+        audit_command: |
+          sysadminctl -screenLock status 2>/dev/null
+        audit_steps: |
+          1. Open System Settings
+          2. Navigate to Lock Screen
+          3. Verify "Require password after screen saver begins or display is turned off" is set to "Immediately"
+        expected_output: |
+          screenLock is on with an immediate grace period (0 seconds).
+        remediation: |
+          Require password immediately after screen saver or sleep:
+            sysadminctl -screenLock immediate -password -
+          Alternatively, set via System Settings > Lock Screen and choose "Immediately."
+
+      - number: "5.5"
+        title: "Ensure the Login Window Shows System Information"
+        description: "The login window should be configured to display the system hostname to help administrators identify machines and detect unauthorized hardware."
+        rationale: "Displaying the hostname on the login window assists administrators in identifying systems, particularly in environments with many similar-looking machines."
+        level: 2
+        scored: false
+        audit_command: |
+          defaults read /Library/Preferences/com.apple.loginwindow AdminHostInfo 2>/dev/null
+        audit_steps: |
+          1. Open Terminal
+          2. Run the audit command above
+          3. Verify it returns "HostName" if system information display is desired
+        expected_output: |
+          HostName
+        remediation: |
+          Display the hostname on the login window:
+            sudo defaults write /Library/Preferences/com.apple.loginwindow AdminHostInfo HostName
+
+      - number: "5.6"
+        title: "Ensure Automatic Login Is Disabled"
+        description: "Automatic login must be disabled so that a password is always required to access the system."
+        rationale: "Automatic login bypasses all authentication, granting immediate access to anyone who powers on the machine. This completely undermines the security of the user account."
+        level: 1
+        scored: true
+        audit_command: |
+          defaults read /Library/Preferences/com.apple.loginwindow autoLoginUser 2>/dev/null
+        audit_steps: |
+          1. Open System Settings
+          2. Navigate to Users & Groups
+          3. Verify "Automatic login" is set to "Off"
+        expected_output: |
+          The key should not exist, or the command should return an error indicating the key does not exist (meaning automatic login is disabled).
+        remediation: |
+          Disable automatic login:
+            sudo defaults delete /Library/Preferences/com.apple.loginwindow autoLoginUser
+          Alternatively, open System Settings > Users & Groups and set Automatic login to Off.
+
+  # ---------------------------------------------------------------------------
+  # Section 6 - User Accounts
+  # ---------------------------------------------------------------------------
+  - number: "6"
+    title: "User Accounts"
+    checks:
+      - number: "6.1"
+        title: "Ensure the Root Account Is Disabled"
+        description: "The root (superuser) account must be disabled for interactive login."
+        rationale: "The root account has unrestricted access to the entire system. If an attacker gains root credentials, they have complete control. Disabling root login forces the use of named accounts with sudo, providing accountability and a smaller attack surface."
+        level: 1
+        scored: true
+        audit_command: |
+          dscl . -read /Users/root AuthenticationAuthority 2>/dev/null
+        audit_steps: |
+          1. Open Terminal
+          2. Run the audit command above
+          3. Verify the root account is disabled (should contain "DisabledUser" or the command should indicate the account is disabled)
+        expected_output: |
+          The output should contain ";DisabledUser;" indicating the root account is disabled for interactive login.
+        remediation: |
+          Disable the root account:
+            sudo dsenableroot -d
+          Alternatively:
+            Open Directory Utility > Edit menu > Disable Root User.
+
+      - number: "6.2"
+        title: "Ensure Password Account Lockout Threshold Is Configured"
+        description: "The system must lock user accounts after a defined number of consecutive failed login attempts."
+        rationale: "Without account lockout, an attacker can make unlimited password guesses. A lockout threshold limits brute-force attacks by temporarily disabling the account after a set number of failures."
+        level: 1
+        scored: true
+        audit_command: |
+          pwpolicy -getaccountpolicies 2>/dev/null | grep -A1 "maxFailedLoginAttempts"
+        audit_steps: |
+          1. Open Terminal
+          2. Run: pwpolicy -getaccountpolicies
+          3. Look for a maxFailedLoginAttempts policy
+          4. Verify the threshold is set to 5 or fewer attempts
+        expected_output: |
+          A maxFailedLoginAttempts value of 5 or fewer should be defined in the account policy.
+        remediation: |
+          Create or update the password policy to include an account lockout threshold. Use a configuration profile (MDM) with the following payload:
+            maxFailedLoginAttempts = 5
+          Or use pwpolicy to set the policy:
+            pwpolicy -setaccountpolicies <policy_file.plist>
+
+      - number: "6.3"
+        title: "Ensure Password Minimum Length Is Configured"
+        description: "A minimum password length of at least 14 characters must be enforced."
+        rationale: "Longer passwords are exponentially harder to crack through brute-force methods. A minimum of 14 characters significantly increases the time required for a successful attack."
+        level: 1
+        scored: true
+        audit_command: |
+          pwpolicy -getaccountpolicies 2>/dev/null | grep -A1 "minChars"
+        audit_steps: |
+          1. Open Terminal
+          2. Run: pwpolicy -getaccountpolicies
+          3. Look for a minChars or minimumLength policy
+          4. Verify the value is 14 or greater
+        expected_output: |
+          A minChars value of 14 or greater should be defined in the account policy.
+        remediation: |
+          Configure a password policy requiring a minimum of 14 characters. Use a configuration profile (MDM) with:
+            minChars = 14
+          Or set via pwpolicy:
+            pwpolicy -setaccountpolicies <policy_file.plist>
+
+      - number: "6.4"
+        title: "Ensure Library Validation Is Enabled"
+        description: "Library validation should be enabled to prevent loading of unsigned or improperly signed dynamic libraries."
+        rationale: "Library validation ensures that only properly signed libraries are loaded into processes, preventing code injection attacks via malicious dynamic libraries."
+        level: 1
+        scored: true
+        audit_command: |
+          defaults read /Library/Preferences/com.apple.security.libraryvalidation.plist DisableLibraryValidation 2>/dev/null
+        audit_steps: |
+          1. Open Terminal
+          2. Run the audit command above
+          3. Verify the key is either absent or set to 0 (library validation enabled)
+        expected_output: |
+          The key should not exist (default is enabled), or the value should be 0.
+        remediation: |
+          Enable library validation:
+            sudo defaults write /Library/Preferences/com.apple.security.libraryvalidation.plist DisableLibraryValidation -bool false
+
+      - number: "6.5"
+        title: "Ensure Sudo Timeout Period Is Set to Zero"
+        description: "The sudo authentication timeout should be set to zero so that a password is required every time sudo is invoked."
+        rationale: "The default sudo timeout allows cached credentials to be reused for several minutes after the initial authentication. Setting the timeout to zero requires re-authentication for every privileged command, reducing the risk window if a terminal session is hijacked."
+        level: 1
+        scored: true
+        audit_command: |
+          sudo cat /etc/sudoers | grep timestamp
+          sudo cat /etc/sudoers.d/* 2>/dev/null | grep timestamp
+        audit_steps: |
+          1. Open Terminal
+          2. Run: sudo visudo (or review /etc/sudoers and /etc/sudoers.d/)
+          3. Verify a "timestamp_timeout=0" entry is present for Defaults
+        expected_output: |
+          Defaults timestamp_timeout=0
+        remediation: |
+          Edit the sudoers file to set the timeout to zero:
+            sudo visudo
+          Add or modify the following line:
+            Defaults timestamp_timeout=0
+
+      - number: "6.6"
+        title: "Ensure a Custom Message for the Login Screen Is Enabled"
+        description: "A custom banner message should be displayed on the login screen to present legal notice or organizational policy."
+        rationale: "A login banner provides legal standing for prosecution in case of unauthorized access and warns potential intruders that their activity is being monitored."
+        level: 2
+        scored: false
+        audit_command: |
+          defaults read /Library/Preferences/com.apple.loginwindow LoginwindowText 2>/dev/null
+        audit_steps: |
+          1. Open System Settings
+          2. Navigate to Lock Screen
+          3. Verify a message is set under "Show a message when the screen is locked"
+        expected_output: |
+          An organization-appropriate legal or policy banner text should be returned.
+        remediation: |
+          Set a login window message:
+            sudo defaults write /Library/Preferences/com.apple.loginwindow LoginwindowText "Authorized use only. All activity is monitored."
+          Customize the message to meet organizational requirements.
+
+      - number: "6.7"
+        title: "Ensure an Administrator Account Cannot Login to Another User's Active and Locked Session"
+        description: "Fast user switching should not allow an administrator to unlock another user's locked session."
+        rationale: "Allowing one user to access another user's locked session violates the principle of individual accountability and can expose sensitive data belonging to the locked user."
+        level: 1
+        scored: true
+        audit_command: |
+          security authorizationdb read system.login.screensaver 2>/dev/null | grep -A1 "use-login-window-ui"
+        audit_steps: |
+          1. Open Terminal
+          2. Run: security authorizationdb read system.login.screensaver
+          3. Verify the mechanism requires the session owner's credentials
+        expected_output: |
+          The screensaver authentication mechanism should use the login window UI that requires the session owner's credentials, not allowing admin override.
+        remediation: |
+          Ensure the screensaver lock requires the logged-in user's password:
+            security authorizationdb write system.login.screensaver use-login-window-ui
+
+      - number: "6.8"
+        title: "Ensure a Password Policy Is Enforced via Configuration Profile"
+        description: "A comprehensive password policy should be deployed and enforced through a configuration profile (MDM)."
+        rationale: "Configuration profiles provide centralized and tamper-resistant enforcement of password policies. Local settings can be overridden by users, whereas MDM-managed profiles enforce compliance."
+        level: 1
+        scored: true
+        audit_command: |
+          profiles -P -o stdout 2>/dev/null | grep -i "passcode\|password"
+        audit_steps: |
+          1. Open System Settings
+          2. Navigate to Privacy & Security > Profiles
+          3. Verify a password/passcode configuration profile is installed
+        expected_output: |
+          A configuration profile containing passcode or password policy payload should be present.
+        remediation: |
+          Deploy a configuration profile via MDM that enforces the organization's password policy, including:
+            - Minimum password length (14+ characters)
+            - Password complexity requirements
+            - Maximum password age
+            - Account lockout threshold
+            - Password history enforcement

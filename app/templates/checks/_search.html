@@ -1,0 +1,29 @@
+{% if checks %}
+<div class="bg-white shadow-lg rounded-lg border border-gray-200 max-h-96 overflow-y-auto">
+    {% for check in checks[:15] %}
+    <a href="{{ url_for('checks.detail', check_id=check.id) }}" class="block px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-0" hx-boost="true">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3 min-w-0">
+                <span class="text-xs font-mono text-gray-400 flex-shrink-0">{{ check.check_number }}</span>
+                <span class="text-sm text-gray-900 truncate">{{ check.title }}</span>
+            </div>
+            <div class="flex items-center space-x-2 flex-shrink-0 ml-2">
+                <span class="inline-flex items-center rounded-full px-1.5 py-0.5 text-xs font-medium {% if check.level == 1 %}bg-blue-100 text-blue-700{% else %}bg-yellow-100 text-yellow-700{% endif %}">L{{ check.level }}</span>
+                <span class="text-xs text-gray-400">{{ check.section.benchmark.platform.name }}</span>
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+    {% if checks|length > 15 %}
+    <div class="px-4 py-2 bg-gray-50 text-center">
+        <a href="{{ url_for('checks.search', q=query) }}" class="text-xs text-primary-600 hover:text-primary-500">
+            View all {{ checks|length }} results
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% elif query %}
+<div class="bg-white shadow-lg rounded-lg border border-gray-200 p-4 text-center">
+    <p class="text-sm text-gray-500">No checks found for "{{ query }}"</p>
+</div>
+{% endif %}
