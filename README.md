@@ -2,6 +2,9 @@
 
 *Observation Haki for your infrastructure*
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Author: D3vn0mi](https://img.shields.io/badge/Author-D3vn0mi-purple.svg)](https://github.com/d3vn0mi)
+
 A web-based security audit reference tool built for compliance warriors. Kenbu — inspired by One Piece's Kenbunshoku Haki (the power to sense and observe everything) — gives security auditors the ability to see through every configuration, every misconfigured service, and every policy gap across your infrastructure.
 
 Starting with CIS benchmarks and expanding to NIST, DISA STIG, ISO 27001, and beyond. Browse checks by benchmark or platform, track audits in real-time, and export formatted Excel checklists for fieldwork.
@@ -231,3 +234,15 @@ Enterprise-grade features for large organizations and MSSPs.
 2. The `benchmark.name` field should reflect the framework (e.g., "NIST SP 800-53 Rev 5")
 3. Map checks to the framework's control numbering system
 4. The existing data model supports any hierarchical check framework
+
+---
+
+## License
+
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+
+## Author
+
+**D3vn0mi** — [github.com/d3vn0mi](https://github.com/d3vn0mi)
+
+Built with Observation Haki. Stay vigilant.
