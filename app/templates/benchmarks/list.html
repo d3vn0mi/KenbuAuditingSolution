@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Benchmarks - CIS Auditor{% endblock %}
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Benchmarks</h1>
+    <p class="mt-1 text-sm text-gray-600">Browse all available CIS benchmarks.</p>
+</div>
+
+<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    {% for benchmark in benchmarks %}
+    <a href="{{ url_for('benchmarks.detail', benchmark_id=benchmark.id) }}" class="bg-white shadow rounded-lg p-6 hover:shadow-md transition-shadow group">
+        <div class="flex items-start justify-between">
+            <div class="flex-shrink-0 h-12 w-12 rounded-lg bg-primary-100 flex items-center justify-center">
+                <span class="text-primary-700 font-bold">{{ benchmark.platform.name[:2].upper() }}</span>
+            </div>
+            <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
+                v{{ benchmark.version }}
+            </span>
+        </div>
+        <h3 class="mt-4 text-lg font-medium text-gray-900 group-hover:text-primary-600">{{ benchmark.name }}</h3>
+        <p class="mt-1 text-sm text-gray-500">{{ benchmark.description }}</p>
+        <div class="mt-4 flex items-center justify-between">
+            <span class="inline-flex items-center text-xs text-gray-500">
+                <svg class="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 0 1-3-3m3 3a3 3 0 1 0 0 6h13.5a3 3 0 1 0 0-6m-16.5-3a3 3 0 0 1 3-3h13.5a3 3 0 0 1 3 3m-19.5 0a4.5 4.5 0 0 1 .9-2.7L5.737 5.1a3.375 3.375 0 0 1 2.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 0 1 .9 2.7m0 0a3 3 0 0 1-3 3m0 3h.008v.008h-.008v-.008Zm0-6h.008v.008h-.008v-.008ZM6.75 8.25h.008v.008H6.75V8.25Z" />
+                </svg>
+                {{ benchmark.platform.name }}
+            </span>
+            <span class="text-xs text-gray-500">{{ benchmark.total_checks }} checks</span>
+        </div>
+        <div class="mt-3">
+            <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-600/20">
+                {{ benchmark.platform.os_family }}
+            </span>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% endblock %}

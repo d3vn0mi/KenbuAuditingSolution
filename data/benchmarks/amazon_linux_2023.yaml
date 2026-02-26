@@ -1,0 +1,1094 @@
+benchmark:
+  name: "CIS Amazon Linux 2023 Benchmark"
+  version: "1.0.0"
+  platform: "amazon-linux-2023"
+  release_date: "2024-04-01"
+  description: "Security configuration benchmark for Amazon Linux 2023"
+  url: "https://www.cisecurity.org/benchmark/amazon_linux"
+
+sections:
+  - number: "1"
+    title: "Initial Setup"
+    children:
+      - number: "1.1"
+        title: "Filesystem Configuration"
+        checks:
+          - number: "1.1.1"
+            title: "Ensure mounting of cramfs filesystems is disabled"
+            description: "The cramfs filesystem type is a compressed read-only Linux filesystem embedded in small footprint systems. A cramfs image can be used without having to first decompress the image."
+            rationale: "Removing support for unneeded filesystem types reduces the local attack surface of the system. If this filesystem type is not needed, disable it."
+            level: 1
+            scored: true
+            audit_command: |
+              modprobe -n -v cramfs 2>&1 | grep -E '(cramfs|install)'
+              lsmod | grep cramfs
+            expected_output: |
+              install /bin/true
+            remediation: |
+              echo "install cramfs /bin/true" >> /etc/modprobe.d/cramfs.conf
+              echo "blacklist cramfs" >> /etc/modprobe.d/cramfs.conf
+              rmmod cramfs 2>/dev/null
+
+          - number: "1.1.2"
+            title: "Ensure mounting of squashfs filesystems is disabled"
+            description: "The squashfs filesystem type is a compressed read-only Linux filesystem embedded in small footprint systems. squashfs is used by snap packages."
+            rationale: "Removing support for unneeded filesystem types reduces the local attack surface of the system. If this filesystem type is not needed, disable it."
+            level: 2
+            scored: true
+            audit_command: |
+              modprobe -n -v squashfs 2>&1 | grep -E '(squashfs|install)'
+              lsmod | grep squashfs
+            expected_output: |
+              install /bin/true
+            remediation: |
+              echo "install squashfs /bin/true" >> /etc/modprobe.d/squashfs.conf
+              echo "blacklist squashfs" >> /etc/modprobe.d/squashfs.conf
+              rmmod squashfs 2>/dev/null
+
+          - number: "1.1.3"
+            title: "Ensure mounting of udf filesystems is disabled"
+            description: "The udf filesystem type is the universal disk format used to implement ISO/IEC 13346 and ECMA-167 based media. This is an open vendor filesystem type for data storage on a broad range of media."
+            rationale: "Removing support for unneeded filesystem types reduces the local attack surface of the system. If this filesystem type is not needed, disable it."
+            level: 1
+            scored: true
+            audit_command: |
+              modprobe -n -v udf 2>&1 | grep -E '(udf|install)'
+              lsmod | grep udf
+            expected_output: |
+              install /bin/true
+            remediation: |
+              echo "install udf /bin/true" >> /etc/modprobe.d/udf.conf
+              echo "blacklist udf" >> /etc/modprobe.d/udf.conf
+              rmmod udf 2>/dev/null
+
+          - number: "1.1.4"
+            title: "Ensure /tmp is configured as a separate partition"
+            description: "The /tmp directory is a world-writable directory used for temporary storage by all users and some applications. Making /tmp its own file system allows an administrator to set additional mount options for hardening."
+            rationale: "Since the /tmp directory is intended to be world-writable, there is a risk of resource exhaustion if it is not bound to a separate partition. In addition, making /tmp its own file system allows an administrator to set the noexec option on the mount."
+            level: 1
+            scored: true
+            audit_command: |
+              findmnt -n /tmp
+            expected_output: |
+              /tmp should be mounted as a separate partition with tmpfs or a dedicated device
+            remediation: |
+              systemctl unmask tmp.mount
+              systemctl enable tmp.mount
+              cat >> /etc/systemd/system/tmp.mount <<EOF
+              [Mount]
+              What=tmpfs
+              Where=/tmp
+              Type=tmpfs
+              Options=mode=1777,strictatime,noexec,nodev,nosuid
+              EOF
+              systemctl start tmp.mount
+
+          - number: "1.1.5"
+            title: "Ensure noexec option set on /tmp partition"
+            description: "The noexec mount option specifies that the filesystem cannot contain executable binaries."
+            rationale: "Since the /tmp filesystem is only intended for temporary file storage, set this option to ensure that users cannot run executable binaries from /tmp."
+            level: 1
+            scored: true
+            audit_command: |
+              findmnt -n /tmp | grep -v noexec
+            expected_output: |
+              No output expected (noexec should be present in mount options)
+            remediation: |
+              Edit /etc/systemd/system/tmp.mount or /etc/fstab to add noexec to the /tmp mount options.
+              Options=mode=1777,strictatime,noexec,nodev,nosuid
+              Then remount: mount -o remount,noexec /tmp
+
+      - number: "1.2"
+        title: "GRUB2 and Boot Configuration"
+        checks:
+          - number: "1.2.1"
+            title: "Ensure GRUB2 bootloader password is set"
+            description: "Setting the boot loader password will require that anyone rebooting the system must enter a password before being able to set command line boot parameters."
+            rationale: "Requiring a boot password upon execution of the boot loader will prevent an unauthorized user from entering boot parameters or changing the boot partition. This prevents users from weakening security by booting into single user mode."
+            level: 1
+            scored: true
+            audit_command: |
+              grep -E '^\s*GRUB2_PASSWORD' /boot/grub2/user.cfg 2>/dev/null
+              grep -E '^\s*set superusers' /boot/grub2/grub.cfg 2>/dev/null
+            expected_output: |
+              GRUB2_PASSWORD=grub.pbkdf2.sha512...
+              set superusers="root"
+            remediation: |
+              grub2-setpassword
+              This will prompt for a password and store the hash in /boot/grub2/user.cfg.
+
+          - number: "1.2.2"
+            title: "Ensure permissions on bootloader config are configured"
+            description: "The grub configuration file contains information on boot settings and passwords for unlocking boot options."
+            rationale: "Setting the permissions to read and write for root only prevents non-root users from seeing the boot parameters or changing them. Non-root users who read the boot parameters may be able to identify weaknesses in security upon boot and be able to exploit them."
+            level: 1
+            scored: true
+            audit_command: |
+              stat -c '%a %u %g' /boot/grub2/grub.cfg
+            expected_output: |
+              600 0 0
+            remediation: |
+              chown root:root /boot/grub2/grub.cfg
+              chmod 600 /boot/grub2/grub.cfg
+
+      - number: "1.3"
+        title: "SELinux Configuration"
+        checks:
+          - number: "1.3.1"
+            title: "Ensure SELinux is installed"
+            description: "SELinux provides Mandatory Access Controls (MAC) on Amazon Linux 2023. It is installed by default but should be verified."
+            rationale: "Without a Mandatory Access Control system installed, the default Discretionary Access Controls are the only controls available. SELinux provides an additional layer of security."
+            level: 1
+            scored: true
+            audit_command: |
+              rpm -q libselinux
+            expected_output: |
+              libselinux-<version>
+            remediation: |
+              dnf install libselinux
+
+          - number: "1.3.2"
+            title: "Ensure SELinux is not disabled in bootloader configuration"
+            description: "Configure GRUB2 so that no SELinux-disabling arguments are passed to the kernel at boot time."
+            rationale: "If SELinux is disabled at boot time via GRUB, it cannot provide its mandatory access control protections."
+            level: 1
+            scored: true
+            audit_command: |
+              grubby --info=ALL | grep -E 'selinux=0|enforcing=0'
+            expected_output: |
+              No output expected (no SELinux-disabling kernel parameters should be present)
+            remediation: |
+              grubby --update-kernel ALL --remove-args "selinux=0 enforcing=0"
+
+          - number: "1.3.3"
+            title: "Ensure SELinux policy is configured to enforcing"
+            description: "SELinux can run in enforcing mode, permissive mode, or can be disabled entirely. Amazon Linux 2023 defaults to permissive. Enforcing mode should be enabled to provide mandatory access controls."
+            rationale: "SELinux must be enabled at boot time to ensure that the controls it provides are in effect at all times. When SELinux is set to permissive, violations are logged but not denied, providing no actual protection."
+            level: 1
+            scored: true
+            audit_command: |
+              getenforce
+              grep -E '^\s*SELINUX=' /etc/selinux/config
+            expected_output: |
+              Enforcing
+              SELINUX=enforcing
+            remediation: |
+              sed -i 's/^\s*SELINUX=.*/SELINUX=enforcing/' /etc/selinux/config
+              setenforce 1
+
+          - number: "1.3.4"
+            title: "Ensure SELinux policy is configured as targeted"
+            description: "The SELinux targeted policy confines selected system processes and is the default policy type on Amazon Linux 2023."
+            rationale: "The targeted policy limits the scope of SELinux enforcement to critical system processes while leaving the rest of the system under standard Linux DAC controls. This provides a balance of security and usability."
+            level: 1
+            scored: true
+            audit_command: |
+              grep -E '^\s*SELINUXTYPE=' /etc/selinux/config
+            expected_output: |
+              SELINUXTYPE=targeted
+            remediation: |
+              sed -i 's/^\s*SELINUXTYPE=.*/SELINUXTYPE=targeted/' /etc/selinux/config
+
+      - number: "1.4"
+        title: "Crypto Policy and Software Updates"
+        checks:
+          - number: "1.4.1"
+            title: "Ensure system-wide crypto policy is set to DEFAULT or stricter"
+            description: "Amazon Linux 2023 uses system-wide crypto policies to manage cryptographic settings across all applications. The policy should be set to at least DEFAULT."
+            rationale: "If the legacy crypto policy is used, it includes support for insecure protocols and algorithms such as SHA-1, DES, and protocols below TLS 1.2. Setting the system-wide policy to DEFAULT or stricter ensures weak algorithms are disabled."
+            level: 1
+            scored: true
+            audit_command: |
+              update-crypto-policies --show
+            expected_output: |
+              DEFAULT
+            remediation: |
+              update-crypto-policies --set DEFAULT
+              For stricter security: update-crypto-policies --set FUTURE
+
+          - number: "1.4.2"
+            title: "Ensure dnf gpgcheck is globally activated"
+            description: "gpgcheck is a dnf option that enables GPG signature checking on all packages from all repositories. This verifies the integrity and origin of packages."
+            rationale: "It is important to ensure that an RPM's package signature is always checked prior to installation to ensure that the software is obtained from a trusted source and has not been modified."
+            level: 1
+            scored: true
+            audit_command: |
+              grep -E '^\s*gpgcheck\s*=' /etc/dnf/dnf.conf
+            expected_output: |
+              gpgcheck=1
+            remediation: |
+              sed -i 's/^\s*gpgcheck\s*=.*/gpgcheck=1/' /etc/dnf/dnf.conf
+
+          - number: "1.4.3"
+            title: "Ensure dnf package updates are available and reviewed"
+            description: "Amazon Linux 2023 packages should be regularly reviewed for available security updates using dnf."
+            rationale: "It is important that patches and updates are applied in a timely manner to protect against known vulnerabilities that could be exploited by malicious actors."
+            level: 1
+            scored: false
+            audit_command: |
+              dnf check-update --security 2>/dev/null | tail -n +3
+            expected_output: |
+              No output expected if system is fully patched. Any output indicates pending security updates.
+            remediation: |
+              dnf update --security -y
+              Consider enabling automatic updates:
+              dnf install dnf-automatic
+              systemctl enable --now dnf-automatic-install.timer
+
+      - number: "1.5"
+        title: "AWS-Specific Initial Configuration"
+        checks:
+          - number: "1.5.1"
+            title: "Ensure IMDSv2 is enforced on the EC2 instance"
+            description: "The Instance Metadata Service (IMDS) provides information about the running instance. IMDSv1 uses a simple request/response method, while IMDSv2 adds session-oriented requests that require a token. IMDSv2 must be enforced to mitigate SSRF attacks."
+            rationale: "IMDSv1 is vulnerable to server-side request forgery (SSRF) attacks. If an application on the instance has an SSRF vulnerability, an attacker could retrieve instance metadata including IAM role credentials. IMDSv2 mitigates this by requiring session tokens."
+            level: 1
+            scored: true
+            audit_command: |
+              TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" 2>/dev/null)
+              curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/services/partition 2>/dev/null && echo "IMDSv2 works"
+              curl -s -o /dev/null -w "%{http_code}" http://169.254.169.254/latest/meta-data/ 2>/dev/null
+            expected_output: |
+              IMDSv2 works
+              The direct IMDSv1 request (without token) should return 401 (Unauthorized).
+              If it returns 200, IMDSv1 is still enabled and the instance should be reconfigured.
+            remediation: |
+              aws ec2 modify-instance-metadata-options \
+                --instance-id <instance-id> \
+                --http-tokens required \
+                --http-endpoint enabled
+              This enforces IMDSv2 by requiring a session token for all metadata requests.
+
+  - number: "2"
+    title: "Services"
+    children:
+      - number: "2.1"
+        title: "Time Synchronization"
+        checks:
+          - number: "2.1.1"
+            title: "Ensure chrony is configured for time synchronization"
+            description: "chrony is the default NTP client on Amazon Linux 2023. It should be configured to synchronize with the Amazon Time Sync Service or other reliable NTP servers."
+            rationale: "Time synchronization is important to support time-sensitive security mechanisms like Kerberos and to ensure that log files have consistent time records across the enterprise for forensic analysis."
+            level: 1
+            scored: true
+            audit_command: |
+              rpm -q chrony
+              systemctl is-enabled chronyd
+              grep -E '^(server|pool)' /etc/chrony.conf
+            expected_output: |
+              chrony-<version>
+              enabled
+              server 169.254.169.123 prefer iburst minpoll 4 maxpoll 4
+              pool 2.amazon.pool.ntp.org iburst
+            remediation: |
+              dnf install chrony
+              systemctl enable --now chronyd
+              Edit /etc/chrony.conf and ensure the Amazon Time Sync Service is configured:
+              server 169.254.169.123 prefer iburst minpoll 4 maxpoll 4
+              pool 2.amazon.pool.ntp.org iburst
+
+      - number: "2.2"
+        title: "Disable Unnecessary Services"
+        checks:
+          - number: "2.2.1"
+            title: "Ensure avahi-daemon is not installed or disabled"
+            description: "Avahi is a free zeroconf implementation, including a system for multicast DNS/DNS-SD service discovery. It is not needed on most server systems."
+            rationale: "Avahi is a network-based service discovery protocol. If this service is not required, it should be disabled to reduce the attack surface."
+            level: 1
+            scored: true
+            audit_command: |
+              rpm -q avahi-daemon
+              systemctl is-enabled avahi-daemon 2>/dev/null
+            expected_output: |
+              package avahi-daemon is not installed
+            remediation: |
+              systemctl stop avahi-daemon
+              systemctl disable avahi-daemon
+              dnf remove avahi-daemon
+
+          - number: "2.2.2"
+            title: "Ensure cups is not installed or disabled"
+            description: "The Common Unix Print System (CUPS) provides the ability to print to both local and network printers. If the system does not need to print, this service should be removed."
+            rationale: "If the system does not need to act as a print server or client, the CUPS service should be disabled to reduce the attack surface. CUPS has had multiple past vulnerabilities."
+            level: 1
+            scored: true
+            audit_command: |
+              rpm -q cups
+              systemctl is-enabled cups 2>/dev/null
+            expected_output: |
+              package cups is not installed
+            remediation: |
+              systemctl stop cups
+              systemctl disable cups
+              dnf remove cups
+
+          - number: "2.2.3"
+            title: "Ensure nfs-utils is not installed or nfs-server is disabled"
+            description: "The Network File System (NFS) is one of the first and most widely distributed file systems in the UNIX environment. If the system does not export NFS shares, the NFS server should be disabled."
+            rationale: "If the system does not export NFS shares, running the NFS server daemon increases the attack surface of the system."
+            level: 1
+            scored: true
+            audit_command: |
+              systemctl is-enabled nfs-server 2>/dev/null
+            expected_output: |
+              disabled
+            remediation: |
+              systemctl stop nfs-server
+              systemctl disable nfs-server
+
+          - number: "2.2.4"
+            title: "Ensure samba is not installed or disabled"
+            description: "The Samba daemon provides Windows file and print sharing functionality via the SMB protocol. If Samba is not needed, it should be removed."
+            rationale: "If there is no need to mount directories and file systems from Windows systems, then Samba is not needed and should be removed to reduce the attack surface."
+            level: 1
+            scored: true
+            audit_command: |
+              rpm -q samba
+              systemctl is-enabled smb 2>/dev/null
+            expected_output: |
+              package samba is not installed
+            remediation: |
+              systemctl stop smb
+              systemctl disable smb
+              dnf remove samba
+
+          - number: "2.2.5"
+            title: "Ensure net-snmp is not installed or disabled"
+            description: "Simple Network Management Protocol (SNMP) is used for remote monitoring and management. If not required, it should be removed."
+            rationale: "The SNMP server can communicate using SNMP v1, which transmits data in the clear and does not require authentication. Unless absolutely necessary, it is recommended that SNMP be removed to reduce the attack surface."
+            level: 1
+            scored: true
+            audit_command: |
+              rpm -q net-snmp
+              systemctl is-enabled snmpd 2>/dev/null
+            expected_output: |
+              package net-snmp is not installed
+            remediation: |
+              systemctl stop snmpd
+              systemctl disable snmpd
+              dnf remove net-snmp
+
+          - number: "2.2.6"
+            title: "Ensure SSM Agent is configured securely or disabled if not needed"
+            description: "AWS Systems Manager Agent (SSM Agent) is installed by default on Amazon Linux 2023 AMIs. If SSM is not required for instance management, the agent should be stopped and disabled."
+            rationale: "SSM Agent allows remote command execution on the instance. If not actively used for management purposes, leaving it running increases the attack surface. If it is used, ensure it is kept up to date."
+            level: 2
+            scored: true
+            audit_command: |
+              systemctl is-enabled amazon-ssm-agent 2>/dev/null
+              rpm -q amazon-ssm-agent
+            expected_output: |
+              If SSM is not needed: disabled / package amazon-ssm-agent is not installed
+              If SSM is needed: enabled (ensure the latest version is installed)
+            remediation: |
+              If SSM Agent is not required:
+              systemctl stop amazon-ssm-agent
+              systemctl disable amazon-ssm-agent
+              dnf remove amazon-ssm-agent
+              If SSM Agent is required, ensure it is up to date:
+              dnf update amazon-ssm-agent
+
+  - number: "3"
+    title: "Network Configuration"
+    children:
+      - number: "3.1"
+        title: "Network Parameters"
+        checks:
+          - number: "3.1.1"
+            title: "Ensure IP forwarding is disabled"
+            description: "The net.ipv4.ip_forward flag is used to tell the system whether it can forward packets or not. IP forwarding should be disabled unless the system is designated as a router."
+            rationale: "Setting the flag to 0 ensures that a system with multiple interfaces where one is connected to the internet and another to an internal network will not route traffic between them unless explicitly configured to do so."
+            level: 1
+            scored: true
+            audit_command: |
+              sysctl net.ipv4.ip_forward
+              sysctl net.ipv6.conf.all.forwarding
+            expected_output: |
+              net.ipv4.ip_forward = 0
+              net.ipv6.conf.all.forwarding = 0
+            remediation: |
+              echo "net.ipv4.ip_forward = 0" >> /etc/sysctl.d/60-netipv4_sysctl.conf
+              echo "net.ipv6.conf.all.forwarding = 0" >> /etc/sysctl.d/60-netipv6_sysctl.conf
+              sysctl -w net.ipv4.ip_forward=0
+              sysctl -w net.ipv6.conf.all.forwarding=0
+              sysctl -w net.ipv4.route.flush=1
+              sysctl -w net.ipv6.route.flush=1
+
+          - number: "3.1.2"
+            title: "Ensure ICMP redirects are not accepted"
+            description: "ICMP redirect messages are packets that convey routing information and tell the host to send packets via an alternate path. These should be disabled to prevent man-in-the-middle attacks."
+            rationale: "Attackers could use bogus ICMP redirect messages to maliciously alter the system routing tables and get them to send packets to incorrect networks, allowing them to perform man-in-the-middle attacks."
+            level: 1
+            scored: true
+            audit_command: |
+              sysctl net.ipv4.conf.all.accept_redirects
+              sysctl net.ipv4.conf.default.accept_redirects
+              sysctl net.ipv6.conf.all.accept_redirects
+              sysctl net.ipv6.conf.default.accept_redirects
+            expected_output: |
+              net.ipv4.conf.all.accept_redirects = 0
+              net.ipv4.conf.default.accept_redirects = 0
+              net.ipv6.conf.all.accept_redirects = 0
+              net.ipv6.conf.default.accept_redirects = 0
+            remediation: |
+              cat >> /etc/sysctl.d/60-netipv4_sysctl.conf <<EOF
+              net.ipv4.conf.all.accept_redirects = 0
+              net.ipv4.conf.default.accept_redirects = 0
+              EOF
+              cat >> /etc/sysctl.d/60-netipv6_sysctl.conf <<EOF
+              net.ipv6.conf.all.accept_redirects = 0
+              net.ipv6.conf.default.accept_redirects = 0
+              EOF
+              sysctl -w net.ipv4.conf.all.accept_redirects=0
+              sysctl -w net.ipv4.conf.default.accept_redirects=0
+              sysctl -w net.ipv6.conf.all.accept_redirects=0
+              sysctl -w net.ipv6.conf.default.accept_redirects=0
+
+          - number: "3.1.3"
+            title: "Ensure source routed packets are not accepted"
+            description: "Source routed packets allow the source of the packet to suggest routers forward the packet along a different path than configured on the router. This can be used to bypass network security measures."
+            rationale: "Setting net.ipv4.conf.all.accept_source_route to 0 disables the system from accepting source-routed packets. This could be leveraged to redirect traffic for malicious purposes."
+            level: 1
+            scored: true
+            audit_command: |
+              sysctl net.ipv4.conf.all.accept_source_route
+              sysctl net.ipv4.conf.default.accept_source_route
+              sysctl net.ipv6.conf.all.accept_source_route
+              sysctl net.ipv6.conf.default.accept_source_route
+            expected_output: |
+              net.ipv4.conf.all.accept_source_route = 0
+              net.ipv4.conf.default.accept_source_route = 0
+              net.ipv6.conf.all.accept_source_route = 0
+              net.ipv6.conf.default.accept_source_route = 0
+            remediation: |
+              cat >> /etc/sysctl.d/60-netipv4_sysctl.conf <<EOF
+              net.ipv4.conf.all.accept_source_route = 0
+              net.ipv4.conf.default.accept_source_route = 0
+              EOF
+              cat >> /etc/sysctl.d/60-netipv6_sysctl.conf <<EOF
+              net.ipv6.conf.all.accept_source_route = 0
+              net.ipv6.conf.default.accept_source_route = 0
+              EOF
+              sysctl --system
+
+      - number: "3.2"
+        title: "Firewall Configuration (nftables)"
+        checks:
+          - number: "3.2.1"
+            title: "Ensure nftables is installed"
+            description: "nftables is the default firewall framework on Amazon Linux 2023, replacing iptables. It provides packet filtering, network address translation, and packet classification."
+            rationale: "A firewall utility is required to configure the Linux kernel's netfilter framework via the nftables interface. nftables is the supported and recommended firewall tool on Amazon Linux 2023."
+            level: 1
+            scored: true
+            audit_command: |
+              rpm -q nftables
+            expected_output: |
+              nftables-<version>
+            remediation: |
+              dnf install nftables
+
+          - number: "3.2.2"
+            title: "Ensure nftables service is enabled and running"
+            description: "The nftables service should be enabled and running to enforce firewall rules at boot and during system operation."
+            rationale: "The nftables service must be enabled to ensure firewall rules are automatically applied at system startup and persist across reboots."
+            level: 1
+            scored: true
+            audit_command: |
+              systemctl is-enabled nftables
+              systemctl is-active nftables
+            expected_output: |
+              enabled
+              active
+            remediation: |
+              systemctl enable --now nftables
+
+          - number: "3.2.3"
+            title: "Ensure nftables default deny firewall policy is configured"
+            description: "A default deny policy on input, forward, and output chains ensures that any packets not explicitly allowed by firewall rules are dropped."
+            rationale: "With a default accept policy, the firewall will accept any packet that is not explicitly denied. A default deny policy is more secure because it forces an explicit allow for each connection type."
+            level: 1
+            scored: true
+            audit_command: |
+              nft list ruleset | grep -E 'hook (input|forward|output)' | grep -v 'policy drop'
+            expected_output: |
+              No output expected (all chains should have policy drop)
+            remediation: |
+              nft add table inet filter
+              nft add chain inet filter input '{ type filter hook input priority 0; policy drop; }'
+              nft add chain inet filter forward '{ type filter hook forward priority 0; policy drop; }'
+              nft add chain inet filter output '{ type filter hook output priority 0; policy drop; }'
+              nft add rule inet filter input iif lo accept
+              nft add rule inet filter input ct state established,related accept
+              nft add rule inet filter output oif lo accept
+              nft add rule inet filter output ct state established accept
+
+          - number: "3.2.4"
+            title: "Ensure nftables loopback traffic is configured"
+            description: "The loopback interface is used for inter-process communication. Rules should be configured to allow traffic on the loopback interface and to deny all traffic from 127.0.0.0/8 that does not use lo."
+            rationale: "Loopback traffic is generated between processes on the machine and is typically critical to the operation of the system. The loopback interface is the only place that loopback network traffic should be seen."
+            level: 1
+            scored: true
+            audit_command: |
+              nft list ruleset | grep -E 'iif\s+"?lo"?\s+accept'
+              nft list ruleset | grep -E 'saddr\s+127\.0\.0\.0/8'
+            expected_output: |
+              iif "lo" accept
+              ip saddr 127.0.0.0/8 counter packets 0 bytes 0 drop
+            remediation: |
+              nft add rule inet filter input iif lo accept
+              nft add rule inet filter input ip saddr 127.0.0.0/8 counter drop
+              nft add rule inet filter input ip6 saddr ::1 counter drop
+
+      - number: "3.3"
+        title: "IPv6 Configuration"
+        checks:
+          - number: "3.3.1"
+            title: "Ensure IPv6 is disabled if not required"
+            description: "If IPv6 is not required on the system, it should be disabled to reduce the attack surface. This is common in AWS VPC environments where IPv6 is not configured."
+            rationale: "If IPv6 is not to be used, it is recommended that it be disabled to reduce the attack surface of the system. Misconfigured IPv6 can provide additional vectors for attack."
+            level: 2
+            scored: true
+            audit_command: |
+              sysctl net.ipv6.conf.all.disable_ipv6
+              sysctl net.ipv6.conf.default.disable_ipv6
+            expected_output: |
+              net.ipv6.conf.all.disable_ipv6 = 1
+              net.ipv6.conf.default.disable_ipv6 = 1
+            remediation: |
+              cat >> /etc/sysctl.d/60-netipv6_sysctl.conf <<EOF
+              net.ipv6.conf.all.disable_ipv6 = 1
+              net.ipv6.conf.default.disable_ipv6 = 1
+              EOF
+              sysctl --system
+              Alternatively, add ipv6.disable=1 to the kernel boot parameters:
+              grubby --update-kernel ALL --args "ipv6.disable=1"
+
+  - number: "4"
+    title: "Logging and Auditing"
+    children:
+      - number: "4.1"
+        title: "Audit System Configuration"
+        checks:
+          - number: "4.1.1"
+            title: "Ensure auditd is installed and enabled"
+            description: "auditd is the userspace component to the Linux Auditing System. It is responsible for writing audit records to the disk."
+            rationale: "The capturing of system events provides a system administrator with information to allow them to determine if unauthorized access to their system is occurring."
+            level: 2
+            scored: true
+            audit_command: |
+              rpm -q audit
+              systemctl is-enabled auditd
+            expected_output: |
+              audit-<version>
+              enabled
+            remediation: |
+              dnf install audit
+              systemctl enable --now auditd
+
+          - number: "4.1.2"
+            title: "Ensure audit log storage size is configured"
+            description: "Configure the maximum size of the audit log file. Once the log reaches the configured size, it will be rotated and a new log will be started."
+            rationale: "It is important that an appropriate size is determined for log files so that they do not impact the system and audit data is not lost."
+            level: 2
+            scored: true
+            audit_command: |
+              grep -E '^\s*max_log_file\s*=' /etc/audit/auditd.conf
+            expected_output: |
+              max_log_file = 8
+            remediation: |
+              Edit /etc/audit/auditd.conf and set:
+              max_log_file = 8
+              Restart auditd: systemctl restart auditd
+
+          - number: "4.1.3"
+            title: "Ensure audit logs are not automatically deleted"
+            description: "The max_log_file_action setting determines how to handle the audit log file reaching its max size. Setting it to keep_logs rotates and retains all logs."
+            rationale: "In high-security contexts, you would not want audit logs to be automatically deleted as it could allow an attacker to cover their tracks."
+            level: 2
+            scored: true
+            audit_command: |
+              grep -E '^\s*max_log_file_action\s*=' /etc/audit/auditd.conf
+            expected_output: |
+              max_log_file_action = keep_logs
+            remediation: |
+              Edit /etc/audit/auditd.conf and set:
+              max_log_file_action = keep_logs
+              Restart auditd: systemctl restart auditd
+
+      - number: "4.2"
+        title: "Logging Configuration"
+        checks:
+          - number: "4.2.1"
+            title: "Ensure rsyslog or journald is configured for log collection"
+            description: "Amazon Linux 2023 uses systemd-journald as the primary logging facility. rsyslog can optionally be installed for forwarding to remote log servers. At minimum, journald must be properly configured."
+            rationale: "Proper logging is critical for security monitoring, incident response, and forensic analysis. Logs must be collected and stored reliably."
+            level: 1
+            scored: true
+            audit_command: |
+              systemctl is-enabled systemd-journald
+              grep -E '^\s*Storage=' /etc/systemd/journald.conf
+              grep -E '^\s*Compress=' /etc/systemd/journald.conf
+            expected_output: |
+              static
+              Storage=persistent
+              Compress=yes
+            remediation: |
+              Edit /etc/systemd/journald.conf and set:
+              Storage=persistent
+              Compress=yes
+              systemctl restart systemd-journald
+
+          - number: "4.2.2"
+            title: "Ensure journald is configured to send logs to a remote log host or CloudWatch"
+            description: "Amazon Linux 2023 instances should be configured to forward logs to a centralized log management solution, either via rsyslog to a remote syslog server or via the CloudWatch Logs agent."
+            rationale: "Storing logs remotely protects the integrity of log data from local compromise. If an attacker gains access to a system, they could modify local logs to cover their tracks. Remote logging ensures an untampered copy exists."
+            level: 1
+            scored: true
+            audit_command: |
+              rpm -q amazon-cloudwatch-agent 2>/dev/null
+              systemctl is-enabled amazon-cloudwatch-agent 2>/dev/null || echo "CloudWatch agent not enabled"
+              grep -r '^\s*\*\.\*\s*@@' /etc/rsyslog.conf /etc/rsyslog.d/ 2>/dev/null || echo "No remote rsyslog forwarding configured"
+            expected_output: |
+              amazon-cloudwatch-agent-<version> (or remote rsyslog forwarding configured)
+              enabled
+            remediation: |
+              Option 1 - CloudWatch Logs Agent:
+              dnf install amazon-cloudwatch-agent
+              /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-config-wizard
+              systemctl enable --now amazon-cloudwatch-agent
+
+              Option 2 - rsyslog forwarding:
+              dnf install rsyslog
+              Add to /etc/rsyslog.conf:
+              *.* @@<remote-log-server>:514
+              systemctl enable --now rsyslog
+
+  - number: "5"
+    title: "Access, Authentication, and Authorization"
+    children:
+      - number: "5.1"
+        title: "Cron and At Configuration"
+        checks:
+          - number: "5.1.1"
+            title: "Ensure cron daemon is enabled and running"
+            description: "The cron daemon (crond) is used to execute batch jobs on the system. It should be enabled if cron jobs are required."
+            rationale: "While there may be systems where cron is not required, it is typically used for important system maintenance tasks. Ensuring the daemon is running guarantees those tasks execute."
+            level: 1
+            scored: true
+            audit_command: |
+              systemctl is-enabled crond
+              systemctl is-active crond
+            expected_output: |
+              enabled
+              active
+            remediation: |
+              systemctl enable --now crond
+
+          - number: "5.1.2"
+            title: "Ensure permissions on /etc/crontab are configured"
+            description: "The /etc/crontab file is used by cron to control its own jobs. The commands in this file run with root privileges and should be protected."
+            rationale: "This file contains the system crontab entries. Granting write access to unprivileged users could provide them with the ability to gain elevated privileges. Granting read access could provide users with the ability to gain insight on system jobs."
+            level: 1
+            scored: true
+            audit_command: |
+              stat -c '%a %U %G' /etc/crontab
+            expected_output: |
+              600 root root
+            remediation: |
+              chown root:root /etc/crontab
+              chmod 600 /etc/crontab
+
+      - number: "5.2"
+        title: "SSH Server Configuration"
+        checks:
+          - number: "5.2.1"
+            title: "Ensure permissions on /etc/ssh/sshd_config are configured"
+            description: "The /etc/ssh/sshd_config file contains configuration specifications for sshd. This file should be owned by root and restricted."
+            rationale: "The /etc/ssh/sshd_config file needs to be protected from unauthorized changes by non-privileged users."
+            level: 1
+            scored: true
+            audit_command: |
+              stat -c '%a %U %G' /etc/ssh/sshd_config
+            expected_output: |
+              600 root root
+            remediation: |
+              chown root:root /etc/ssh/sshd_config
+              chmod 600 /etc/ssh/sshd_config
+
+          - number: "5.2.2"
+            title: "Ensure SSH root login is disabled"
+            description: "The PermitRootLogin parameter specifies if the root user can log in using SSH. Disallowing root logins over SSH requires system admins to authenticate using their own individual account, then escalate to root."
+            rationale: "Disallowing root logins over SSH provides an audit trail of who accessed the system and requires escalation, making it easier to track actions."
+            level: 1
+            scored: true
+            audit_command: |
+              sshd -T 2>/dev/null | grep -i permitrootlogin
+            expected_output: |
+              permitrootlogin no
+            remediation: |
+              Edit /etc/ssh/sshd_config and set:
+              PermitRootLogin no
+              systemctl restart sshd
+
+          - number: "5.2.3"
+            title: "Ensure SSH MaxAuthTries is set to 4 or less"
+            description: "The MaxAuthTries parameter specifies the maximum number of authentication attempts permitted per connection. When the number of failures reaches half the number, error messages will be written to the syslog file."
+            rationale: "Setting the MaxAuthTries parameter to a low number will minimize the risk of successful brute-force attacks to the SSH server."
+            level: 1
+            scored: true
+            audit_command: |
+              sshd -T 2>/dev/null | grep maxauthtries
+            expected_output: |
+              maxauthtries 4
+            remediation: |
+              Edit /etc/ssh/sshd_config and set:
+              MaxAuthTries 4
+              systemctl restart sshd
+
+          - number: "5.2.4"
+            title: "Ensure SSH PermitEmptyPasswords is disabled"
+            description: "The PermitEmptyPasswords parameter specifies if the SSH server allows login to accounts with empty password strings."
+            rationale: "Disallowing remote shell access to accounts that have an empty password reduces the probability of unauthorized access to the system."
+            level: 1
+            scored: true
+            audit_command: |
+              sshd -T 2>/dev/null | grep permitemptypasswords
+            expected_output: |
+              permitemptypasswords no
+            remediation: |
+              Edit /etc/ssh/sshd_config and set:
+              PermitEmptyPasswords no
+              systemctl restart sshd
+
+          - number: "5.2.5"
+            title: "Ensure SSH Idle Timeout Interval is configured"
+            description: "The ClientAliveInterval and ClientAliveCountMax SSH parameters control the timeout of SSH sessions. ClientAliveInterval sets the interval in seconds after which, if no data has been received from the client, the server will send a message through the encrypted channel."
+            rationale: "Having no timeout value associated with an SSH connection can allow an unauthorized user to have access to another user's SSH session. Setting a timeout limits this potential risk."
+            level: 1
+            scored: true
+            audit_command: |
+              sshd -T 2>/dev/null | grep clientaliveinterval
+              sshd -T 2>/dev/null | grep clientalivecountmax
+            expected_output: |
+              clientaliveinterval 300
+              clientalivecountmax 3
+            remediation: |
+              Edit /etc/ssh/sshd_config and set:
+              ClientAliveInterval 300
+              ClientAliveCountMax 3
+              systemctl restart sshd
+
+          - number: "5.2.6"
+            title: "Ensure SSH Protocol 2 is enforced and strong ciphers are used"
+            description: "SSH should use only strong, modern ciphers and MACs. The system-wide crypto policy on Amazon Linux 2023 typically enforces this, but it should be verified."
+            rationale: "Weak ciphers (such as 3DES, RC4) and weak MACs can be exploited. Ensuring only strong algorithms are permitted protects the confidentiality and integrity of SSH sessions."
+            level: 1
+            scored: true
+            audit_command: |
+              sshd -T 2>/dev/null | grep -i ciphers
+              sshd -T 2>/dev/null | grep -i macs
+            expected_output: |
+              The output should list only strong ciphers such as:
+              ciphers aes256-gcm@openssh.com,chacha20-poly1305@openssh.com,aes256-ctr,aes128-gcm@openssh.com,aes128-ctr
+              macs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512,hmac-sha2-256
+            remediation: |
+              Rely on the system-wide crypto policy:
+              update-crypto-policies --set DEFAULT
+              Or configure explicitly in /etc/ssh/sshd_config:
+              Ciphers aes256-gcm@openssh.com,chacha20-poly1305@openssh.com,aes256-ctr,aes128-gcm@openssh.com,aes128-ctr
+              MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512,hmac-sha2-256
+              systemctl restart sshd
+
+      - number: "5.3"
+        title: "PAM and Password Configuration"
+        checks:
+          - number: "5.3.1"
+            title: "Ensure password creation requirements are configured (pwquality)"
+            description: "The pam_pwquality module checks the strength of passwords. It performs checks such as making sure a password is not a dictionary word, minimum length, and complexity requirements."
+            rationale: "Strong passwords protect systems from being compromised via brute-force methods. Password quality requirements ensure users select passwords that meet organizational security standards."
+            level: 1
+            scored: true
+            audit_command: |
+              grep -E '^\s*minlen' /etc/security/pwquality.conf
+              grep -E '^\s*minclass' /etc/security/pwquality.conf
+              grep -E '^\s*dcredit' /etc/security/pwquality.conf
+              grep -E '^\s*ucredit' /etc/security/pwquality.conf
+              grep -E '^\s*ocredit' /etc/security/pwquality.conf
+              grep -E '^\s*lcredit' /etc/security/pwquality.conf
+            expected_output: |
+              minlen = 14
+              minclass = 4
+              dcredit = -1
+              ucredit = -1
+              ocredit = -1
+              lcredit = -1
+            remediation: |
+              Edit /etc/security/pwquality.conf and set:
+              minlen = 14
+              minclass = 4
+              dcredit = -1
+              ucredit = -1
+              ocredit = -1
+              lcredit = -1
+
+          - number: "5.3.2"
+            title: "Ensure lockout for failed password attempts is configured (faillock)"
+            description: "Lock out users after a specified number of consecutive unsuccessful login attempts using pam_faillock. Amazon Linux 2023 uses faillock instead of the deprecated pam_tally2."
+            rationale: "Locking out user IDs after a number of incorrect attempts prevents brute-force password attacks against the system."
+            level: 1
+            scored: true
+            audit_command: |
+              grep -E '^\s*deny' /etc/security/faillock.conf
+              grep -E '^\s*unlock_time' /etc/security/faillock.conf
+              grep -E '^\s*fail_interval' /etc/security/faillock.conf
+            expected_output: |
+              deny = 5
+              unlock_time = 900
+              fail_interval = 900
+            remediation: |
+              Edit /etc/security/faillock.conf and set:
+              deny = 5
+              unlock_time = 900
+              fail_interval = 900
+
+          - number: "5.3.3"
+            title: "Ensure password hashing algorithm is SHA-512 or yescrypt"
+            description: "The password hashing algorithm should be set to SHA-512 or yescrypt (preferred on newer systems) to ensure password hashes are securely stored."
+            rationale: "Weak hashing algorithms such as MD5 can be easily cracked. SHA-512 and yescrypt provide significantly stronger password hash storage."
+            level: 1
+            scored: true
+            audit_command: |
+              grep -E '^\s*ENCRYPT_METHOD' /etc/login.defs
+            expected_output: |
+              ENCRYPT_METHOD SHA512
+            remediation: |
+              Edit /etc/login.defs and set:
+              ENCRYPT_METHOD SHA512
+              Or for yescrypt (Amazon Linux 2023 supports it):
+              ENCRYPT_METHOD YESCRYPT
+
+      - number: "5.4"
+        title: "Sudo Configuration"
+        checks:
+          - number: "5.4.1"
+            title: "Ensure sudo is installed and configured"
+            description: "sudo allows a permitted user to execute a command as the superuser or another user, as specified by the security policy."
+            rationale: "sudo allows controlled escalation of privileges. All administrative actions should be performed through sudo rather than direct root login."
+            level: 1
+            scored: true
+            audit_command: |
+              rpm -q sudo
+            expected_output: |
+              sudo-<version>
+            remediation: |
+              dnf install sudo
+
+          - number: "5.4.2"
+            title: "Ensure sudo commands use pty"
+            description: "sudo should be configured to run commands in a pseudo-pty to prevent abuse."
+            rationale: "Attackers can run a malicious program using sudo which would fork a background process that retains the elevated privileges even after the main program has finished executing. Requiring a pty mitigates this."
+            level: 1
+            scored: true
+            audit_command: |
+              grep -rE '^\s*Defaults\s+.*use_pty' /etc/sudoers /etc/sudoers.d/ 2>/dev/null
+            expected_output: |
+              Defaults use_pty
+            remediation: |
+              Add the following line to /etc/sudoers using visudo:
+              Defaults use_pty
+
+          - number: "5.4.3"
+            title: "Ensure sudo log file exists"
+            description: "sudo can be configured to log all input and output to a file. This provides an audit trail of sudo usage."
+            rationale: "A sudo log file simplifies tracking of sudo commands and provides a forensic audit trail."
+            level: 1
+            scored: true
+            audit_command: |
+              grep -rE '^\s*Defaults\s+logfile=' /etc/sudoers /etc/sudoers.d/ 2>/dev/null
+            expected_output: |
+              Defaults logfile="/var/log/sudo.log"
+            remediation: |
+              Add the following line to /etc/sudoers using visudo:
+              Defaults logfile="/var/log/sudo.log"
+
+      - number: "5.5"
+        title: "Password and Login Policy"
+        checks:
+          - number: "5.5.1"
+            title: "Ensure password expiration is 365 days or less"
+            description: "The PASS_MAX_DAYS parameter in /etc/login.defs allows an administrator to force passwords to expire once they reach a defined age."
+            rationale: "The window of opportunity for an attacker to leverage compromised credentials is reduced by forcing regular password changes."
+            level: 1
+            scored: true
+            audit_command: |
+              grep -E '^\s*PASS_MAX_DAYS' /etc/login.defs
+            expected_output: |
+              PASS_MAX_DAYS 365
+            remediation: |
+              Edit /etc/login.defs and set:
+              PASS_MAX_DAYS 365
+              For existing users:
+              chage --maxdays 365 <user>
+
+          - number: "5.5.2"
+            title: "Ensure minimum days between password changes is configured"
+            description: "The PASS_MIN_DAYS parameter in /etc/login.defs defines the minimum number of days that must pass before a user can change their password."
+            rationale: "By restricting the frequency of password changes, an administrator can prevent users from repeatedly changing their password in an attempt to circumvent password reuse controls."
+            level: 1
+            scored: true
+            audit_command: |
+              grep -E '^\s*PASS_MIN_DAYS' /etc/login.defs
+            expected_output: |
+              PASS_MIN_DAYS 1
+            remediation: |
+              Edit /etc/login.defs and set:
+              PASS_MIN_DAYS 1
+              For existing users:
+              chage --mindays 1 <user>
+
+      - number: "5.6"
+        title: "EC2 Instance Connect"
+        checks:
+          - number: "5.6.1"
+            title: "Ensure EC2 Instance Connect is configured securely or removed if not needed"
+            description: "EC2 Instance Connect provides a mechanism to connect to instances using SSH without managing SSH keys. If it is not used, it should be removed to reduce the attack surface."
+            rationale: "EC2 Instance Connect pushes a one-time-use SSH public key to the instance metadata. If this feature is not actively used, the package provides an unnecessary authentication path."
+            level: 2
+            scored: true
+            audit_command: |
+              rpm -q ec2-instance-connect
+            expected_output: |
+              If not needed: package ec2-instance-connect is not installed
+              If needed: ec2-instance-connect-<version> (ensure latest version)
+            remediation: |
+              If EC2 Instance Connect is not needed:
+              dnf remove ec2-instance-connect
+              If it is needed, ensure it is up to date:
+              dnf update ec2-instance-connect
+
+  - number: "6"
+    title: "System Maintenance"
+    children:
+      - number: "6.1"
+        title: "System File Permissions"
+        checks:
+          - number: "6.1.1"
+            title: "Ensure permissions on /etc/passwd are configured"
+            description: "The /etc/passwd file contains user account information. It should be readable by all users but only writable by root."
+            rationale: "The /etc/passwd file contains user account information. If this file is writable by unauthorized users, they could create new accounts or modify existing ones to gain access."
+            level: 1
+            scored: true
+            audit_command: |
+              stat -c '%a %U %G' /etc/passwd
+            expected_output: |
+              644 root root
+            remediation: |
+              chown root:root /etc/passwd
+              chmod 644 /etc/passwd
+
+          - number: "6.1.2"
+            title: "Ensure permissions on /etc/shadow are configured"
+            description: "The /etc/shadow file contains password hashes and is used to store the information about user password aging. It must be protected from unauthorized access."
+            rationale: "If attackers can gain read access to the /etc/shadow file, they can attempt to crack passwords offline. The file should have the most restrictive permissions possible."
+            level: 1
+            scored: true
+            audit_command: |
+              stat -c '%a %U %G' /etc/shadow
+            expected_output: |
+              0 root root
+            remediation: |
+              chown root:root /etc/shadow
+              chmod 0000 /etc/shadow
+
+          - number: "6.1.3"
+            title: "Ensure permissions on /etc/group are configured"
+            description: "The /etc/group file contains a list of all valid groups defined in the system. The command below allows read/write access for root and read access for everyone else."
+            rationale: "The /etc/group file needs to be protected from unauthorized changes by non-privileged users, but needs to be readable as this information is used with many non-privileged programs."
+            level: 1
+            scored: true
+            audit_command: |
+              stat -c '%a %U %G' /etc/group
+            expected_output: |
+              644 root root
+            remediation: |
+              chown root:root /etc/group
+              chmod 644 /etc/group
+
+          - number: "6.1.4"
+            title: "Ensure permissions on /etc/gshadow are configured"
+            description: "The /etc/gshadow file is used to store the hashed passwords for group accounts. It must be restricted to root access only."
+            rationale: "If attackers can gain read access to /etc/gshadow, they can attempt to crack group passwords. The file should have the most restrictive permissions possible."
+            level: 1
+            scored: true
+            audit_command: |
+              stat -c '%a %U %G' /etc/gshadow
+            expected_output: |
+              0 root root
+            remediation: |
+              chown root:root /etc/gshadow
+              chmod 0000 /etc/gshadow
+
+      - number: "6.2"
+        title: "SUID/SGID and World-Writable Files"
+        checks:
+          - number: "6.2.1"
+            title: "Audit SUID executables"
+            description: "The owner of a file can set the file's permissions to run with the owner's or group's permissions, even if the user running the program is not the owner or a member of the group. SUID programs should be audited regularly."
+            rationale: "There are valid reasons for SUID programs, but it is important to identify and review such programs to ensure they are legitimate. SUID programs with vulnerabilities can be exploited for privilege escalation."
+            level: 1
+            scored: false
+            audit_command: |
+              find / -xdev -type f -perm -4000 -exec ls -l {} \; 2>/dev/null
+            expected_output: |
+              Review the list of SUID files and ensure they are all expected system binaries.
+              Common legitimate SUID binaries include: /usr/bin/passwd, /usr/bin/sudo, /usr/bin/mount, /usr/bin/umount, /usr/bin/su, /usr/bin/chage, /usr/bin/gpasswd, /usr/bin/newgrp
+            remediation: |
+              Review each SUID file in the output. For any that are not required:
+              chmod u-s <filename>
+              Ensure only necessary binaries retain the SUID bit.
+
+          - number: "6.2.2"
+            title: "Audit SGID executables"
+            description: "The owner of a file can set the file's permissions to run with the owner's or group's permissions. SGID programs should be audited regularly."
+            rationale: "There are valid reasons for SGID programs, but it is important to identify and review such programs to ensure they are legitimate."
+            level: 1
+            scored: false
+            audit_command: |
+              find / -xdev -type f -perm -2000 -exec ls -l {} \; 2>/dev/null
+            expected_output: |
+              Review the list of SGID files and ensure they are all expected system binaries.
+              Common legitimate SGID binaries include: /usr/bin/write, /usr/bin/wall, /usr/sbin/postdrop, /usr/sbin/postqueue
+            remediation: |
+              Review each SGID file in the output. For any that are not required:
+              chmod g-s <filename>
+              Ensure only necessary binaries retain the SGID bit.
+
+          - number: "6.2.3"
+            title: "Ensure no world-writable files exist"
+            description: "Unix-based systems support variable settings to control access to files. Files that are world-writable can be modified by any user on the system."
+            rationale: "Data in world-writable files can be modified and compromised by any user on the system. World-writable files may also indicate an incorrectly written script or program that could potentially be the cause of a larger compromise."
+            level: 1
+            scored: true
+            audit_command: |
+              find / -xdev -type f -perm -0002 -exec ls -l {} \; 2>/dev/null
+            expected_output: |
+              No output expected (no world-writable files should exist)
+            remediation: |
+              For each world-writable file found, remove the world-writable bit:
+              chmod o-w <filename>
+              Investigate why the file was world-writable and correct the underlying issue.
+
+          - number: "6.2.4"
+            title: "Ensure no unowned files or directories exist"
+            description: "Files and directories should be owned by a valid user. Files without an owner may indicate that the owning account has been deleted."
+            rationale: "A new user who is assigned the deleted user's UID would then have ownership of these files and could potentially access sensitive data. Files and directories without a valid owner should be assigned to an active user."
+            level: 1
+            scored: true
+            audit_command: |
+              find / -xdev -nouser -exec ls -l {} \; 2>/dev/null
+            expected_output: |
+              No output expected (no unowned files should exist)
+            remediation: |
+              Locate unowned files and assign them to an appropriate user:
+              chown <user>:<group> <filename>
+              Investigate why the file has no owner and correct the underlying issue.

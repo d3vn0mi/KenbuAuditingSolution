@@ -1,0 +1,57 @@
+<td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-gray-500">{{ result.check.check_number }}</td>
+<td class="px-4 py-3">
+    <a href="{{ url_for('checks.detail', check_id=result.check.id) }}" class="text-sm text-gray-900 hover:text-primary-600">{{ result.check.title }}</a>
+</td>
+<td class="px-4 py-3 text-center">
+    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {% if result.check.level == 1 %}bg-blue-100 text-blue-700{% else %}bg-yellow-100 text-yellow-700{% endif %}">L{{ result.check.level }}</span>
+</td>
+<td class="px-4 py-3 text-center">
+    {% if session.status == 'in_progress' %}
+    <form hx-post="{{ url_for('audits.update_result', session_id=session.id, check_id=result.check.id) }}"
+          hx-target="#result-{{ result.id }}"
+          hx-swap="innerHTML"
+          class="flex items-center space-x-1 justify-center">
+        <select name="status" onchange="this.form.requestSubmit()"
+                class="text-xs rounded border-gray-300 py-1 pr-6 focus:ring-primary-500 focus:border-primary-500
+                {% if result.status == 'pass' %}bg-green-100 text-green-800
+                {% elif result.status == 'fail' %}bg-red-100 text-red-800
+                {% elif result.status == 'not_applicable' %}bg-gray-100 text-gray-700
+                {% else %}bg-white text-gray-600{% endif %}">
+            <option value="not_checked" {% if result.status == 'not_checked' %}selected{% endif %}>-- Select --</option>
+            <option value="pass" {% if result.status == 'pass' %}selected{% endif %}>Pass</option>
+            <option value="fail" {% if result.status == 'fail' %}selected{% endif %}>Fail</option>
+            <option value="not_applicable" {% if result.status == 'not_applicable' %}selected{% endif %}>N/A</option>
+        </select>
+    </form>
+    {% else %}
+    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
+        {% if result.status == 'pass' %}bg-green-100 text-green-800
+        {% elif result.status == 'fail' %}bg-red-100 text-red-800
+        {% elif result.status == 'not_applicable' %}bg-gray-100 text-gray-700
+        {% else %}text-gray-400{% endif %}">
+        {{ result.status.replace('_', ' ').title() }}
+    </span>
+    {% endif %}
+</td>
+<td class="px-4 py-3">
+    {% if session.status == 'in_progress' %}
+    <input type="text" value="{{ result.finding or '' }}" placeholder="Notes..."
+           hx-post="{{ url_for('audits.update_result', session_id=session.id, check_id=result.check.id) }}"
+           hx-trigger="change"
+           hx-target="#result-{{ result.id }}"
+           hx-swap="innerHTML"
+           hx-include="closest tr"
+           name="finding"
+           class="text-xs w-full border-gray-300 rounded py-1 px-2 focus:ring-primary-500 focus:border-primary-500">
+    {% else %}
+    <span class="text-xs text-gray-600">{{ result.finding or '-' }}</span>
+    {% endif %}
+</td>
+<td class="px-4 py-3 text-center">
+    <a href="{{ url_for('checks.detail', check_id=result.check.id) }}" class="text-primary-600 hover:text-primary-800">
+        <svg class="h-4 w-4 inline" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+        </svg>
+    </a>
+</td>

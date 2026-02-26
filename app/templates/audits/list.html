@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Audit Sessions - CIS Auditor{% endblock %}
+{% block content %}
+<div class="mb-6 flex items-center justify-between">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">Audit Sessions</h1>
+        <p class="mt-1 text-sm text-gray-600">Manage your security audit sessions.</p>
+    </div>
+    <a href="{{ url_for('audits.new_audit') }}" class="inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500">
+        <svg class="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+        New Audit
+    </a>
+</div>
+
+{% if sessions %}
+<div class="bg-white shadow rounded-lg overflow-hidden">
+    <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Target</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Benchmark</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Progress</th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Pass</th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Fail</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Started</th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+            {% for session in sessions %}
+            <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <a href="{{ url_for('audits.session_detail', session_id=session.id) }}" class="text-sm font-medium text-primary-600 hover:text-primary-500">{{ session.target_name }}</a>
+                    {% if session.target_ip %}
+                    <p class="text-xs text-gray-500">{{ session.target_ip }}</p>
+                    {% endif %}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ session.benchmark.platform.name }}</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <div class="w-24 bg-gray-200 rounded-full h-2 mr-2">
+                            <div class="bg-primary-600 h-2 rounded-full" style="width: {{ session.progress }}%"></div>
+                        </div>
+                        <span class="text-sm text-gray-600">{{ session.progress }}%</span>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-green-600">{{ session.pass_count }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-red-600">{{ session.fail_count }}</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {% if session.status == 'completed' %}bg-green-100 text-green-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                        {{ session.status.replace('_', ' ').title() }}
+                    </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ session.started_at.strftime('%Y-%m-%d') }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
+                    <a href="{{ url_for('export.export_audit', session_id=session.id) }}" hx-boost="false" class="text-green-600 hover:text-green-500" title="Export to Excel">
+                        <svg class="h-5 w-5 inline" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                        </svg>
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="text-center py-12 bg-white shadow rounded-lg">
+    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+    </svg>
+    <h3 class="mt-2 text-sm font-semibold text-gray-900">No audit sessions</h3>
+    <p class="mt-1 text-sm text-gray-500">Create your first audit session to start tracking compliance.</p>
+    <div class="mt-6">
+        <a href="{{ url_for('audits.new_audit') }}" class="inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500">
+            Start New Audit
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
