@@ -73,6 +73,9 @@
                         </div>
                         <!-- User menu -->
                         <span class="text-gray-300 text-sm">{{ current_user.display_name or current_user.username }}</span>
+                        {% if current_user.is_admin %}
+                        <a href="{{ url_for('admin.change_password') }}" class="text-gray-400 hover:text-white text-sm">Change Password</a>
+                        {% endif %}
                         <a href="{{ url_for('auth.logout') }}" hx-boost="false" class="text-gray-400 hover:text-white text-sm">Logout</a>
                     </div>
                 </div>

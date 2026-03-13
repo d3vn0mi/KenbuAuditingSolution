@@ -1,5 +1,5 @@
 from functools import wraps
-from flask import Blueprint, render_template, redirect, url_for, flash, abort
+from flask import Blueprint, render_template, redirect, url_for, flash, abort, request
 from flask_login import login_required, current_user
 from ..extensions import db
 from ..models.user import User
@@ -81,3 +81,28 @@ def revoke_user(user_id):
     db.session.commit()
     flash(f'Access revoked for "{user.username}".', 'info')
     return redirect(url_for('admin.users'))
+
+
+@admin_bp.route('/change-password', methods=['GET', 'POST'])
+@admin_required
+def change_password():
+    if request.method == 'POST':
+        current_password = request.form.get('current_password', '')
+        new_password = request.form.get('new_password', '')
+        confirm_password = request.form.get('confirm_password', '')
+
+        if not current_user.check_password(current_password):
+            flash('Current password is incorrect.', 'error')
+        elif not new_password:
+            flash('New password is required.', 'error')
+        elif len(new_password) < 8:
+            flash('New password must be at least 8 characters.', 'error')
+        elif new_password != confirm_password:
+            flash('New passwords do not match.', 'error')
+        else:
+            current_user.set_password(new_password)
+            db.session.commit()
+            flash('Password changed successfully.', 'success')
+            return redirect(url_for('admin.users'))
+
+    return render_template('admin/change_password.html')
