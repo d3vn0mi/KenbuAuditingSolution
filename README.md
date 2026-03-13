@@ -18,7 +18,7 @@ Starting with CIS benchmarks and expanding to NIST, DISA STIG, ISO 27001, and be
 - **Excel Export** with formatted checklists, status dropdowns, and color-coded levels
 - **Audit Sessions** to track pass/fail results per check during on-site audits
 - **Audit Reports** with summary statistics, compliance rates, and pie charts
-- **Basic Authentication** with username/password login
+- **Authentication** — local username/password + GitHub SSO
 
 ## Quick Start
 
@@ -36,6 +36,21 @@ python run.py
 Open http://localhost:5000 and log in with:
 - **Username:** `admin`
 - **Password:** `changeme`
+
+### GitHub SSO (Optional)
+
+To enable "Sign in with GitHub":
+
+1. Go to [GitHub Developer Settings](https://github.com/settings/developers) and create a new OAuth App
+2. Set the **Authorization callback URL** to `http://localhost:5000/oauth/github/callback`
+3. Export the credentials before running the app:
+
+```bash
+export GITHUB_CLIENT_ID=your_client_id
+export GITHUB_CLIENT_SECRET=your_client_secret
+```
+
+The GitHub button will appear on the login and register pages automatically when these env vars are set.
 
 ## Usage
 
