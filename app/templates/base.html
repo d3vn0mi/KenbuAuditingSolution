@@ -46,6 +46,7 @@
                                 <a href="{{ url_for('platforms.list_platforms') }}" class="text-gray-300 hover:bg-dark-800 hover:text-white rounded-md px-3 py-2 text-sm font-medium {% if request.endpoint and request.endpoint.startswith('platforms.') %}bg-dark-800 text-white{% endif %}">Platforms</a>
                                 <a href="{{ url_for('checks.search') }}" class="text-gray-300 hover:bg-dark-800 hover:text-white rounded-md px-3 py-2 text-sm font-medium {% if request.endpoint and request.endpoint.startswith('checks.') %}bg-dark-800 text-white{% endif %}">Search Checks</a>
                                 <a href="{{ url_for('audits.list_audits') }}" class="text-gray-300 hover:bg-dark-800 hover:text-white rounded-md px-3 py-2 text-sm font-medium {% if request.endpoint and request.endpoint.startswith('audits.') %}bg-dark-800 text-white{% endif %}">Audits</a>
+                                <a href="{{ url_for('hardening.list_tasks') }}" class="text-gray-300 hover:bg-dark-800 hover:text-white rounded-md px-3 py-2 text-sm font-medium {% if request.endpoint and request.endpoint.startswith('hardening.') %}bg-dark-800 text-white{% endif %}">Hardening</a>
                                 {% if current_user.is_admin %}
                                 <a href="{{ url_for('admin.users') }}" class="text-gray-300 hover:bg-dark-800 hover:text-white rounded-md px-3 py-2 text-sm font-medium {% if request.endpoint and request.endpoint.startswith('admin.') %}bg-dark-800 text-white{% endif %}">Admin</a>
                                 {% endif %}
@@ -73,6 +74,17 @@
                         </div>
                         <!-- User menu -->
                         <span class="text-gray-300 text-sm">{{ current_user.display_name or current_user.username }}</span>
+                        {% if current_user.is_admin %}
+                        <a href="{{ url_for('admin.change_password') }}" class="text-gray-400 hover:text-white text-sm">Change Password</a>
+                        <a href="{{ url_for('admin.mfa_settings') }}" class="text-gray-400 hover:text-white text-sm flex items-center gap-1">
+                            MFA
+                            {% if current_user.mfa_enabled %}
+                            <span class="inline-block w-2 h-2 rounded-full bg-green-400" title="MFA enabled"></span>
+                            {% else %}
+                            <span class="inline-block w-2 h-2 rounded-full bg-yellow-400" title="MFA not enabled"></span>
+                            {% endif %}
+                        </a>
+                        {% endif %}
                         <a href="{{ url_for('auth.logout') }}" hx-boost="false" class="text-gray-400 hover:text-white text-sm">Logout</a>
                     </div>
                 </div>
@@ -84,6 +96,7 @@
                 <a href="{{ url_for('platforms.list_platforms') }}" class="text-gray-300 hover:bg-dark-800 hover:text-white block rounded-md px-3 py-2 text-base font-medium">Platforms</a>
                 <a href="{{ url_for('checks.search') }}" class="text-gray-300 hover:bg-dark-800 hover:text-white block rounded-md px-3 py-2 text-base font-medium">Search</a>
                 <a href="{{ url_for('audits.list_audits') }}" class="text-gray-300 hover:bg-dark-800 hover:text-white block rounded-md px-3 py-2 text-base font-medium">Audits</a>
+                <a href="{{ url_for('hardening.list_tasks') }}" class="text-gray-300 hover:bg-dark-800 hover:text-white block rounded-md px-3 py-2 text-base font-medium">Hardening</a>
                 {% if current_user.is_admin %}
                 <a href="{{ url_for('admin.users') }}" class="text-gray-300 hover:bg-dark-800 hover:text-white block rounded-md px-3 py-2 text-base font-medium">Admin</a>
                 {% endif %}
