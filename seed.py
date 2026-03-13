@@ -2,6 +2,9 @@
 """Seed the database with platforms, benchmarks, and checks."""
 import os
 import sys
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(__file__))

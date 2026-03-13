@@ -1,0 +1,3 @@
+kenbu.ravensec.eu {
+    reverse_proxy kenbu:8000
+}
