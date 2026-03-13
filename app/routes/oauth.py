@@ -120,16 +120,22 @@ def github_callback():
             db.session.commit()
             user = existing
         else:
-            # Create new user
+            # Create new user (pending approval)
             user = User(
                 username=github_username,
                 display_name=display_name,
                 auth_provider='github',
                 github_id=github_id,
                 avatar_url=avatar_url,
+                role='user',
+                is_approved=False,
             )
             db.session.add(user)
             db.session.commit()
+
+    if not user.is_approved:
+        flash('Your account is pending admin approval.', 'warning')
+        return redirect(url_for('auth.login'))
 
     login_user(user, remember=True)
     return redirect(url_for('main.dashboard'))
