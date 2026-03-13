@@ -16,7 +16,7 @@ Starting with CIS benchmarks and expanding to NIST, DISA STIG, ISO 27001, and be
 - **Excel Export** with formatted checklists, status dropdowns, and color-coded levels
 - **Audit Sessions** to track pass/fail results per check during on-site audits
 - **Audit Reports** with summary statistics, compliance rates, and pie charts
-- **Basic Authentication** with username/password login
+- **Authentication** — local username/password + GitHub SSO
 
 ## Quick Start
 
@@ -34,6 +34,58 @@ python run.py
 Open http://localhost:5000 and log in with:
 - **Username:** `admin`
 - **Password:** `changeme`
+
+### GitHub SSO (Optional)
+
+To enable "Sign in with GitHub":
+
+1. Go to [GitHub Developer Settings](https://github.com/settings/developers) and create a new OAuth App
+2. Set the **Authorization callback URL** to `http://localhost:5000/oauth/github/callback`
+3. Export the credentials before running the app:
+
+```bash
+export GITHUB_CLIENT_ID=your_client_id
+export GITHUB_CLIENT_SECRET=your_client_secret
+```
+
+The GitHub button will appear on the login and register pages automatically when these env vars are set.
+
+For production, use `https://kenbu.ravensec.eu/oauth/github/callback` as the callback URL.
+
+## Deploy with Docker
+
+### Prerequisites
+
+- Docker and Docker Compose installed
+- A domain (e.g. `kenbu.ravensec.eu`) with DNS A record pointing to your server
+- Ports 80 and 443 open
+
+### Steps
+
+```bash
+# Clone the repo
+git clone https://github.com/d3vn0mi/Kenbu-auditing-tool.git
+cd Kenbu-auditing-tool
+
+# Create your .env from the example
+cp .env.example .env
+# Edit .env — set SECRET_KEY and optionally GITHUB_CLIENT_ID/SECRET
+nano .env
+
+# Build and start
+docker compose up -d
+```
+
+Caddy automatically provisions HTTPS certificates via Let's Encrypt. Your app will be live at `https://kenbu.ravensec.eu`.
+
+### Useful commands
+
+```bash
+docker compose logs -f          # View logs
+docker compose restart kenbu    # Restart the app
+docker compose down             # Stop everything
+docker compose up -d --build    # Rebuild after code changes
+```
 
 ## Usage
 

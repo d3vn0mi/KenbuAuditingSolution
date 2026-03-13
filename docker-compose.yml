@@ -1,0 +1,35 @@
+services:
+  kenbu:
+    build: .
+    container_name: kenbu
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - kenbu_data:/app/instance
+    networks:
+      - kenbu_net
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: kenbu-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - kenbu_net
+    depends_on:
+      - kenbu
+
+volumes:
+  kenbu_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  kenbu_net:
