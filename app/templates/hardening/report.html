@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hardening Report: {{ task.title }}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1a1a2e; line-height: 1.5; max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+        h1 { font-size: 24px; color: #1a1a2e; border-bottom: 3px solid #1a1a2e; padding-bottom: 8px; margin-bottom: 16px; }
+        h2 { font-size: 20px; color: #1a1a2e; margin: 24px 0 12px; border-bottom: 1px solid #ddd; padding-bottom: 6px; }
+        h3 { font-size: 16px; color: #333; margin: 16px 0 8px; }
+
+        .meta { display: grid; grid-template-columns: 150px 1fr; gap: 4px 16px; margin-bottom: 20px; font-size: 14px; }
+        .meta dt { font-weight: 600; color: #555; }
+        .meta dd { color: #333; }
+
+        .stats { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+        .stat-card { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 12px 20px; text-align: center; min-width: 120px; }
+        .stat-card .value { font-size: 24px; font-weight: 700; }
+        .stat-card .label { font-size: 12px; color: #666; text-transform: uppercase; }
+        .stat-card .value.green { color: #28a745; }
+        .stat-card .value.gray { color: #6c757d; }
+        .stat-card .value.blue { color: #2563eb; }
+
+        .progress-bar { background: #e9ecef; border-radius: 8px; height: 12px; margin-bottom: 20px; overflow: hidden; }
+        .progress-bar .fill { background: #2563eb; height: 100%; border-radius: 8px; transition: width 0.3s; }
+
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; }
+        th { background: #1a1a2e; color: #fff; padding: 8px 10px; text-align: left; font-size: 12px; text-transform: uppercase; }
+        td { padding: 6px 10px; border-bottom: 1px solid #e9ecef; vertical-align: top; }
+        tr:nth-child(even) { background: #f8f9fa; }
+        tr.done { background: #d4edda; }
+        tr.skipped { background: #e2e3e5; }
+
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+        .badge-done { background: #d4edda; color: #155724; }
+        .badge-skipped { background: #e2e3e5; color: #383d41; }
+        .badge-pending { background: #fff3cd; color: #856404; }
+        .badge-draft { background: #e2e3e5; color: #383d41; }
+        .badge-in_progress { background: #fff3cd; color: #856404; }
+        .badge-completed { background: #d4edda; color: #155724; }
+        .badge-type { background: #cce5ff; color: #004085; }
+        .badge-level { background: #d1ecf1; color: #0c5460; }
+
+        .asset-section { page-break-before: always; margin-top: 32px; }
+        .asset-section:first-of-type { page-break-before: auto; margin-top: 0; }
+
+        .footer { margin-top: 32px; padding-top: 12px; border-top: 1px solid #ddd; font-size: 12px; color: #888; text-align: center; }
+
+        @media print {
+            body { padding: 10px; }
+            .asset-section { page-break-before: always; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Hardening Report: {{ task.title }}</h1>
+
+    <dl class="meta">
+        {% if task.description %}<dt>Description</dt><dd>{{ task.description }}</dd>{% endif %}
+        <dt>Status</dt><dd><span class="badge badge-{{ task.status }}">{{ task.status.replace('_', ' ').title() }}</span></dd>
+        <dt>Created</dt><dd>{{ task.created_at.strftime('%Y-%m-%d %H:%M UTC') }}</dd>
+        {% if task.started_at %}<dt>Started</dt><dd>{{ task.started_at.strftime('%Y-%m-%d %H:%M UTC') }}</dd>{% endif %}
+        {% if task.completed_at %}<dt>Completed</dt><dd>{{ task.completed_at.strftime('%Y-%m-%d %H:%M UTC') }}</dd>{% endif %}
+    </dl>
+
+    <div class="stats">
+        <div class="stat-card"><div class="value">{{ asset_data|length }}</div><div class="label">Assets</div></div>
+        <div class="stat-card"><div class="value">{{ task.total_items }}</div><div class="label">Total Checks</div></div>
+        <div class="stat-card"><div class="value green">{{ task.completed_items }}</div><div class="label">Completed</div></div>
+        <div class="stat-card"><div class="value blue">{{ task.progress }}%</div><div class="label">Progress</div></div>
+    </div>
+
+    <div class="progress-bar"><div class="fill" style="width: {{ task.progress }}%"></div></div>
+
+    <!-- Asset Overview Table -->
+    <h2>Asset Overview</h2>
+    <table>
+        <thead>
+            <tr><th>Asset</th><th>Type</th><th>Benchmarks</th><th>Done</th><th>Skipped</th><th>Pending</th><th>Progress</th></tr>
+        </thead>
+        <tbody>
+            {% for item in asset_data %}
+            {% set asset = item.asset %}
+            {% set done = item.results|selectattr('status', 'equalto', 'done')|list|length %}
+            {% set skipped = item.results|selectattr('status', 'equalto', 'skipped')|list|length %}
+            {% set pending = item.results|selectattr('status', 'equalto', 'pending')|list|length %}
+            <tr>
+                <td><strong>{{ asset.name }}</strong></td>
+                <td><span class="badge badge-type">{{ asset.asset_type }}</span></td>
+                <td>{% for ab in asset.benchmarks %}{{ ab.benchmark.platform.name }} v{{ ab.benchmark.version }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
+                <td>{{ done }}</td>
+                <td>{{ skipped }}</td>
+                <td>{{ pending }}</td>
+                <td>{{ asset.progress }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Per-Asset Detail -->
+    {% for item in asset_data %}
+    {% set asset = item.asset %}
+    <div class="asset-section">
+        <h2>{{ asset.name }} <span class="badge badge-type">{{ asset.asset_type }}</span></h2>
+        {% if asset.notes %}<p style="font-size:14px; color:#666; margin-bottom:12px;">{{ asset.notes }}</p>{% endif %}
+        <p style="font-size:13px; color:#888; margin-bottom:12px;">
+            Benchmarks: {% for ab in asset.benchmarks %}{{ ab.benchmark.name }} (v{{ ab.benchmark.version }}){% if not loop.last %}, {% endif %}{% endfor %}
+        </p>
+
+        <table>
+            <thead>
+                <tr><th>Check #</th><th>Title</th><th>Level</th><th>Remediation</th><th>Status</th><th>Notes</th></tr>
+            </thead>
+            <tbody>
+                {% for result in item.results %}
+                <tr class="{{ result.status }}">
+                    <td style="font-family:monospace; white-space:nowrap;">{{ result.check.check_number }}</td>
+                    <td>{{ result.check.title }}</td>
+                    <td><span class="badge badge-level">L{{ result.check.level }}</span></td>
+                    <td style="max-width:300px;">{{ (result.check.remediation or '')|truncate(200) }}</td>
+                    <td><span class="badge badge-{{ result.status }}">{{ result.status.title() }}</span></td>
+                    <td>{{ result.notes or '' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endfor %}
+
+    <div class="footer">
+        Generated by Kenbu on {{ generated_at }}
+    </div>
+</body>
+</html>

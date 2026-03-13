@@ -7,6 +7,7 @@ def register_blueprints(app):
     from .platforms import platforms_bp
     from .checks import checks_bp
     from .audits import audits_bp
+    from .hardening import hardening_bp
     from .export import export_bp
 
     app.register_blueprint(auth_bp)
@@ -17,5 +18,6 @@ def register_blueprints(app):
     app.register_blueprint(platforms_bp)
     app.register_blueprint(checks_bp)
     app.register_blueprint(audits_bp)
+    app.register_blueprint(hardening_bp)
     app.register_blueprint(export_bp)
 
