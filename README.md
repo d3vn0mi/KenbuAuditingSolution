@@ -52,6 +52,43 @@ export GITHUB_CLIENT_SECRET=your_client_secret
 
 The GitHub button will appear on the login and register pages automatically when these env vars are set.
 
+For production, use `https://kenbu.ravensec.eu/oauth/github/callback` as the callback URL.
+
+## Deploy with Docker
+
+### Prerequisites
+
+- Docker and Docker Compose installed
+- A domain (e.g. `kenbu.ravensec.eu`) with DNS A record pointing to your server
+- Ports 80 and 443 open
+
+### Steps
+
+```bash
+# Clone the repo
+git clone https://github.com/d3vn0mi/Kenbu-auditing-tool.git
+cd Kenbu-auditing-tool
+
+# Create your .env from the example
+cp .env.example .env
+# Edit .env — set SECRET_KEY and optionally GITHUB_CLIENT_ID/SECRET
+nano .env
+
+# Build and start
+docker compose up -d
+```
+
+Caddy automatically provisions HTTPS certificates via Let's Encrypt. Your app will be live at `https://kenbu.ravensec.eu`.
+
+### Useful commands
+
+```bash
+docker compose logs -f          # View logs
+docker compose restart kenbu    # Restart the app
+docker compose down             # Stop everything
+docker compose up -d --build    # Rebuild after code changes
+```
+
 ## Usage
 
 ### Browsing Checks

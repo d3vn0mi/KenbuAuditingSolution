@@ -1,0 +1,14 @@
+.git
+.gitignore
+.env
+instance/
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.vscode/
+.idea/
+node_modules/
+*.md
+LICENSE
+.dockerignore
