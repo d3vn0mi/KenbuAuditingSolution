@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from flask_login import login_user, logout_user, login_required, current_user
 from ..extensions import db
 from ..models.user import User
@@ -20,12 +20,44 @@ def login():
             if not user.is_approved:
                 flash('Your account is pending admin approval.', 'warning')
                 return render_template('auth/login.html')
+
+            # Check if MFA is enabled
+            if user.mfa_enabled:
+                session['mfa_user_id'] = user.id
+                session['mfa_remember'] = bool(request.form.get('remember'))
+                session['mfa_next'] = request.args.get('next')
+                return redirect(url_for('auth.mfa_verify'))
+
             login_user(user, remember=request.form.get('remember'))
             next_page = request.args.get('next')
             return redirect(next_page or url_for('main.dashboard'))
         flash('Invalid username or password.', 'error')
 
     return render_template('auth/login.html')
+
+
+@auth_bp.route('/mfa-verify', methods=['GET', 'POST'])
+def mfa_verify():
+    user_id = session.get('mfa_user_id')
+    if not user_id:
+        return redirect(url_for('auth.login'))
+
+    user = db.session.get(User, user_id)
+    if not user:
+        session.pop('mfa_user_id', None)
+        return redirect(url_for('auth.login'))
+
+    if request.method == 'POST':
+        token = request.form.get('token', '').strip()
+        if user.verify_mfa_token(token):
+            remember = session.pop('mfa_remember', False)
+            next_page = session.pop('mfa_next', None)
+            session.pop('mfa_user_id', None)
+            login_user(user, remember=remember)
+            return redirect(next_page or url_for('main.dashboard'))
+        flash('Invalid verification code. Please try again.', 'error')
+
+    return render_template('auth/mfa_verify.html')
 
 
 @auth_bp.route('/register', methods=['GET', 'POST'])

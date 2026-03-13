@@ -75,6 +75,14 @@
                         <span class="text-gray-300 text-sm">{{ current_user.display_name or current_user.username }}</span>
                         {% if current_user.is_admin %}
                         <a href="{{ url_for('admin.change_password') }}" class="text-gray-400 hover:text-white text-sm">Change Password</a>
+                        <a href="{{ url_for('admin.mfa_settings') }}" class="text-gray-400 hover:text-white text-sm flex items-center gap-1">
+                            MFA
+                            {% if current_user.mfa_enabled %}
+                            <span class="inline-block w-2 h-2 rounded-full bg-green-400" title="MFA enabled"></span>
+                            {% else %}
+                            <span class="inline-block w-2 h-2 rounded-full bg-yellow-400" title="MFA not enabled"></span>
+                            {% endif %}
+                        </a>
                         {% endif %}
                         <a href="{{ url_for('auth.logout') }}" hx-boost="false" class="text-gray-400 hover:text-white text-sm">Logout</a>
                     </div>
