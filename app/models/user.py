@@ -13,6 +13,10 @@ class User(UserMixin, db.Model):
     display_name = db.Column(db.String(120))
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
+    # Role and approval
+    role = db.Column(db.String(20), default='user')  # 'admin' or 'user'
+    is_approved = db.Column(db.Boolean, default=False)
+
     # OAuth fields
     auth_provider = db.Column(db.String(20), default='local')  # 'local' or 'github'
     github_id = db.Column(db.Integer, unique=True, nullable=True, index=True)
@@ -20,6 +24,10 @@ class User(UserMixin, db.Model):
 
     # Relationships
     audit_sessions = db.relationship('AuditSession', backref='auditor', lazy='dynamic')
+
+    @property
+    def is_admin(self):
+        return self.role == 'admin'
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
