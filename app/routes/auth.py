@@ -17,6 +17,9 @@ def login():
 
         user = User.query.filter_by(username=username).first()
         if user and user.check_password(password):
+            if not user.is_approved:
+                flash('Your account is pending admin approval.', 'warning')
+                return render_template('auth/login.html')
             login_user(user, remember=request.form.get('remember'))
             next_page = request.args.get('next')
             return redirect(next_page or url_for('main.dashboard'))
@@ -47,12 +50,14 @@ def register():
         else:
             user = User(
                 username=username,
-                display_name=display_name or username
+                display_name=display_name or username,
+                role='user',
+                is_approved=False,
             )
             user.set_password(password)
             db.session.add(user)
             db.session.commit()
-            flash('Account created. Please log in.', 'success')
+            flash('Account created. An admin must approve your account before you can log in.', 'info')
             return redirect(url_for('auth.login'))
 
     return render_template('auth/register.html')

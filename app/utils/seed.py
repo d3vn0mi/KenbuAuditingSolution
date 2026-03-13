@@ -17,7 +17,12 @@ def seed_users(data_dir):
     if not os.path.exists(filepath):
         # Create default admin if no seed file
         if not User.query.filter_by(username='admin').first():
-            user = User(username='admin', display_name='Administrator')
+            user = User(
+                username='admin',
+                display_name='Administrator',
+                role='admin',
+                is_approved=True,
+            )
             user.set_password('changeme')
             db.session.add(user)
             db.session.commit()
@@ -29,11 +34,13 @@ def seed_users(data_dir):
         if not User.query.filter_by(username=user_data['username']).first():
             user = User(
                 username=user_data['username'],
-                display_name=user_data.get('display_name', user_data['username'])
+                display_name=user_data.get('display_name', user_data['username']),
+                role=user_data.get('role', 'user'),
+                is_approved=user_data.get('is_approved', True),
             )
             user.set_password(user_data['password'])
             db.session.add(user)
-            print(f'  Created user: {user_data["username"]}')
+            print(f'  Created user: {user_data["username"]} (role={user.role})')
     db.session.commit()
 
 
