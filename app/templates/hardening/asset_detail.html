@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}{{ asset.name }} - Hardening - Kenbu{% endblock %}
+{% block content %}
+<!-- Breadcrumb -->
+<nav class="flex mb-4" aria-label="Breadcrumb">
+    <ol class="flex items-center space-x-2 text-sm text-gray-500">
+        <li><a href="{{ url_for('hardening.list_tasks') }}" class="hover:text-gray-700">Hardening</a></li>
+        <li><span class="mx-1">/</span></li>
+        <li><a href="{{ url_for('hardening.task_detail', task_id=task.id) }}" class="hover:text-gray-700">{{ task.title }}</a></li>
+        <li><span class="mx-1">/</span></li>
+        <li class="text-gray-900 font-medium">{{ asset.name }}</li>
+    </ol>
+</nav>
+
+<!-- Header -->
+<div class="mb-6 flex items-start justify-between">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">{{ asset.name }}</h1>
+        <div class="mt-2 flex items-center space-x-4 text-sm text-gray-500">
+            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-blue-100 text-blue-800">{{ asset.asset_type }}</span>
+            {% for ab in asset.benchmarks %}
+            <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700">{{ ab.benchmark.platform.name }} v{{ ab.benchmark.version }}</span>
+            {% endfor %}
+            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
+                {% if task.status == 'completed' %}bg-green-100 text-green-800
+                {% elif task.status == 'in_progress' %}bg-yellow-100 text-yellow-800
+                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                {{ task.status.replace('_', ' ').title() }}
+            </span>
+        </div>
+    </div>
+    <a href="{{ url_for('hardening.task_detail', task_id=task.id) }}" class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+        Back to Task
+    </a>
+</div>
+
+<!-- Progress Stats -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+    <div class="bg-white shadow rounded-lg p-4 text-center">
+        <p class="text-2xl font-bold text-gray-900">{{ results|length }}</p>
+        <p class="text-xs text-gray-500">Total</p>
+    </div>
+    <div class="bg-white shadow rounded-lg p-4 text-center">
+        <p class="text-2xl font-bold text-green-600">{{ results|selectattr('status', 'equalto', 'done')|list|length }}</p>
+        <p class="text-xs text-gray-500">Done</p>
+    </div>
+    <div class="bg-white shadow rounded-lg p-4 text-center">
+        <p class="text-2xl font-bold text-gray-500">{{ results|selectattr('status', 'equalto', 'skipped')|list|length }}</p>
+        <p class="text-xs text-gray-500">Skipped</p>
+    </div>
+    <div class="bg-white shadow rounded-lg p-4 text-center">
+        <p class="text-2xl font-bold text-primary-600">{{ asset.progress }}%</p>
+        <p class="text-xs text-gray-500">Progress</p>
+    </div>
+</div>
+
+<!-- Progress Bar -->
+<div class="mb-6">
+    <div class="w-full bg-gray-200 rounded-full h-3">
+        <div class="bg-primary-600 h-3 rounded-full transition-all" style="width: {{ asset.progress }}%"></div>
+    </div>
+</div>
+
+<!-- Checklist -->
+<div class="bg-white shadow rounded-lg overflow-hidden">
+    <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-24">Check #</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
+                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase w-16">Level</th>
+                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase w-32">Status</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-48">Notes</th>
+                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase w-16">View</th>
+            </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+            {% for result in results %}
+            <tr id="result-{{ result.id }}" class="{% if result.status == 'done' %}bg-green-50{% elif result.status == 'skipped' %}bg-gray-50{% endif %}">
+                {% include 'hardening/_check_row.html' %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block title %}{{ task.title }} - Kenbu{% endblock %}
+{% block content %}
+<!-- Breadcrumb -->
+<nav class="flex mb-4" aria-label="Breadcrumb">
+    <ol class="flex items-center space-x-2 text-sm text-gray-500">
+        <li><a href="{{ url_for('hardening.list_tasks') }}" class="hover:text-gray-700">Hardening</a></li>
+        <li><span class="mx-1">/</span></li>
+        <li class="text-gray-900 font-medium">{{ task.title }}</li>
+    </ol>
+</nav>
+
+<!-- Header -->
+<div class="mb-6 flex items-start justify-between">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">{{ task.title }}</h1>
+        <div class="mt-2 flex items-center space-x-4 text-sm text-gray-500">
+            {% if task.description %}
+            <span>{{ task.description }}</span>
+            {% endif %}
+            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
+                {% if task.status == 'completed' %}bg-green-100 text-green-800
+                {% elif task.status == 'in_progress' %}bg-yellow-100 text-yellow-800
+                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                {{ task.status.replace('_', ' ').title() }}
+            </span>
+        </div>
+    </div>
+    <div class="flex space-x-3">
+        {% if task.status != 'draft' %}
+        <a href="{{ url_for('export.export_hardening_excel', task_id=task.id) }}" hx-boost="false"
+           class="inline-flex items-center rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500">
+            <svg class="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+            Excel
+        </a>
+        <a href="{{ url_for('export.export_hardening_html', task_id=task.id) }}" hx-boost="false"
+           class="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500">
+            <svg class="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+            </svg>
+            HTML
+        </a>
+        {% endif %}
+        {% if task.status == 'draft' %}
+        <form method="POST" action="{{ url_for('hardening.delete_task', task_id=task.id) }}" hx-boost="false">
+            <button type="submit" class="inline-flex items-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500"
+                    onclick="return confirm('Delete this hardening task?')">
+                Delete
+            </button>
+        </form>
+        {% endif %}
+        {% if task.status == 'in_progress' %}
+        <form method="POST" action="{{ url_for('hardening.complete_task', task_id=task.id) }}" hx-boost="false">
+            <button type="submit" class="inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500"
+                    onclick="return confirm('Mark this hardening task as complete?')">
+                Complete Task
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+{% if task.status != 'draft' %}
+<!-- Progress Stats -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+    <div class="bg-white shadow rounded-lg p-4 text-center">
+        <p class="text-2xl font-bold text-gray-900">{{ assets|length }}</p>
+        <p class="text-xs text-gray-500">Assets</p>
+    </div>
+    <div class="bg-white shadow rounded-lg p-4 text-center">
+        <p class="text-2xl font-bold text-gray-900">{{ task.total_items }}</p>
+        <p class="text-xs text-gray-500">Total Checks</p>
+    </div>
+    <div class="bg-white shadow rounded-lg p-4 text-center">
+        <p class="text-2xl font-bold text-green-600">{{ task.completed_items }}</p>
+        <p class="text-xs text-gray-500">Completed</p>
+    </div>
+    <div class="bg-white shadow rounded-lg p-4 text-center">
+        <p class="text-2xl font-bold text-primary-600">{{ task.progress }}%</p>
+        <p class="text-xs text-gray-500">Progress</p>
+    </div>
+</div>
+
+<!-- Progress Bar -->
+<div class="mb-6">
+    <div class="w-full bg-gray-200 rounded-full h-3">
+        <div class="bg-primary-600 h-3 rounded-full transition-all" style="width: {{ task.progress }}%"></div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Assets Section -->
+<div class="mb-4 flex items-center justify-between">
+    <h2 class="text-lg font-semibold text-gray-900">Assets</h2>
+    {% if task.status == 'draft' %}
+    <a href="{{ url_for('hardening.new_asset', task_id=task.id) }}" class="inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500">
+        <svg class="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+        Add Asset
+    </a>
+    {% endif %}
+</div>
+
+{% if assets %}
+<div class="bg-white shadow rounded-lg overflow-hidden">
+    <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Benchmarks</th>
+                {% if task.status != 'draft' %}
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Progress</th>
+                {% endif %}
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+            {% for asset in assets %}
+            <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap">
+                    {% if task.status != 'draft' %}
+                    <a href="{{ url_for('hardening.asset_detail', task_id=task.id, asset_id=asset.id) }}" class="text-sm font-medium text-primary-600 hover:text-primary-500">{{ asset.name }}</a>
+                    {% else %}
+                    <span class="text-sm font-medium text-gray-900">{{ asset.name }}</span>
+                    {% endif %}
+                    {% if asset.notes %}
+                    <p class="text-xs text-gray-500">{{ asset.notes }}</p>
+                    {% endif %}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-blue-100 text-blue-800">{{ asset.asset_type }}</span>
+                </td>
+                <td class="px-6 py-4">
+                    <div class="flex flex-wrap gap-1">
+                        {% for ab in asset.benchmarks %}
+                        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700">{{ ab.benchmark.platform.name }} v{{ ab.benchmark.version }}</span>
+                        {% endfor %}
+                        {% if not asset.benchmarks %}
+                        <span class="text-xs text-red-500">No benchmarks assigned</span>
+                        {% endif %}
+                    </div>
+                </td>
+                {% if task.status != 'draft' %}
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <div class="w-24 bg-gray-200 rounded-full h-2 mr-2">
+                            <div class="bg-primary-600 h-2 rounded-full" style="width: {{ asset.progress }}%"></div>
+                        </div>
+                        <span class="text-sm text-gray-600">{{ asset.progress }}%</span>
+                    </div>
+                </td>
+                {% endif %}
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm space-x-2">
+                    {% if task.status == 'draft' %}
+                    <a href="{{ url_for('hardening.asset_benchmarks', task_id=task.id, asset_id=asset.id) }}" class="text-primary-600 hover:text-primary-500">Benchmarks</a>
+                    <form method="POST" action="{{ url_for('hardening.delete_asset', task_id=task.id, asset_id=asset.id) }}" class="inline" hx-boost="false">
+                        <button type="submit" class="text-red-600 hover:text-red-500" onclick="return confirm('Remove this asset?')">Remove</button>
+                    </form>
+                    {% elif task.status != 'draft' %}
+                    <a href="{{ url_for('hardening.asset_detail', task_id=task.id, asset_id=asset.id) }}" class="text-primary-600 hover:text-primary-500">
+                        Open Checklist
+                    </a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if task.status == 'draft' and assets %}
+<div class="mt-6">
+    <form method="POST" action="{{ url_for('hardening.start_task', task_id=task.id) }}" hx-boost="false">
+        <button type="submit" class="inline-flex items-center rounded-md bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500"
+                onclick="return confirm('Start this hardening task? You will not be able to add or remove assets after starting.')">
+            <svg class="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" />
+            </svg>
+            Start Hardening
+        </button>
+    </form>
+</div>
+{% endif %}
+
+{% else %}
+<div class="text-center py-8 bg-white shadow rounded-lg">
+    <p class="text-sm text-gray-500">No assets added yet. Add assets to define what systems you want to harden.</p>
+    {% if task.status == 'draft' %}
+    <div class="mt-4">
+        <a href="{{ url_for('hardening.new_asset', task_id=task.id) }}" class="inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500">Add First Asset</a>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
