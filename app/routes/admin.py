@@ -1,5 +1,8 @@
+import io
+import base64
 from functools import wraps
-from flask import Blueprint, render_template, redirect, url_for, flash, abort, request
+import qrcode
+from flask import Blueprint, render_template, redirect, url_for, flash, abort, request, session
 from flask_login import login_required, current_user
 from ..extensions import db
 from ..models.user import User
@@ -106,3 +109,72 @@ def change_password():
             return redirect(url_for('admin.users'))
 
     return render_template('admin/change_password.html')
+
+
+@admin_bp.route('/mfa/setup', methods=['GET', 'POST'])
+@admin_required
+def mfa_setup():
+    if current_user.mfa_enabled:
+        flash('MFA is already enabled on your account.', 'info')
+        return redirect(url_for('admin.users'))
+
+    if request.method == 'POST':
+        token = request.form.get('token', '').strip()
+        secret = session.get('mfa_setup_secret')
+
+        if not secret:
+            flash('MFA setup session expired. Please try again.', 'error')
+            return redirect(url_for('admin.mfa_setup'))
+
+        # Temporarily set the secret to verify the token
+        current_user.mfa_secret = secret
+        if current_user.verify_mfa_token(token):
+            current_user.mfa_enabled = True
+            db.session.commit()
+            session.pop('mfa_setup_secret', None)
+            flash('MFA has been enabled successfully.', 'success')
+            return redirect(url_for('admin.users'))
+        else:
+            current_user.mfa_secret = None
+            flash('Invalid verification code. Please try again.', 'error')
+
+    # Generate a new secret and QR code
+    secret = current_user.generate_mfa_secret()
+    session['mfa_setup_secret'] = secret
+    current_user.mfa_secret = secret  # Temporarily set to generate URI
+    uri = current_user.get_mfa_uri()
+    current_user.mfa_secret = None  # Clear until verified
+
+    # Generate QR code as base64 image
+    img = qrcode.make(uri)
+    buf = io.BytesIO()
+    img.save(buf, format='PNG')
+    qr_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
+
+    return render_template('admin/mfa_setup.html', secret=secret, qr_code=qr_base64)
+
+
+@admin_bp.route('/mfa/disable', methods=['POST'])
+@admin_required
+def mfa_disable():
+    token = request.form.get('token', '').strip()
+
+    if not current_user.mfa_enabled:
+        flash('MFA is not enabled on your account.', 'info')
+        return redirect(url_for('admin.users'))
+
+    if not current_user.verify_mfa_token(token):
+        flash('Invalid verification code. MFA was not disabled.', 'error')
+        return redirect(url_for('admin.mfa_settings'))
+
+    current_user.mfa_secret = None
+    current_user.mfa_enabled = False
+    db.session.commit()
+    flash('MFA has been disabled.', 'success')
+    return redirect(url_for('admin.users'))
+
+
+@admin_bp.route('/mfa', methods=['GET'])
+@admin_required
+def mfa_settings():
+    return render_template('admin/mfa_settings.html')

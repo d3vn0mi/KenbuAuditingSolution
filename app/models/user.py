@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import pyotp
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from ..extensions import db, login_manager
@@ -22,6 +23,10 @@ class User(UserMixin, db.Model):
     github_id = db.Column(db.Integer, unique=True, nullable=True, index=True)
     avatar_url = db.Column(db.String(500), nullable=True)
 
+    # MFA fields
+    mfa_secret = db.Column(db.String(32), nullable=True)
+    mfa_enabled = db.Column(db.Boolean, default=False)
+
     # Relationships
     audit_sessions = db.relationship('AuditSession', backref='auditor', lazy='dynamic')
 
@@ -36,6 +41,22 @@ class User(UserMixin, db.Model):
         if not self.password_hash:
             return False
         return check_password_hash(self.password_hash, password)
+
+    def generate_mfa_secret(self):
+        self.mfa_secret = pyotp.random_base32()
+        return self.mfa_secret
+
+    def get_mfa_uri(self):
+        if not self.mfa_secret:
+            return None
+        totp = pyotp.TOTP(self.mfa_secret)
+        return totp.provisioning_uri(name=self.username, issuer_name='Kenbu')
+
+    def verify_mfa_token(self, token):
+        if not self.mfa_secret:
+            return False
+        totp = pyotp.TOTP(self.mfa_secret)
+        return totp.verify(token, valid_window=1)
 
     def __repr__(self):
         return f'<User {self.username}>'
