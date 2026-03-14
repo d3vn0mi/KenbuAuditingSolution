@@ -17,28 +17,18 @@ depends_on = None
 
 
 def upgrade():
-    # Split into separate batch operations to avoid SQLite circular
-    # dependency when combining add_column, alter_column, and create_index.
-    with op.batch_alter_table('users', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('auth_provider', sa.String(length=20), nullable=True))
-        batch_op.add_column(sa.Column('github_id', sa.Integer(), nullable=True))
-        batch_op.add_column(sa.Column('avatar_url', sa.String(length=500), nullable=True))
-        batch_op.alter_column('password_hash',
-               existing_type=sa.VARCHAR(length=256),
-               nullable=True)
-
-    with op.batch_alter_table('users', schema=None) as batch_op:
-        batch_op.create_index(batch_op.f('ix_users_github_id'), ['github_id'], unique=True)
+    # Use direct ALTER TABLE ADD COLUMN — supported natively by SQLite.
+    # Avoids batch_alter_table which causes CircularDependencyError on SQLite
+    # when combining multiple add_column + alter_column operations.
+    op.add_column('users', sa.Column('auth_provider', sa.String(length=20), nullable=True))
+    op.add_column('users', sa.Column('github_id', sa.Integer(), nullable=True))
+    op.add_column('users', sa.Column('avatar_url', sa.String(length=500), nullable=True))
+    op.create_index(op.f('ix_users_github_id'), 'users', ['github_id'], unique=True)
 
 
 def downgrade():
+    op.drop_index(op.f('ix_users_github_id'), table_name='users')
     with op.batch_alter_table('users', schema=None) as batch_op:
-        batch_op.drop_index(batch_op.f('ix_users_github_id'))
-
-    with op.batch_alter_table('users', schema=None) as batch_op:
-        batch_op.alter_column('password_hash',
-               existing_type=sa.VARCHAR(length=256),
-               nullable=False)
         batch_op.drop_column('avatar_url')
         batch_op.drop_column('github_id')
         batch_op.drop_column('auth_provider')
