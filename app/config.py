@@ -17,7 +17,7 @@ class DevelopmentConfig(Config):
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = os.environ.get(
         'DATABASE_URL',
-        'sqlite:///' + os.path.join(basedir, 'instance', 'kenbu.db')
+        'postgresql://kenbu:kenbu@db:5432/kenbu'
     )
 
 
@@ -31,7 +31,7 @@ class ProductionConfig(Config):
     DEBUG = False
     SQLALCHEMY_DATABASE_URI = os.environ.get(
         'DATABASE_URL',
-        'sqlite:///' + os.path.join(basedir, 'instance', 'kenbu.db')
+        'postgresql://kenbu:kenbu@db:5432/kenbu'
     )
 
 

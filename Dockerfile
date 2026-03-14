@@ -2,15 +2,16 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+# Install PostgreSQL client for pg_isready in entrypoint
+RUN apt-get update && apt-get install -y --no-install-recommends postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application
 COPY . .
-
-# Create instance directory for SQLite
-RUN mkdir -p instance
 
 ENV FLASK_APP=app:create_app
 

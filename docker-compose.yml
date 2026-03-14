@@ -1,11 +1,30 @@
 services:
+  db:
+    image: postgres:16-alpine
+    container_name: kenbu-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-kenbu}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:-kenbu}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - kenbu_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kenbu} -d ${POSTGRES_DB:-kenbu}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   kenbu:
     build: .
     container_name: kenbu
     restart: unless-stopped
     env_file: .env
-    volumes:
-      - kenbu_data:/app/instance
+    depends_on:
+      db:
+        condition: service_healthy
     networks:
       - kenbu_net
 
@@ -27,7 +46,7 @@ services:
       - kenbu
 
 volumes:
-  kenbu_data:
+  postgres_data:
   caddy_data:
   caddy_config:
 
