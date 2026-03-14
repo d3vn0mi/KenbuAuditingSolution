@@ -12,8 +12,11 @@ COPY . .
 # Create instance directory for SQLite
 RUN mkdir -p instance
 
-# Seed database on build
-RUN python seed.py
+ENV FLASK_APP=app:create_app
+
+# Entrypoint runs migrations and seeds before starting the app
+RUN chmod +x entrypoint.sh
+ENTRYPOINT ["./entrypoint.sh"]
 
 EXPOSE 8000
 
