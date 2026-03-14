@@ -1,6 +1,14 @@
 #!/bin/bash
 set -e
 
+# Wait for PostgreSQL to be ready
+echo "Waiting for PostgreSQL..."
+until pg_isready -h "${DB_HOST:-db}" -p "${DB_PORT:-5432}" -U "${POSTGRES_USER:-kenbu}" -q; do
+    echo "  PostgreSQL not ready — retrying in 2s..."
+    sleep 2
+done
+echo "PostgreSQL is ready."
+
 # Check if alembic_version table exists (indicates migrations have been used before)
 HAS_ALEMBIC=$(python -c "
 from app import create_app
