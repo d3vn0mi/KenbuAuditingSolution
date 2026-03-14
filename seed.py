@@ -20,11 +20,7 @@ def main():
     app = create_app(os.getenv('FLASK_CONFIG', 'development'))
 
     with app.app_context():
-        # Create tables if they don't exist
-        db.create_all()
-        print('Database tables created.\n')
-
-        # Run seed
+        # Run seed (tables are managed by Alembic migrations)
         seed_all(DATA_DIR)
         print('\nSeeding complete!')
 
