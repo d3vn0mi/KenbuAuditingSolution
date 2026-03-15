@@ -15,6 +15,7 @@ class HardeningTask(db.Model):
     completed_at = db.Column(db.DateTime, nullable=True)
 
     # Relationships
+    user = db.relationship('User', lazy='joined')
     assets = db.relationship('HardeningAsset', backref='task', lazy='dynamic',
                              cascade='all, delete-orphan')
 

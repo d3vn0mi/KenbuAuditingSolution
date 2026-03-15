@@ -94,7 +94,7 @@
 <!-- Assets Section -->
 <div class="mb-4 flex items-center justify-between">
     <h2 class="text-lg font-semibold text-gray-900">Assets</h2>
-    {% if task.status == 'draft' %}
+    {% if task.status in ['draft', 'in_progress'] %}
     <a href="{{ url_for('hardening.new_asset', task_id=task.id) }}" class="inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500">
         <svg class="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -155,15 +155,16 @@
                 </td>
                 {% endif %}
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm space-x-2">
-                    {% if task.status == 'draft' %}
-                    <a href="{{ url_for('hardening.asset_benchmarks', task_id=task.id, asset_id=asset.id) }}" class="text-primary-600 hover:text-primary-500">Benchmarks</a>
-                    <form method="POST" action="{{ url_for('hardening.delete_asset', task_id=task.id, asset_id=asset.id) }}" class="inline" hx-boost="false">
-                        <button type="submit" class="text-red-600 hover:text-red-500" onclick="return confirm('Remove this asset?')">Remove</button>
-                    </form>
-                    {% elif task.status != 'draft' %}
+                    {% if task.status != 'draft' %}
                     <a href="{{ url_for('hardening.asset_detail', task_id=task.id, asset_id=asset.id) }}" class="text-primary-600 hover:text-primary-500">
                         Open Checklist
                     </a>
+                    {% endif %}
+                    {% if task.status in ['draft', 'in_progress'] %}
+                    <a href="{{ url_for('hardening.asset_benchmarks', task_id=task.id, asset_id=asset.id) }}" class="text-primary-600 hover:text-primary-500">Benchmarks</a>
+                    <form method="POST" action="{{ url_for('hardening.delete_asset', task_id=task.id, asset_id=asset.id) }}" class="inline" hx-boost="false">
+                        <button type="submit" class="text-red-600 hover:text-red-500" onclick="return confirm('Remove this asset{% if task.status == 'in_progress' %} and all its check results{% endif %}?')">Remove</button>
+                    </form>
                     {% endif %}
                 </td>
             </tr>
@@ -176,7 +177,7 @@
 <div class="mt-6">
     <form method="POST" action="{{ url_for('hardening.start_task', task_id=task.id) }}" hx-boost="false">
         <button type="submit" class="inline-flex items-center rounded-md bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500"
-                onclick="return confirm('Start this hardening task? You will not be able to add or remove assets after starting.')">
+                onclick="return confirm('Start this hardening task? Check results will be generated for all assets.')">
             <svg class="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" />
             </svg>
@@ -189,7 +190,7 @@
 {% else %}
 <div class="text-center py-8 bg-white shadow rounded-lg">
     <p class="text-sm text-gray-500">No assets added yet. Add assets to define what systems you want to harden.</p>
-    {% if task.status == 'draft' %}
+    {% if task.status in ['draft', 'in_progress'] %}
     <div class="mt-4">
         <a href="{{ url_for('hardening.new_asset', task_id=task.id) }}" class="inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500">Add First Asset</a>
     </div>

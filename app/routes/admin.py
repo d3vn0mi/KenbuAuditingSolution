@@ -1,6 +1,7 @@
 import io
 import base64
 from functools import wraps
+import pyotp
 import qrcode
 from flask import Blueprint, render_template, redirect, url_for, flash, abort, request, session
 from flask_login import login_required, current_user
@@ -126,24 +127,23 @@ def mfa_setup():
             flash('MFA setup session expired. Please try again.', 'error')
             return redirect(url_for('admin.mfa_setup'))
 
-        # Temporarily set the secret to verify the token
-        current_user.mfa_secret = secret
-        if current_user.verify_mfa_token(token):
+        # Verify the token against the session secret without modifying user object
+        totp = pyotp.TOTP(secret)
+        if totp.verify(token, valid_window=1):
+            current_user.mfa_secret = secret
             current_user.mfa_enabled = True
             db.session.commit()
             session.pop('mfa_setup_secret', None)
             flash('MFA has been enabled successfully.', 'success')
             return redirect(url_for('admin.users'))
         else:
-            current_user.mfa_secret = None
             flash('Invalid verification code. Please try again.', 'error')
 
     # Generate a new secret and QR code
-    secret = current_user.generate_mfa_secret()
+    secret = pyotp.random_base32()
     session['mfa_setup_secret'] = secret
-    current_user.mfa_secret = secret  # Temporarily set to generate URI
-    uri = current_user.get_mfa_uri()
-    current_user.mfa_secret = None  # Clear until verified
+    totp = pyotp.TOTP(secret)
+    uri = totp.provisioning_uri(name=current_user.username, issuer_name='Kenbu')
 
     # Generate QR code as base64 image
     img = qrcode.make(uri)

@@ -1,3 +1,8 @@
+{% if task.status == 'in_progress' %}
+<td class="px-4 py-3 text-center">
+    <input type="checkbox" class="check-select rounded border-gray-300 text-primary-600 focus:ring-primary-500" value="{{ result.check.id }}">
+</td>
+{% endif %}
 <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-gray-500">{{ result.check.check_number }}</td>
 <td class="px-4 py-3">
     <a href="{{ url_for('checks.detail', check_id=result.check.id) }}" class="text-sm text-gray-900 hover:text-primary-600">{{ result.check.title }}</a>
