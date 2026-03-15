@@ -99,8 +99,8 @@ def new_asset(task_id):
     task = HardeningTask.query.get_or_404(task_id)
     if task.user_id != current_user.id:
         abort(403)
-    if task.status != 'draft':
-        flash('Cannot add assets to a task that is not in draft status.', 'error')
+    if task.status not in ('draft', 'in_progress'):
+        flash('Cannot add assets to a completed task.', 'error')
         return redirect(url_for('hardening.task_detail', task_id=task.id))
 
     if request.method == 'POST':
@@ -132,8 +132,8 @@ def delete_asset(task_id, asset_id):
     task = HardeningTask.query.get_or_404(task_id)
     if task.user_id != current_user.id:
         abort(403)
-    if task.status != 'draft':
-        flash('Cannot remove assets from a task that is not in draft status.', 'error')
+    if task.status not in ('draft', 'in_progress'):
+        flash('Cannot remove assets from a completed task.', 'error')
         return redirect(url_for('hardening.task_detail', task_id=task.id))
 
     asset = HardeningAsset.query.get_or_404(asset_id)
@@ -152,8 +152,8 @@ def asset_benchmarks(task_id, asset_id):
     task = HardeningTask.query.get_or_404(task_id)
     if task.user_id != current_user.id:
         abort(403)
-    if task.status != 'draft':
-        flash('Cannot modify benchmarks for a task that is not in draft status.', 'error')
+    if task.status not in ('draft', 'in_progress'):
+        flash('Cannot modify benchmarks on a completed task.', 'error')
         return redirect(url_for('hardening.task_detail', task_id=task.id))
 
     asset = HardeningAsset.query.get_or_404(asset_id)
@@ -171,6 +171,11 @@ def asset_benchmarks(task_id, asset_id):
             mapping = HardeningAssetBenchmark(asset_id=asset.id, benchmark_id=bid)
             db.session.add(mapping)
 
+        # If task is in_progress, regenerate check results for this asset
+        if task.status == 'in_progress':
+            HardeningCheckResult.query.filter_by(asset_id=asset.id).delete()
+            _generate_check_results_for_asset(asset)
+
         db.session.commit()
         flash(f'Benchmarks updated for "{asset.name}".', 'success')
         return redirect(url_for('hardening.task_detail', task_id=task.id))
@@ -180,6 +185,20 @@ def asset_benchmarks(task_id, asset_id):
     return render_template('hardening/asset_benchmarks.html',
                            task=task, asset=asset,
                            benchmarks=benchmarks, assigned_ids=assigned_ids)
+
+
+def _generate_check_results_for_asset(asset):
+    """Generate HardeningCheckResult records for all checks in the asset's benchmarks."""
+    benchmark_ids = [ab.benchmark_id for ab in asset.benchmarks]
+    if not benchmark_ids:
+        return 0
+    checks = Check.query.join(BenchmarkSection).filter(
+        BenchmarkSection.benchmark_id.in_(benchmark_ids)
+    ).all()
+    for check in checks:
+        result = HardeningCheckResult(asset_id=asset.id, check_id=check.id)
+        db.session.add(result)
+    return len(checks)
 
 
 @hardening_bp.route('/<int:task_id>/start', methods=['POST'])
@@ -206,17 +225,7 @@ def start_task(task_id):
     # Generate check results for all assets
     total_checks = 0
     for asset in assets:
-        benchmark_ids = [ab.benchmark_id for ab in asset.benchmarks]
-        checks = Check.query.join(BenchmarkSection).filter(
-            BenchmarkSection.benchmark_id.in_(benchmark_ids)
-        ).all()
-        for check in checks:
-            result = HardeningCheckResult(
-                asset_id=asset.id,
-                check_id=check.id,
-            )
-            db.session.add(result)
-            total_checks += 1
+        total_checks += _generate_check_results_for_asset(asset)
 
     task.status = 'in_progress'
     task.started_at = datetime.now(timezone.utc)
@@ -269,10 +278,55 @@ def update_check(task_id, asset_id, check_id):
         db.session.commit()
 
     if request.headers.get('HX-Request'):
-        return render_template('hardening/_check_row.html',
-                               result=result, task=task, asset=result.asset)
+        asset = result.asset
+        results = HardeningCheckResult.query.filter_by(asset_id=asset.id).all()
+        row_html = render_template('hardening/_check_row.html',
+                                   result=result, task=task, asset=asset)
+        stats_html = render_template('hardening/_asset_stats.html',
+                                     asset=asset, results=results, oob=True)
+        return row_html + stats_html
 
     return redirect(url_for('hardening.asset_detail', task_id=task.id, asset_id=asset_id))
+
+
+@hardening_bp.route('/<int:task_id>/assets/<int:asset_id>/bulk-update', methods=['POST'])
+@login_required
+def bulk_update_checks(task_id, asset_id):
+    task = HardeningTask.query.get_or_404(task_id)
+    if task.user_id != current_user.id:
+        abort(403)
+    if task.status != 'in_progress':
+        flash('Task must be in progress to update checks.', 'error')
+        return redirect(url_for('hardening.task_detail', task_id=task.id))
+
+    asset = HardeningAsset.query.get_or_404(asset_id)
+    if asset.task_id != task.id:
+        abort(404)
+
+    status = request.form.get('bulk_status', '')
+    check_ids = request.form.getlist('check_ids', type=int)
+
+    if status not in ('pending', 'done', 'skipped'):
+        flash('Invalid status.', 'error')
+        return redirect(url_for('hardening.asset_detail', task_id=task.id, asset_id=asset.id))
+
+    if not check_ids:
+        flash('No checks selected.', 'error')
+        return redirect(url_for('hardening.asset_detail', task_id=task.id, asset_id=asset.id))
+
+    results = HardeningCheckResult.query.filter(
+        HardeningCheckResult.asset_id == asset.id,
+        HardeningCheckResult.check_id.in_(check_ids)
+    ).all()
+
+    now = datetime.now(timezone.utc)
+    for result in results:
+        result.status = status
+        result.completed_at = now if status != 'pending' else None
+
+    db.session.commit()
+    flash(f'{len(results)} checks updated to {status}.', 'success')
+    return redirect(url_for('hardening.asset_detail', task_id=task.id, asset_id=asset.id))
 
 
 @hardening_bp.route('/<int:task_id>/complete', methods=['POST'])
