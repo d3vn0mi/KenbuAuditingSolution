@@ -105,10 +105,11 @@
 </div>
 
 <!-- Recent Audits -->
+<!-- My Recent Audits -->
 {% if recent_audits %}
-<div>
+<div class="mb-8">
     <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold text-gray-900">Recent Audits</h2>
+        <h2 class="text-lg font-semibold text-gray-900">My Recent Audits</h2>
         <a href="{{ url_for('audits.list_audits') }}" class="text-sm text-primary-600 hover:text-primary-500">View all</a>
     </div>
     <div class="bg-white shadow rounded-lg overflow-hidden">
@@ -148,7 +149,7 @@
     </div>
 </div>
 {% else %}
-<div class="text-center py-12 bg-white shadow rounded-lg">
+<div class="text-center py-12 bg-white shadow rounded-lg mb-8">
     <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
     </svg>
@@ -158,6 +159,154 @@
         <a href="{{ url_for('audits.new_audit') }}" class="inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500">
             Start New Audit
         </a>
+    </div>
+</div>
+{% endif %}
+
+<!-- My Hardening Tasks -->
+{% if my_hardening %}
+<div class="mb-8">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-gray-900">My Hardening Tasks</h2>
+        <a href="{{ url_for('hardening.list_tasks') }}" class="text-sm text-primary-600 hover:text-primary-500">View all</a>
+    </div>
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Progress</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for task in my_hardening %}
+                <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location='{{ url_for('hardening.task_detail', task_id=task.id) }}'">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ task.title }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {% if task.status != 'draft' %}
+                        <div class="flex items-center">
+                            <div class="w-24 bg-gray-200 rounded-full h-2 mr-2">
+                                <div class="bg-primary-600 h-2 rounded-full" style="width: {{ task.progress }}%"></div>
+                            </div>
+                            <span class="text-sm text-gray-600">{{ task.progress }}%</span>
+                        </div>
+                        {% else %}
+                        <span class="text-sm text-gray-400">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
+                            {% if task.status == 'completed' %}bg-green-100 text-green-800
+                            {% elif task.status == 'in_progress' %}bg-yellow-100 text-yellow-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ task.status.replace('_', ' ').title() }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ task.created_at.strftime('%Y-%m-%d') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Admin: All Audits -->
+{% if current_user.is_admin and all_audits %}
+<div class="mb-8">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-gray-900">All Audits</h2>
+        <a href="{{ url_for('audits.list_audits') }}" class="text-sm text-primary-600 hover:text-primary-500">View all</a>
+    </div>
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Target</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Benchmark</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Progress</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Started</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for audit in all_audits %}
+                <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location='{{ url_for('audits.session_detail', session_id=audit.id) }}'">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ audit.auditor.display_name or audit.auditor.username }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ audit.target_name }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ audit.benchmark.name }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="w-24 bg-gray-200 rounded-full h-2 mr-2">
+                                <div class="bg-primary-600 h-2 rounded-full" style="width: {{ audit.progress }}%"></div>
+                            </div>
+                            <span class="text-sm text-gray-600">{{ audit.progress }}%</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {% if audit.status == 'completed' %}bg-green-100 text-green-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                            {{ audit.status.replace('_', ' ').title() }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ audit.started_at.strftime('%Y-%m-%d') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Admin: All Hardening Tasks -->
+{% if current_user.is_admin and all_hardening %}
+<div class="mb-8">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-gray-900">All Hardening Tasks</h2>
+    </div>
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Progress</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for task in all_hardening %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ task.user.display_name or task.user.username }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ task.title }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {% if task.status != 'draft' %}
+                        <div class="flex items-center">
+                            <div class="w-24 bg-gray-200 rounded-full h-2 mr-2">
+                                <div class="bg-primary-600 h-2 rounded-full" style="width: {{ task.progress }}%"></div>
+                            </div>
+                            <span class="text-sm text-gray-600">{{ task.progress }}%</span>
+                        </div>
+                        {% else %}
+                        <span class="text-sm text-gray-400">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
+                            {% if task.status == 'completed' %}bg-green-100 text-green-800
+                            {% elif task.status == 'in_progress' %}bg-yellow-100 text-yellow-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ task.status.replace('_', ' ').title() }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ task.created_at.strftime('%Y-%m-%d') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 {% endif %}
