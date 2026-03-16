@@ -14,7 +14,6 @@ class Benchmark(db.Model):
 
     # Relationships
     sections = db.relationship('BenchmarkSection', backref='benchmark', lazy='dynamic')
-    audit_sessions = db.relationship('AuditSession', backref='benchmark', lazy='dynamic')
 
     @property
     def total_checks(self):

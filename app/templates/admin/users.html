@@ -3,30 +3,30 @@
 {% block content %}
 <div class="space-y-8">
     <div>
-        <h1 class="text-2xl font-bold text-gray-900">User Management</h1>
-        <p class="mt-1 text-sm text-gray-500">Approve new users and manage roles.</p>
+        <h1 class="text-2xl font-bold text-text-primary">User Management</h1>
+        <p class="mt-1 text-sm text-text-muted">Approve new users and manage roles.</p>
     </div>
 
     <!-- Pending Approval -->
     {% if pending %}
     <div>
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">
+        <h2 class="text-lg font-semibold text-text-primary mb-4">
             <span class="inline-flex items-center gap-2">
-                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-100 text-amber-700 text-xs font-bold">{{ pending|length }}</span>
+                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-900/30 border border-amber-500/40 text-amber-400 text-xs font-bold">{{ pending|length }}</span>
                 Pending Approval
             </span>
         </h2>
-        <div class="bg-white shadow rounded-lg overflow-hidden">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+        <div class="bg-cyber-card border border-cyber-border rounded-lg overflow-hidden">
+            <table class="min-w-full divide-y divide-cyber-border">
+                <thead class="bg-[#0d1220]">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Provider</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registered</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">User</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Provider</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Registered</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-text-muted uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="bg-cyber-card divide-y divide-cyber-border">
                     {% for user in pending %}
                     <tr>
                         <td class="px-6 py-4 whitespace-nowrap">
@@ -34,22 +34,22 @@
                                 {% if user.avatar_url %}
                                 <img class="h-8 w-8 rounded-full mr-3" src="{{ user.avatar_url }}" alt="">
                                 {% else %}
-                                <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center mr-3">
-                                    <span class="text-sm font-medium text-gray-600">{{ user.username[0]|upper }}</span>
+                                <div class="h-8 w-8 rounded-full bg-cyber-card-hover flex items-center justify-center mr-3">
+                                    <span class="text-sm font-medium text-text-secondary">{{ user.username[0]|upper }}</span>
                                 </div>
                                 {% endif %}
                                 <div>
-                                    <div class="text-sm font-medium text-gray-900">{{ user.display_name or user.username }}</div>
-                                    <div class="text-sm text-gray-500">@{{ user.username }}</div>
+                                    <div class="text-sm font-medium text-text-primary">{{ user.display_name or user.username }}</div>
+                                    <div class="text-sm text-text-muted">@{{ user.username }}</div>
                                 </div>
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if user.auth_provider == 'github' %}bg-gray-800 text-white{% else %}bg-blue-100 text-blue-800{% endif %}">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if user.auth_provider == 'github' %}bg-gray-800 text-white{% else %}bg-blue-900/30 border border-blue-500/40 text-blue-400{% endif %}">
                                 {{ user.auth_provider }}
                             </span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-text-muted">
                             {{ user.created_at.strftime('%Y-%m-%d %H:%M') if user.created_at else 'N/A' }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm space-x-2">
@@ -60,7 +60,7 @@
                             </form>
                             <form method="POST" action="{{ url_for('admin.reject_user', user_id=user.id) }}" class="inline" hx-boost="false"
                                   onsubmit="return confirm('Reject and delete this user?')">
-                                <button type="submit" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-md text-red-700 bg-white hover:bg-red-50">
+                                <button type="submit" class="inline-flex items-center px-3 py-1.5 border border-cyber-border text-xs font-medium rounded-md text-red-400 bg-cyber-card hover:bg-red-900/20">
                                     Reject
                                 </button>
                             </form>
@@ -75,19 +75,19 @@
 
     <!-- Approved Users -->
     <div>
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Approved Users ({{ approved|length }})</h2>
-        <div class="bg-white shadow rounded-lg overflow-hidden">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+        <h2 class="text-lg font-semibold text-text-primary mb-4">Approved Users ({{ approved|length }})</h2>
+        <div class="bg-cyber-card border border-cyber-border rounded-lg overflow-hidden">
+            <table class="min-w-full divide-y divide-cyber-border">
+                <thead class="bg-[#0d1220]">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Provider</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registered</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">User</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Role</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Provider</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Registered</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-text-muted uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="bg-cyber-card divide-y divide-cyber-border">
                     {% for user in approved %}
                     <tr>
                         <td class="px-6 py-4 whitespace-nowrap">
@@ -95,44 +95,44 @@
                                 {% if user.avatar_url %}
                                 <img class="h-8 w-8 rounded-full mr-3" src="{{ user.avatar_url }}" alt="">
                                 {% else %}
-                                <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center mr-3">
-                                    <span class="text-sm font-medium text-gray-600">{{ user.username[0]|upper }}</span>
+                                <div class="h-8 w-8 rounded-full bg-cyber-card-hover flex items-center justify-center mr-3">
+                                    <span class="text-sm font-medium text-text-secondary">{{ user.username[0]|upper }}</span>
                                 </div>
                                 {% endif %}
                                 <div>
-                                    <div class="text-sm font-medium text-gray-900">{{ user.display_name or user.username }}</div>
-                                    <div class="text-sm text-gray-500">@{{ user.username }}</div>
+                                    <div class="text-sm font-medium text-text-primary">{{ user.display_name or user.username }}</div>
+                                    <div class="text-sm text-text-muted">@{{ user.username }}</div>
                                 </div>
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if user.role == 'admin' %}bg-purple-100 text-purple-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if user.role == 'admin' %}bg-purple-900/30 border border-purple-500/40 text-purple-400{% else %}bg-gray-800 border border-gray-600/40 text-gray-400{% endif %}">
                                 {{ user.role }}
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if user.auth_provider == 'github' %}bg-gray-800 text-white{% else %}bg-blue-100 text-blue-800{% endif %}">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if user.auth_provider == 'github' %}bg-gray-800 text-white{% else %}bg-blue-900/30 border border-blue-500/40 text-blue-400{% endif %}">
                                 {{ user.auth_provider }}
                             </span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-text-muted">
                             {{ user.created_at.strftime('%Y-%m-%d %H:%M') if user.created_at else 'N/A' }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm space-x-2">
                             {% if user.id != current_user.id %}
                             <form method="POST" action="{{ url_for('admin.toggle_role', user_id=user.id) }}" class="inline" hx-boost="false">
-                                <button type="submit" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                <button type="submit" class="inline-flex items-center px-3 py-1.5 border border-cyber-border text-xs font-medium rounded-md text-text-primary bg-cyber-card-hover hover:bg-cyber-card">
                                     {% if user.role == 'admin' %}Demote{% else %}Promote{% endif %}
                                 </button>
                             </form>
                             <form method="POST" action="{{ url_for('admin.revoke_user', user_id=user.id) }}" class="inline" hx-boost="false"
                                   onsubmit="return confirm('Revoke access for this user?')">
-                                <button type="submit" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-md text-red-700 bg-white hover:bg-red-50">
+                                <button type="submit" class="inline-flex items-center px-3 py-1.5 border border-cyber-border text-xs font-medium rounded-md text-red-400 bg-cyber-card hover:bg-red-900/20">
                                     Revoke
                                 </button>
                             </form>
                             {% else %}
-                            <span class="text-xs text-gray-400">You</span>
+                            <span class="text-xs text-text-muted">You</span>
                             {% endif %}
                         </td>
                     </tr>

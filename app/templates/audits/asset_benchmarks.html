@@ -3,17 +3,17 @@
 {% block content %}
 <nav class="flex mb-4" aria-label="Breadcrumb">
     <ol class="flex items-center space-x-2 text-sm text-text-muted">
-        <li><a href="{{ url_for('hardening.list_tasks') }}" class="hover:text-accent-cyan">Hardening</a></li>
+        <li><a href="{{ url_for('audits.list_audits') }}" class="hover:text-accent-cyan">Audits</a></li>
         <li><span class="mx-1">/</span></li>
-        <li><a href="{{ url_for('hardening.task_detail', task_id=task.id) }}" class="hover:text-accent-cyan">{{ task.title }}</a></li>
+        <li><a href="{{ url_for('audits.session_detail', session_id=session.id) }}" class="hover:text-accent-cyan">{{ session.title }}</a></li>
         <li><span class="mx-1">/</span></li>
         <li class="text-text-primary font-medium">{{ asset.name }} - Benchmarks</li>
     </ol>
 </nav>
 
 <div class="max-w-2xl">
-    <h1 class="text-2xl font-bold text-text-primary mb-2">Assign Hardening Guides</h1>
-    <p class="text-sm text-text-secondary mb-6">Select the CIS benchmarks to apply when hardening <strong>{{ asset.name }}</strong> ({{ asset.asset_type }}).</p>
+    <h1 class="text-2xl font-bold text-text-primary mb-2">Assign Benchmarks</h1>
+    <p class="text-sm text-text-secondary mb-6">Select the CIS benchmarks to audit against for <strong>{{ asset.name }}</strong> ({{ asset.asset_type }}).</p>
 
     <div class="bg-cyber-card border border-cyber-border rounded-lg p-6">
         <form method="POST" class="space-y-6" hx-boost="false">
@@ -36,7 +36,7 @@
             </fieldset>
 
             <div class="flex justify-end space-x-3">
-                <a href="{{ url_for('hardening.task_detail', task_id=task.id) }}" class="inline-flex items-center rounded-md bg-cyber-card-hover px-3 py-2 text-sm font-semibold text-text-primary ring-1 ring-inset ring-cyber-border hover:bg-cyber-card">Cancel</a>
+                <a href="{{ url_for('audits.session_detail', session_id=session.id) }}" class="inline-flex items-center rounded-md bg-cyber-card-hover px-3 py-2 text-sm font-semibold text-text-primary ring-1 ring-inset ring-cyber-border hover:bg-cyber-card">Cancel</a>
                 <button type="submit" class="inline-flex items-center rounded-md bg-accent-red hover:bg-accent-red-hover px-3 py-2 text-sm font-semibold text-white shadow-sm">
                     Save Benchmarks
                 </button>
