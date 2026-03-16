@@ -1,3 +1,4 @@
+<tr id="result-{{ result.id }}" class="{% if result.status == 'pass' %}bg-green-900/10{% elif result.status == 'fail' %}bg-red-900/10{% elif result.status == 'not_applicable' %}bg-gray-800/30{% endif %}">
 {% if session.status == 'in_progress' %}
 <td class="px-4 py-3 text-center">
     <input type="checkbox" class="check-select rounded border-cyber-border bg-cyber-card-hover text-accent-cyan focus:ring-accent-cyan" value="{{ result.check.id }}">
@@ -14,7 +15,7 @@
     {% if session.status == 'in_progress' %}
     <form hx-post="{{ url_for('audits.update_result', session_id=session.id, asset_id=asset.id, check_id=result.check.id) }}"
           hx-target="#result-{{ result.id }}"
-          hx-swap="innerHTML"
+          hx-swap="outerHTML"
           class="flex items-center space-x-1 justify-center">
         <select name="status" onchange="this.form.requestSubmit()"
                 class="text-xs rounded border-cyber-border bg-cyber-card-hover text-text-primary py-1 pr-6 focus:ring-accent-cyan focus:border-accent-cyan
@@ -44,7 +45,7 @@
            hx-post="{{ url_for('audits.update_result', session_id=session.id, asset_id=asset.id, check_id=result.check.id) }}"
            hx-trigger="change"
            hx-target="#result-{{ result.id }}"
-           hx-swap="innerHTML"
+           hx-swap="outerHTML"
            hx-include="closest tr"
            name="finding"
            class="text-xs w-full border-cyber-border bg-cyber-card-hover text-text-primary rounded py-1 px-2 focus:ring-accent-cyan focus:border-accent-cyan">
@@ -60,3 +61,4 @@
         </svg>
     </a>
 </td>
+</tr>

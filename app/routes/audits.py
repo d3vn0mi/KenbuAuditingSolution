@@ -308,11 +308,11 @@ def update_result(session_id, asset_id, check_id):
 
     if request.headers.get('HX-Request'):
         asset = result.asset
-        results = AuditResult.query.filter_by(asset_id=asset.id).all()
+        all_results = AuditResult.query.filter_by(asset_id=asset.id).all()
         row_html = render_template('audits/_result_row.html',
                                    result=result, session=session, asset=asset)
         stats_html = render_template('audits/_asset_stats.html',
-                                     asset=asset, results=results, oob=True)
+                                     asset=asset, results=all_results, oob=True)
         return row_html + stats_html
 
     return redirect(url_for('audits.asset_detail', session_id=session_id, asset_id=asset_id))
@@ -354,6 +354,18 @@ def bulk_update_results(session_id, asset_id):
         result.checked_at = now if status != 'not_checked' else None
 
     db.session.commit()
+
+    if request.headers.get('HX-Request'):
+        all_results = AuditResult.query.filter_by(asset_id=asset.id).all()
+        rows_html = ''.join(
+            render_template('audits/_result_row.html',
+                           result=r, session=session, asset=asset)
+            for r in all_results
+        )
+        stats_html = render_template('audits/_asset_stats.html',
+                                     asset=asset, results=all_results, oob=True)
+        return rows_html + stats_html
+
     flash(f'{len(results)} checks updated to {status.replace("_", " ")}.', 'success')
     return redirect(url_for('audits.asset_detail', session_id=session.id, asset_id=asset.id))
 
