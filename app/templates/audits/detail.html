@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+{% block title %}{{ session.title }} - Kenbu{% endblock %}
+{% block content %}
+<!-- Breadcrumb -->
+<nav class="flex mb-4" aria-label="Breadcrumb">
+    <ol class="flex items-center space-x-2 text-sm text-text-muted">
+        <li><a href="{{ url_for('audits.list_audits') }}" class="hover:text-accent-cyan">Audits</a></li>
+        <li><span class="mx-1">/</span></li>
+        <li class="text-text-primary font-medium">{{ session.title }}</li>
+    </ol>
+</nav>
+
+<!-- Header -->
+<div class="mb-6 flex items-start justify-between">
+    <div>
+        <h1 class="text-2xl font-bold text-text-primary">{{ session.title }}</h1>
+        <div class="mt-2 flex items-center space-x-4 text-sm text-text-muted">
+            {% if session.description %}
+            <span>{{ session.description }}</span>
+            {% endif %}
+            {% if session.standard %}
+            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-purple-900/30 border border-purple-500/40 text-purple-400">{{ session.standard.name }}</span>
+            {% endif %}
+            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
+                {% if session.status == 'completed' %}bg-green-900/30 border border-green-500/40 text-green-400
+                {% elif session.status == 'in_progress' %}bg-yellow-900/30 border border-yellow-500/40 text-yellow-400
+                {% else %}bg-gray-800 border border-gray-600/40 text-gray-400{% endif %}">
+                {{ session.status.replace('_', ' ').title() }}
+            </span>
+        </div>
+    </div>
+    <div class="flex space-x-3">
+        {% if session.status != 'draft' %}
+        <a href="{{ url_for('export.export_audit', session_id=session.id) }}" hx-boost="false"
+           class="inline-flex items-center rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500">
+            <svg class="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+            Export
+        </a>
+        {% endif %}
+        {% if session.status == 'draft' %}
+        <form method="POST" action="{{ url_for('audits.delete_session', session_id=session.id) }}" hx-boost="false">
+            <button type="submit" class="inline-flex items-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500"
+                    onclick="return confirm('Delete this audit session?')">
+                Delete
+            </button>
+        </form>
+        {% endif %}
+        {% if session.status == 'in_progress' %}
+        <form method="POST" action="{{ url_for('audits.complete_session', session_id=session.id) }}" hx-boost="false">
+            <button type="submit" class="inline-flex items-center rounded-md bg-accent-red hover:bg-accent-red-hover px-3 py-2 text-sm font-semibold text-white shadow-sm"
+                    onclick="return confirm('Mark this audit as complete?')">
+                Complete Audit
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+{% if session.status != 'draft' %}
+<!-- Progress Stats -->
+<div class="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
+    <div class="bg-cyber-card border border-cyber-border rounded-lg p-4 text-center">
+        <p class="text-2xl font-bold text-text-primary">{{ assets|length }}</p>
+        <p class="text-xs text-text-muted">Assets</p>
+    </div>
+    <div class="bg-cyber-card border border-cyber-border rounded-lg p-4 text-center">
+        <p class="text-2xl font-bold text-text-primary">{{ session.total_checks }}</p>
+        <p class="text-xs text-text-muted">Total Checks</p>
+    </div>
+    <div class="bg-cyber-card border border-cyber-border rounded-lg p-4 text-center">
+        <p class="text-2xl font-bold text-accent-green">{{ session.pass_count }}</p>
+        <p class="text-xs text-text-muted">Pass</p>
+    </div>
+    <div class="bg-cyber-card border border-cyber-border rounded-lg p-4 text-center">
+        <p class="text-2xl font-bold text-red-400">{{ session.fail_count }}</p>
+        <p class="text-xs text-text-muted">Fail</p>
+    </div>
+    <div class="bg-cyber-card border border-cyber-border rounded-lg p-4 text-center">
+        <p class="text-2xl font-bold text-accent-cyan">{{ session.progress }}%</p>
+        <p class="text-xs text-text-muted">Progress</p>
+    </div>
+</div>
+
+<!-- Progress Bar -->
+<div class="mb-6">
+    <div class="w-full bg-cyber-border rounded-full h-3">
+        <div class="bg-accent-cyan h-3 rounded-full transition-all" style="width: {{ session.progress }}%"></div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Edit Session (draft only) -->
+{% if session.status == 'draft' %}
+<div class="mb-6 bg-cyber-card border border-cyber-border rounded-lg p-6">
+    <h2 class="text-lg font-semibold text-text-primary mb-4">Session Details</h2>
+    <form method="POST" action="{{ url_for('audits.edit_session', session_id=session.id) }}" class="space-y-4" hx-boost="false">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label for="title" class="block text-sm font-medium text-text-primary">Title</label>
+                <input type="text" name="title" id="title" value="{{ session.title }}" required
+                       class="mt-1 block w-full rounded-md border border-cyber-border bg-cyber-card-hover text-text-primary px-3 py-2 shadow-sm focus:border-accent-cyan focus:outline-none focus:ring-1 focus:ring-accent-cyan sm:text-sm">
+            </div>
+            <div>
+                <label for="standard_id" class="block text-sm font-medium text-text-primary">Compliance Standard</label>
+                <select name="standard_id" id="standard_id"
+                        class="mt-1 block w-full rounded-md border border-cyber-border bg-cyber-card-hover text-text-primary px-3 py-2 shadow-sm focus:border-accent-cyan focus:outline-none focus:ring-1 focus:ring-accent-cyan sm:text-sm">
+                    <option value="">No standard filter</option>
+                    {% for standard in standards %}
+                    <option value="{{ standard.id }}" {% if session.standard_id == standard.id %}selected{% endif %}>{{ standard.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div>
+            <label for="description" class="block text-sm font-medium text-text-primary">Description</label>
+            <textarea name="description" id="description" rows="2"
+                      class="mt-1 block w-full rounded-md border border-cyber-border bg-cyber-card-hover text-text-primary px-3 py-2 shadow-sm focus:border-accent-cyan focus:outline-none focus:ring-1 focus:ring-accent-cyan sm:text-sm">{{ session.description or '' }}</textarea>
+        </div>
+        <div class="flex justify-end">
+            <button type="submit" class="inline-flex items-center rounded-md bg-accent-red hover:bg-accent-red-hover px-3 py-2 text-sm font-semibold text-white shadow-sm">
+                Update Session
+            </button>
+        </div>
+    </form>
+</div>
+{% endif %}
+
+<!-- Assets Section -->
+<div class="mb-4 flex items-center justify-between">
+    <h2 class="text-lg font-semibold text-text-primary">Assets</h2>
+    {% if session.status in ['draft', 'in_progress'] %}
+    <a href="{{ url_for('audits.new_asset', session_id=session.id) }}" class="inline-flex items-center rounded-md bg-accent-red hover:bg-accent-red-hover px-3 py-2 text-sm font-semibold text-white shadow-sm">
+        <svg class="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+        Add Asset
+    </a>
+    {% endif %}
+</div>
+
+{% if assets %}
+<div class="bg-cyber-card border border-cyber-border rounded-lg overflow-hidden">
+    <table class="min-w-full divide-y divide-cyber-border">
+        <thead class="bg-[#0d1220]">
+            <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase">Name</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase">Type</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase">Benchmarks</th>
+                {% if session.status != 'draft' %}
+                <th class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase">Progress</th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-text-muted uppercase">Pass</th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-text-muted uppercase">Fail</th>
+                {% endif %}
+                <th class="px-6 py-3 text-right text-xs font-medium text-text-muted uppercase">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="bg-cyber-card divide-y divide-cyber-border">
+            {% for asset in assets %}
+            <tr class="hover:bg-cyber-card-hover">
+                <td class="px-6 py-4 whitespace-nowrap">
+                    {% if session.status != 'draft' %}
+                    <a href="{{ url_for('audits.asset_detail', session_id=session.id, asset_id=asset.id) }}" class="text-sm font-medium text-accent-cyan hover:text-accent-cyan-dim">{{ asset.name }}</a>
+                    {% else %}
+                    <span class="text-sm font-medium text-text-primary">{{ asset.name }}</span>
+                    {% endif %}
+                    {% if asset.ip_address %}
+                    <p class="text-xs text-text-muted">{{ asset.ip_address }}</p>
+                    {% endif %}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-blue-900/30 border border-blue-500/40 text-blue-400">{{ asset.asset_type }}</span>
+                </td>
+                <td class="px-6 py-4">
+                    <div class="flex flex-wrap gap-1">
+                        {% for ab in asset.benchmarks %}
+                        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-gray-800 border border-gray-600/40 text-gray-400">{{ ab.benchmark.platform.name }} v{{ ab.benchmark.version }}</span>
+                        {% endfor %}
+                        {% if not asset.benchmarks %}
+                        <span class="text-xs text-red-500">No benchmarks assigned</span>
+                        {% endif %}
+                    </div>
+                </td>
+                {% if session.status != 'draft' %}
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <div class="w-24 bg-cyber-border rounded-full h-2 mr-2">
+                            <div class="bg-accent-cyan h-2 rounded-full" style="width: {{ asset.progress }}%"></div>
+                        </div>
+                        <span class="text-sm text-text-secondary">{{ asset.progress }}%</span>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-accent-green">{{ asset.pass_count }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-red-400">{{ asset.fail_count }}</td>
+                {% endif %}
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm space-x-2">
+                    {% if session.status != 'draft' %}
+                    <a href="{{ url_for('audits.asset_detail', session_id=session.id, asset_id=asset.id) }}" class="text-accent-cyan hover:text-accent-cyan-dim">
+                        Open Checklist
+                    </a>
+                    {% endif %}
+                    {% if session.status in ['draft', 'in_progress'] %}
+                    <a href="{{ url_for('audits.asset_benchmarks', session_id=session.id, asset_id=asset.id) }}" class="text-accent-cyan hover:text-accent-cyan-dim">Benchmarks</a>
+                    <form method="POST" action="{{ url_for('audits.delete_asset', session_id=session.id, asset_id=asset.id) }}" class="inline" hx-boost="false">
+                        <button type="submit" class="text-red-400 hover:text-red-300" onclick="return confirm('Remove this asset{% if session.status == 'in_progress' %} and all its check results{% endif %}?')">Remove</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if session.status == 'draft' and assets %}
+<div class="mt-6">
+    <form method="POST" action="{{ url_for('audits.start_session', session_id=session.id) }}" hx-boost="false">
+        <button type="submit" class="inline-flex items-center rounded-md bg-accent-red hover:bg-accent-red-hover px-4 py-2 text-sm font-semibold text-white shadow-sm"
+                onclick="return confirm('Start this audit? Check results will be generated for all assets.')">
+            <svg class="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" />
+            </svg>
+            Start Audit
+        </button>
+    </form>
+</div>
+{% endif %}
+
+{% else %}
+<div class="text-center py-8 bg-cyber-card border border-cyber-border rounded-lg">
+    <p class="text-sm text-text-muted">No assets added yet. Add assets to define what systems you want to audit.</p>
+    {% if session.status in ['draft', 'in_progress'] %}
+    <div class="mt-4">
+        <a href="{{ url_for('audits.new_asset', session_id=session.id) }}" class="inline-flex items-center rounded-md bg-accent-red hover:bg-accent-red-hover px-3 py-2 text-sm font-semibold text-white shadow-sm">Add First Asset</a>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+{% if session.notes %}
+<div class="mt-6 bg-cyber-card border border-cyber-border rounded-lg p-4">
+    <h3 class="text-sm font-semibold text-text-primary mb-2">Session Notes</h3>
+    <p class="text-sm text-text-secondary">{{ session.notes }}</p>
+</div>
+{% endif %}
+{% endblock %}

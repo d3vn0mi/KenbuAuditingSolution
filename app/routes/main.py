@@ -14,7 +14,7 @@ def dashboard():
     total_checks = Check.query.count()
     recent_audits = AuditSession.query.filter_by(
         user_id=current_user.id
-    ).order_by(AuditSession.started_at.desc()).limit(5).all()
+    ).order_by(AuditSession.created_at.desc()).limit(5).all()
     my_hardening = HardeningTask.query.filter_by(
         user_id=current_user.id
     ).order_by(HardeningTask.created_at.desc()).limit(5).all()
@@ -24,7 +24,7 @@ def dashboard():
     all_hardening = None
     if current_user.is_admin:
         all_audits = AuditSession.query.order_by(
-            AuditSession.started_at.desc()
+            AuditSession.created_at.desc()
         ).limit(10).all()
         all_hardening = HardeningTask.query.order_by(
             HardeningTask.created_at.desc()

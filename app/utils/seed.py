@@ -3,6 +3,7 @@ import yaml
 from datetime import date
 from ..extensions import db
 from ..models import User, Platform, Benchmark, BenchmarkSection, Check
+from ..models.standard import Standard, StandardCheck
 
 
 def load_yaml(filepath):
@@ -201,6 +202,85 @@ def seed_platforms():
     db.session.commit()
 
 
+def seed_standards(data_dir):
+    """Seed compliance standards (GDPR, NIS2) from YAML files or defaults."""
+    standards_dir = os.path.join(data_dir, 'standards')
+
+    defaults = [
+        {
+            'name': 'GDPR',
+            'slug': 'gdpr',
+            'description': 'General Data Protection Regulation (EU) 2016/679',
+            'version': '2016/679',
+        },
+        {
+            'name': 'NIS2',
+            'slug': 'nis2',
+            'description': 'Network and Information Security Directive (EU) 2022/2555',
+            'version': '2022/2555',
+        },
+    ]
+
+    for std_data in defaults:
+        if not Standard.query.filter_by(slug=std_data['slug']).first():
+            standard = Standard(**std_data)
+            db.session.add(standard)
+            print(f'  Created standard: {std_data["name"]}')
+
+    db.session.commit()
+
+    # Load standard-check mappings from YAML if available
+    if os.path.exists(standards_dir):
+        for filename in sorted(os.listdir(standards_dir)):
+            if filename.endswith('.yaml') or filename.endswith('.yml'):
+                filepath = os.path.join(standards_dir, filename)
+                _seed_standard_checks(filepath)
+
+
+def _seed_standard_checks(filepath):
+    """Load standard-to-check mappings from a YAML file."""
+    data = load_yaml(filepath)
+    if not data:
+        return
+
+    slug = data.get('standard_slug')
+    if not slug:
+        return
+
+    standard = Standard.query.filter_by(slug=slug).first()
+    if not standard:
+        print(f'  WARNING: Standard {slug} not found, skipping {os.path.basename(filepath)}')
+        return
+
+    mappings = data.get('mappings', [])
+    added = 0
+    for mapping in mappings:
+        check_number = mapping.get('check_number')
+        if not check_number:
+            continue
+
+        check = Check.query.filter_by(check_number=check_number).first()
+        if not check:
+            continue
+
+        existing = StandardCheck.query.filter_by(
+            standard_id=standard.id, check_id=check.id
+        ).first()
+        if not existing:
+            sc = StandardCheck(
+                standard_id=standard.id,
+                check_id=check.id,
+                article=mapping.get('article', ''),
+                requirement=mapping.get('requirement', ''),
+            )
+            db.session.add(sc)
+            added += 1
+
+    db.session.commit()
+    if added:
+        print(f'  Loaded {added} check mappings for {standard.name}')
+
+
 def seed_all(data_dir):
     """Run all seed operations."""
     print('Seeding platforms...')
@@ -208,6 +288,9 @@ def seed_all(data_dir):
 
     print('Seeding users...')
     seed_users(data_dir)
+
+    print('Seeding standards...')
+    seed_standards(data_dir)
 
     print('Seeding benchmarks...')
     benchmarks_dir = os.path.join(data_dir, 'benchmarks')
@@ -226,3 +309,4 @@ def seed_all(data_dir):
     print(f'  Sections: {BenchmarkSection.query.count()}')
     print(f'  Checks: {Check.query.count()}')
     print(f'  Users: {User.query.count()}')
+    print(f'  Standards: {Standard.query.count()}')

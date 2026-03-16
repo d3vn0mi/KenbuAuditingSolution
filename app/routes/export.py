@@ -1,6 +1,7 @@
 from flask import Blueprint, send_file, request, render_template, make_response
 from flask_login import login_required, current_user
-from ..models import Benchmark, AuditSession
+from ..models import Benchmark, Check
+from ..models.audit import AuditSession, AuditAsset, AuditResult
 from ..models.hardening import HardeningTask, HardeningCheckResult, HardeningAsset
 from ..utils.excel_export import export_benchmark_to_excel, export_audit_to_excel, export_hardening_to_excel
 
@@ -30,15 +31,16 @@ def export_benchmark(benchmark_id):
 @export_bp.route('/audit/<int:session_id>')
 @login_required
 def export_audit(session_id):
+    from flask import abort
     session = AuditSession.query.get_or_404(session_id)
     if session.user_id != current_user.id:
-        from flask import abort
         abort(403)
 
     output = export_audit_to_excel(session)
 
-    target = session.target_name.replace(' ', '_') if session.target_name else 'audit'
-    filename = f'Audit_Report_{target}_{session.started_at.strftime("%Y%m%d")}.xlsx'
+    title_slug = session.title.replace(' ', '_')[:30]
+    date_str = (session.started_at or session.created_at).strftime('%Y%m%d')
+    filename = f'Audit_Report_{title_slug}_{date_str}.xlsx'
     return send_file(
         output,
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -72,7 +74,6 @@ def export_hardening_excel(task_id):
 @login_required
 def export_hardening_html(task_id):
     from flask import abort
-    from ..models import Check
     task = HardeningTask.query.get_or_404(task_id)
     if task.user_id != current_user.id:
         abort(403)

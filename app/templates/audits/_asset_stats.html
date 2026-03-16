@@ -1,17 +1,21 @@
-<div id="asset-stats" {% if oob %}hx-swap-oob="true"{% endif %}
+<div id="asset-stats" {% if oob %}hx-swap-oob="true"{% endif %}>
     <!-- Progress Stats -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
         <div class="bg-cyber-card border border-cyber-border rounded-lg p-4 text-center">
             <p class="text-2xl font-bold text-text-primary">{{ results|length }}</p>
             <p class="text-xs text-text-muted">Total</p>
         </div>
         <div class="bg-cyber-card border border-cyber-border rounded-lg p-4 text-center">
-            <p class="text-2xl font-bold text-green-600">{{ results|selectattr('status', 'equalto', 'done')|list|length }}</p>
-            <p class="text-xs text-text-muted">Done</p>
+            <p class="text-2xl font-bold text-accent-green">{{ results|selectattr('status', 'equalto', 'pass')|list|length }}</p>
+            <p class="text-xs text-text-muted">Pass</p>
         </div>
         <div class="bg-cyber-card border border-cyber-border rounded-lg p-4 text-center">
-            <p class="text-2xl font-bold text-text-muted">{{ results|selectattr('status', 'equalto', 'skipped')|list|length }}</p>
-            <p class="text-xs text-text-muted">Skipped</p>
+            <p class="text-2xl font-bold text-red-400">{{ results|selectattr('status', 'equalto', 'fail')|list|length }}</p>
+            <p class="text-xs text-text-muted">Fail</p>
+        </div>
+        <div class="bg-cyber-card border border-cyber-border rounded-lg p-4 text-center">
+            <p class="text-2xl font-bold text-text-muted">{{ results|selectattr('status', 'equalto', 'not_applicable')|list|length }}</p>
+            <p class="text-xs text-text-muted">N/A</p>
         </div>
         <div class="bg-cyber-card border border-cyber-border rounded-lg p-4 text-center">
             <p class="text-2xl font-bold text-accent-cyan">{{ asset.progress }}%</p>

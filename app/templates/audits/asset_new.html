@@ -3,9 +3,9 @@
 {% block content %}
 <nav class="flex mb-4" aria-label="Breadcrumb">
     <ol class="flex items-center space-x-2 text-sm text-text-muted">
-        <li><a href="{{ url_for('hardening.list_tasks') }}" class="hover:text-accent-cyan">Hardening</a></li>
+        <li><a href="{{ url_for('audits.list_audits') }}" class="hover:text-accent-cyan">Audits</a></li>
         <li><span class="mx-1">/</span></li>
-        <li><a href="{{ url_for('hardening.task_detail', task_id=task.id) }}" class="hover:text-accent-cyan">{{ task.title }}</a></li>
+        <li><a href="{{ url_for('audits.session_detail', session_id=session.id) }}" class="hover:text-accent-cyan">{{ session.title }}</a></li>
         <li><span class="mx-1">/</span></li>
         <li class="text-text-primary font-medium">Add Asset</li>
     </ol>
@@ -20,7 +20,7 @@
                 <label for="name" class="block text-sm font-medium text-text-primary">Asset Name</label>
                 <input type="text" name="name" id="name" required autofocus placeholder="e.g., PROD-WEB-01"
                        class="mt-1 block w-full rounded-md border border-cyber-border bg-cyber-card-hover text-text-primary px-3 py-2 shadow-sm focus:border-accent-cyan focus:outline-none focus:ring-1 focus:ring-accent-cyan sm:text-sm">
-                <p class="mt-1 text-xs text-text-muted">Hostname or descriptive name of the system to harden.</p>
+                <p class="mt-1 text-xs text-text-muted">Hostname or descriptive name of the system being audited.</p>
             </div>
 
             <div>
@@ -39,13 +39,19 @@
             </div>
 
             <div>
+                <label for="ip_address" class="block text-sm font-medium text-text-primary">IP Address</label>
+                <input type="text" name="ip_address" id="ip_address" placeholder="e.g., 192.168.1.100"
+                       class="mt-1 block w-full rounded-md border border-cyber-border bg-cyber-card-hover text-text-primary px-3 py-2 shadow-sm focus:border-accent-cyan focus:outline-none focus:ring-1 focus:ring-accent-cyan sm:text-sm">
+            </div>
+
+            <div>
                 <label for="notes" class="block text-sm font-medium text-text-primary">Notes</label>
                 <textarea name="notes" id="notes" rows="3" placeholder="Any additional notes about this asset..."
                           class="mt-1 block w-full rounded-md border border-cyber-border bg-cyber-card-hover text-text-primary px-3 py-2 shadow-sm focus:border-accent-cyan focus:outline-none focus:ring-1 focus:ring-accent-cyan sm:text-sm"></textarea>
             </div>
 
             <div class="flex justify-end space-x-3">
-                <a href="{{ url_for('hardening.task_detail', task_id=task.id) }}" class="inline-flex items-center rounded-md bg-cyber-card-hover px-3 py-2 text-sm font-semibold text-text-primary ring-1 ring-inset ring-cyber-border hover:bg-cyber-card">Cancel</a>
+                <a href="{{ url_for('audits.session_detail', session_id=session.id) }}" class="inline-flex items-center rounded-md bg-cyber-card-hover px-3 py-2 text-sm font-semibold text-text-primary ring-1 ring-inset ring-cyber-border hover:bg-cyber-card">Cancel</a>
                 <button type="submit" class="inline-flex items-center rounded-md bg-accent-red hover:bg-accent-red-hover px-3 py-2 text-sm font-semibold text-white shadow-sm">
                     Add Asset &amp; Assign Benchmarks
                 </button>
