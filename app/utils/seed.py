@@ -259,22 +259,23 @@ def _seed_standard_checks(filepath):
         if not check_number:
             continue
 
-        check = Check.query.filter_by(check_number=check_number).first()
-        if not check:
+        checks = Check.query.filter_by(check_number=check_number).all()
+        if not checks:
             continue
 
-        existing = StandardCheck.query.filter_by(
-            standard_id=standard.id, check_id=check.id
-        ).first()
-        if not existing:
-            sc = StandardCheck(
-                standard_id=standard.id,
-                check_id=check.id,
-                article=mapping.get('article', ''),
-                requirement=mapping.get('requirement', ''),
-            )
-            db.session.add(sc)
-            added += 1
+        for check in checks:
+            existing = StandardCheck.query.filter_by(
+                standard_id=standard.id, check_id=check.id
+            ).first()
+            if not existing:
+                sc = StandardCheck(
+                    standard_id=standard.id,
+                    check_id=check.id,
+                    article=mapping.get('article', ''),
+                    requirement=mapping.get('requirement', ''),
+                )
+                db.session.add(sc)
+                added += 1
 
     db.session.commit()
     if added:
