@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% block title %}{{ asset.name }} - Hardening - Kenbu{% endblock %}
+{% block title %}{{ asset.name }} - Audit - Kenbu{% endblock %}
 {% block content %}
 <!-- Breadcrumb -->
 <nav class="flex mb-4" aria-label="Breadcrumb">
     <ol class="flex items-center space-x-2 text-sm text-text-muted">
-        <li><a href="{{ url_for('hardening.list_tasks') }}" class="hover:text-accent-cyan">Hardening</a></li>
+        <li><a href="{{ url_for('audits.list_audits') }}" class="hover:text-accent-cyan">Audits</a></li>
         <li><span class="mx-1">/</span></li>
-        <li><a href="{{ url_for('hardening.task_detail', task_id=task.id) }}" class="hover:text-accent-cyan">{{ task.title }}</a></li>
+        <li><a href="{{ url_for('audits.session_detail', session_id=session.id) }}" class="hover:text-accent-cyan">{{ session.title }}</a></li>
         <li><span class="mx-1">/</span></li>
         <li class="text-text-primary font-medium">{{ asset.name }}</li>
     </ol>
@@ -18,36 +18,40 @@
         <h1 class="text-2xl font-bold text-text-primary">{{ asset.name }}</h1>
         <div class="mt-2 flex items-center space-x-4 text-sm text-text-muted">
             <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-blue-900/30 border border-blue-500/40 text-blue-400">{{ asset.asset_type }}</span>
+            {% if asset.ip_address %}
+            <span>{{ asset.ip_address }}</span>
+            {% endif %}
             {% for ab in asset.benchmarks %}
             <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-gray-800 border border-gray-600/40 text-gray-400">{{ ab.benchmark.platform.name }} v{{ ab.benchmark.version }}</span>
             {% endfor %}
             <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
-                {% if task.status == 'completed' %}bg-green-900/30 border border-green-500/40 text-green-400
-                {% elif task.status == 'in_progress' %}bg-yellow-900/30 border border-yellow-500/40 text-yellow-400
+                {% if session.status == 'completed' %}bg-green-900/30 border border-green-500/40 text-green-400
+                {% elif session.status == 'in_progress' %}bg-yellow-900/30 border border-yellow-500/40 text-yellow-400
                 {% else %}bg-gray-800 border border-gray-600/40 text-gray-400{% endif %}">
-                {{ task.status.replace('_', ' ').title() }}
+                {{ session.status.replace('_', ' ').title() }}
             </span>
         </div>
     </div>
-    <a href="{{ url_for('hardening.task_detail', task_id=task.id) }}" class="inline-flex items-center rounded-md bg-cyber-card-hover px-3 py-2 text-sm font-semibold text-text-primary ring-1 ring-inset ring-cyber-border hover:bg-cyber-card">
-        Back to Task
+    <a href="{{ url_for('audits.session_detail', session_id=session.id) }}" class="inline-flex items-center rounded-md bg-cyber-card-hover px-3 py-2 text-sm font-semibold text-text-primary ring-1 ring-inset ring-cyber-border hover:bg-cyber-card">
+        Back to Session
     </a>
 </div>
 
-{% include 'hardening/_asset_stats.html' %}
+{% include 'audits/_asset_stats.html' %}
 
 <!-- Bulk Action Bar (visible when checks selected) -->
-{% if task.status == 'in_progress' %}
+{% if session.status == 'in_progress' %}
 <div id="bulk-bar" class="hidden mb-4 bg-cyber-card border border-accent-cyan/30 rounded-lg p-4 flex items-center justify-between sticky top-0 z-10">
     <div class="flex items-center space-x-3">
         <span class="text-sm font-medium text-text-primary"><span id="selected-count">0</span> checks selected</span>
     </div>
-    <form method="POST" action="{{ url_for('hardening.bulk_update_checks', task_id=task.id, asset_id=asset.id) }}" hx-boost="false" id="bulk-form">
+    <form method="POST" action="{{ url_for('audits.bulk_update_results', session_id=session.id, asset_id=asset.id) }}" hx-boost="false" id="bulk-form">
         <div class="flex items-center space-x-3">
             <select name="bulk_status" class="text-sm rounded border-cyber-border bg-cyber-card-hover text-text-primary py-1.5 pr-8 focus:ring-accent-cyan focus:border-accent-cyan">
-                <option value="done">Done</option>
-                <option value="skipped">Skipped</option>
-                <option value="pending">Pending</option>
+                <option value="pass">Pass</option>
+                <option value="fail">Fail</option>
+                <option value="not_applicable">N/A</option>
+                <option value="not_checked">Not Checked</option>
             </select>
             <button type="submit" class="inline-flex items-center rounded-md bg-accent-red hover:bg-accent-red-hover px-3 py-1.5 text-sm font-semibold text-white shadow-sm">
                 Apply
@@ -62,7 +66,7 @@
     <table class="min-w-full divide-y divide-cyber-border">
         <thead class="bg-[#0d1220]">
             <tr>
-                {% if task.status == 'in_progress' %}
+                {% if session.status == 'in_progress' %}
                 <th class="px-4 py-3 text-center w-10">
                     <input type="checkbox" id="select-all" class="rounded border-cyber-border bg-cyber-card-hover text-accent-cyan focus:ring-accent-cyan">
                 </th>
@@ -71,21 +75,21 @@
                 <th class="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase">Title</th>
                 <th class="px-4 py-3 text-center text-xs font-medium text-text-muted uppercase w-16">Level</th>
                 <th class="px-4 py-3 text-center text-xs font-medium text-text-muted uppercase w-32">Status</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase w-48">Notes</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase w-48">Finding</th>
                 <th class="px-4 py-3 text-center text-xs font-medium text-text-muted uppercase w-16">View</th>
             </tr>
         </thead>
         <tbody class="bg-cyber-card divide-y divide-cyber-border">
             {% for result in results %}
-            <tr id="result-{{ result.id }}" class="{% if result.status == 'done' %}bg-green-900/10{% elif result.status == 'skipped' %}bg-gray-800/30{% endif %}">
-                {% include 'hardening/_check_row.html' %}
+            <tr id="result-{{ result.id }}" class="{% if result.status == 'pass' %}bg-green-900/10{% elif result.status == 'fail' %}bg-red-900/10{% elif result.status == 'not_applicable' %}bg-gray-800/30{% endif %}">
+                {% include 'audits/_result_row.html' %}
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
 
-{% if task.status == 'in_progress' %}
+{% if session.status == 'in_progress' %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const selectAll = document.getElementById('select-all');
