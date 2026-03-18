@@ -1,7 +1,9 @@
 from flask import Blueprint, render_template
 from flask_login import login_required, current_user
+from ..extensions import db
 from ..models import Platform, Benchmark, Check, AuditSession
 from ..models.hardening import HardeningTask
+from ..models.pentest import PentestAssessment, PentestTeamMember
 
 main_bp = Blueprint('main', __name__)
 
@@ -18,6 +20,16 @@ def dashboard():
     my_hardening = HardeningTask.query.filter_by(
         user_id=current_user.id
     ).order_by(HardeningTask.created_at.desc()).limit(5).all()
+
+    # Pentests: owned + team member
+    owned_pentests = PentestAssessment.query.filter_by(user_id=current_user.id)
+    member_ids = db.session.query(PentestTeamMember.assessment_id).filter_by(
+        user_id=current_user.id
+    )
+    team_pentests = PentestAssessment.query.filter(PentestAssessment.id.in_(member_ids.scalar_subquery()))
+    my_pentests = owned_pentests.union(team_pentests).order_by(
+        PentestAssessment.created_at.desc()
+    ).limit(5).all()
 
     # Admin: all audits and hardening tasks across users
     all_audits = None
@@ -36,5 +48,6 @@ def dashboard():
                            total_checks=total_checks,
                            recent_audits=recent_audits,
                            my_hardening=my_hardening,
+                           my_pentests=my_pentests,
                            all_audits=all_audits,
                            all_hardening=all_hardening)

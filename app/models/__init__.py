@@ -5,6 +5,8 @@ from .check import Check
 from .standard import Standard, StandardCheck
 from .audit import AuditSession, AuditAsset, AuditAssetBenchmark, AuditResult
 from .hardening import HardeningTask, HardeningAsset, HardeningAssetBenchmark, HardeningCheckResult
+from .pentest import (PentestAssessment, PentestPhase, PentestChecklistItem,
+                      PentestFinding, PentestDocument, PentestTeamMember)
 
 __all__ = [
     'User',
@@ -22,4 +24,10 @@ __all__ = [
     'HardeningAsset',
     'HardeningAssetBenchmark',
     'HardeningCheckResult',
+    'PentestAssessment',
+    'PentestPhase',
+    'PentestChecklistItem',
+    'PentestFinding',
+    'PentestDocument',
+    'PentestTeamMember',
 ]
