@@ -1,24 +1,14 @@
 import io
 import base64
-from functools import wraps
 import pyotp
 import qrcode
 from flask import Blueprint, render_template, redirect, url_for, flash, abort, request, session
 from flask_login import login_required, current_user
 from ..extensions import db
-from ..models.user import User
+from ..models.user import User, VALID_ROLES
+from ..utils.auth import admin_required
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
-
-
-def admin_required(f):
-    @wraps(f)
-    @login_required
-    def decorated(*args, **kwargs):
-        if not current_user.is_admin:
-            abort(403)
-        return f(*args, **kwargs)
-    return decorated
 
 
 @admin_bp.route('/users')
@@ -57,18 +47,22 @@ def reject_user(user_id):
     return redirect(url_for('admin.users'))
 
 
-@admin_bp.route('/users/<int:user_id>/toggle-role', methods=['POST'])
+@admin_bp.route('/users/<int:user_id>/set-role', methods=['POST'])
 @admin_required
-def toggle_role(user_id):
+def set_role(user_id):
     user = db.session.get(User, user_id)
     if not user:
         abort(404)
     if user.id == current_user.id:
         flash('You cannot change your own role.', 'error')
         return redirect(url_for('admin.users'))
-    user.role = 'user' if user.role == 'admin' else 'admin'
+    new_role = request.form.get('role', '').strip()
+    if new_role not in VALID_ROLES:
+        flash('Invalid role.', 'error')
+        return redirect(url_for('admin.users'))
+    user.role = new_role
     db.session.commit()
-    flash(f'User "{user.username}" is now {user.role}.', 'success')
+    flash(f'User "{user.username}" is now {new_role.replace("_", " ")}.', 'success')
     return redirect(url_for('admin.users'))
 
 
