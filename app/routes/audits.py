@@ -1,16 +1,17 @@
 from datetime import datetime, timezone
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort
-from flask_login import login_required, current_user
+from flask_login import current_user
 from ..extensions import db
 from ..models import Benchmark, BenchmarkSection, Check
 from ..models.audit import AuditSession, AuditAsset, AuditAssetBenchmark, AuditResult
 from ..models.standard import Standard, StandardCheck
+from ..utils.auth import auditor_required
 
 audits_bp = Blueprint('audits', __name__, url_prefix='/audits')
 
 
 @audits_bp.route('/')
-@login_required
+@auditor_required
 def list_audits():
     sessions = AuditSession.query.filter_by(
         user_id=current_user.id
@@ -19,7 +20,7 @@ def list_audits():
 
 
 @audits_bp.route('/new', methods=['GET', 'POST'])
-@login_required
+@auditor_required
 def new_audit():
     if request.method == 'POST':
         title = request.form.get('title', '').strip()
@@ -49,7 +50,7 @@ def new_audit():
 
 
 @audits_bp.route('/<int:session_id>')
-@login_required
+@auditor_required
 def session_detail(session_id):
     session = AuditSession.query.get_or_404(session_id)
     if session.user_id != current_user.id:
@@ -64,7 +65,7 @@ def session_detail(session_id):
 
 
 @audits_bp.route('/<int:session_id>/edit', methods=['POST'])
-@login_required
+@auditor_required
 def edit_session(session_id):
     session = AuditSession.query.get_or_404(session_id)
     if session.user_id != current_user.id:
@@ -90,7 +91,7 @@ def edit_session(session_id):
 
 
 @audits_bp.route('/<int:session_id>/delete', methods=['POST'])
-@login_required
+@auditor_required
 def delete_session(session_id):
     session = AuditSession.query.get_or_404(session_id)
     if session.user_id != current_user.id:
@@ -106,7 +107,7 @@ def delete_session(session_id):
 
 
 @audits_bp.route('/<int:session_id>/assets/new', methods=['GET', 'POST'])
-@login_required
+@auditor_required
 def new_asset(session_id):
     session = AuditSession.query.get_or_404(session_id)
     if session.user_id != current_user.id:
@@ -141,7 +142,7 @@ def new_asset(session_id):
 
 
 @audits_bp.route('/<int:session_id>/assets/<int:asset_id>/delete', methods=['POST'])
-@login_required
+@auditor_required
 def delete_asset(session_id, asset_id):
     session = AuditSession.query.get_or_404(session_id)
     if session.user_id != current_user.id:
@@ -161,7 +162,7 @@ def delete_asset(session_id, asset_id):
 
 
 @audits_bp.route('/<int:session_id>/assets/<int:asset_id>/benchmarks', methods=['GET', 'POST'])
-@login_required
+@auditor_required
 def asset_benchmarks(session_id, asset_id):
     session = AuditSession.query.get_or_404(session_id)
     if session.user_id != current_user.id:
@@ -227,7 +228,7 @@ def _generate_audit_results_for_asset(asset, standard_id=None):
 
 
 @audits_bp.route('/<int:session_id>/start', methods=['POST'])
-@login_required
+@auditor_required
 def start_session(session_id):
     session = AuditSession.query.get_or_404(session_id)
     if session.user_id != current_user.id:
@@ -264,7 +265,7 @@ def start_session(session_id):
 
 
 @audits_bp.route('/<int:session_id>/assets/<int:asset_id>')
-@login_required
+@auditor_required
 def asset_detail(session_id, asset_id):
     session = AuditSession.query.get_or_404(session_id)
     if session.user_id != current_user.id:
@@ -283,7 +284,7 @@ def asset_detail(session_id, asset_id):
 
 
 @audits_bp.route('/<int:session_id>/assets/<int:asset_id>/check/<int:check_id>', methods=['POST'])
-@login_required
+@auditor_required
 def update_result(session_id, asset_id, check_id):
     session = AuditSession.query.get_or_404(session_id)
     if session.user_id != current_user.id:
@@ -319,7 +320,7 @@ def update_result(session_id, asset_id, check_id):
 
 
 @audits_bp.route('/<int:session_id>/assets/<int:asset_id>/bulk-update', methods=['POST'])
-@login_required
+@auditor_required
 def bulk_update_results(session_id, asset_id):
     session = AuditSession.query.get_or_404(session_id)
     if session.user_id != current_user.id:
@@ -371,7 +372,7 @@ def bulk_update_results(session_id, asset_id):
 
 
 @audits_bp.route('/<int:session_id>/complete', methods=['POST'])
-@login_required
+@auditor_required
 def complete_session(session_id):
     session = AuditSession.query.get_or_404(session_id)
     if session.user_id != current_user.id:

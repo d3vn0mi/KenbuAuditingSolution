@@ -14,22 +14,31 @@ def dashboard():
     platforms = Platform.query.order_by(Platform.name).all()
     benchmarks = Benchmark.query.all()
     total_checks = Check.query.count()
-    recent_audits = AuditSession.query.filter_by(
-        user_id=current_user.id
-    ).order_by(AuditSession.created_at.desc()).limit(5).all()
-    my_hardening = HardeningTask.query.filter_by(
-        user_id=current_user.id
-    ).order_by(HardeningTask.created_at.desc()).limit(5).all()
 
-    # Pentests: owned + team member
-    owned_pentests = PentestAssessment.query.filter_by(user_id=current_user.id)
-    member_ids = db.session.query(PentestTeamMember.assessment_id).filter_by(
-        user_id=current_user.id
-    )
-    team_pentests = PentestAssessment.query.filter(PentestAssessment.id.in_(member_ids.scalar_subquery()))
-    my_pentests = owned_pentests.union(team_pentests).order_by(
-        PentestAssessment.created_at.desc()
-    ).limit(5).all()
+    recent_audits = []
+    my_pentests = []
+    my_hardening = []
+
+    if current_user.can_audit:
+        recent_audits = AuditSession.query.filter_by(
+            user_id=current_user.id
+        ).order_by(AuditSession.created_at.desc()).limit(5).all()
+
+    if current_user.can_harden:
+        my_hardening = HardeningTask.query.filter_by(
+            user_id=current_user.id
+        ).order_by(HardeningTask.created_at.desc()).limit(5).all()
+
+    if current_user.can_pentest:
+        # Pentests: owned + team member
+        owned_pentests = PentestAssessment.query.filter_by(user_id=current_user.id)
+        member_ids = db.session.query(PentestTeamMember.assessment_id).filter_by(
+            user_id=current_user.id
+        )
+        team_pentests = PentestAssessment.query.filter(PentestAssessment.id.in_(member_ids.scalar_subquery()))
+        my_pentests = owned_pentests.union(team_pentests).order_by(
+            PentestAssessment.created_at.desc()
+        ).limit(5).all()
 
     # Admin: all audits and hardening tasks across users
     all_audits = None

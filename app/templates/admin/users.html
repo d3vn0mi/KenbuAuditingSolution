@@ -106,8 +106,12 @@
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if user.role == 'admin' %}bg-purple-900/30 border border-purple-500/40 text-purple-400{% else %}bg-gray-800 border border-gray-600/40 text-gray-400{% endif %}">
-                                {{ user.role }}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                {% if user.role == 'admin' %}bg-purple-900/30 border border-purple-500/40 text-purple-400
+                                {% elif user.role == 'auditor' %}bg-cyan-900/30 border border-cyan-500/40 text-cyan-400
+                                {% elif user.role == 'security_engineer' %}bg-green-900/30 border border-green-500/40 text-green-400
+                                {% else %}bg-gray-800 border border-gray-600/40 text-gray-400{% endif %}">
+                                {{ user.role.replace('_', ' ') }}
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
@@ -120,9 +124,15 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm space-x-2">
                             {% if user.id != current_user.id %}
-                            <form method="POST" action="{{ url_for('admin.toggle_role', user_id=user.id) }}" class="inline" hx-boost="false">
+                            <form method="POST" action="{{ url_for('admin.set_role', user_id=user.id) }}" class="inline-flex items-center gap-2" hx-boost="false">
+                                <select name="role" class="rounded-md bg-cyber-card border border-cyber-border py-1 pl-2 pr-6 text-xs text-text-primary focus:ring-1 focus:ring-accent-cyan focus:border-accent-cyan">
+                                    <option value="user" {% if user.role == 'user' %}selected{% endif %}>user</option>
+                                    <option value="security_engineer" {% if user.role == 'security_engineer' %}selected{% endif %}>security engineer</option>
+                                    <option value="auditor" {% if user.role == 'auditor' %}selected{% endif %}>auditor</option>
+                                    <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>admin</option>
+                                </select>
                                 <button type="submit" class="inline-flex items-center px-3 py-1.5 border border-cyber-border text-xs font-medium rounded-md text-text-primary bg-cyber-card-hover hover:bg-cyber-card">
-                                    {% if user.role == 'admin' %}Demote{% else %}Promote{% endif %}
+                                    Set Role
                                 </button>
                             </form>
                             <form method="POST" action="{{ url_for('admin.revoke_user', user_id=user.id) }}" class="inline" hx-boost="false"
