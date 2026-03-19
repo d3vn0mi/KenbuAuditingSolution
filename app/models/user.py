@@ -5,6 +5,16 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from ..extensions import db, login_manager
 
 
+VALID_ROLES = ['admin', 'auditor', 'security_engineer', 'user']
+
+ROLE_PERMISSIONS = {
+    'admin': {'audits', 'hardening', 'pentests', 'admin'},
+    'auditor': {'audits', 'hardening', 'pentests'},
+    'security_engineer': {'hardening'},
+    'user': set(),
+}
+
+
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
 
@@ -15,7 +25,7 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Role and approval
-    role = db.Column(db.String(20), default='user')  # 'admin' or 'user'
+    role = db.Column(db.String(20), default='user')
     is_approved = db.Column(db.Boolean, default=False)
 
     # OAuth fields
@@ -33,6 +43,21 @@ class User(UserMixin, db.Model):
     @property
     def is_admin(self):
         return self.role == 'admin'
+
+    def can_access(self, feature):
+        return feature in ROLE_PERMISSIONS.get(self.role, set())
+
+    @property
+    def can_audit(self):
+        return self.can_access('audits')
+
+    @property
+    def can_harden(self):
+        return self.can_access('hardening')
+
+    @property
+    def can_pentest(self):
+        return self.can_access('pentests')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

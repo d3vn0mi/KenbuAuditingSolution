@@ -1,17 +1,18 @@
 from datetime import datetime, timezone
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort
-from flask_login import login_required, current_user
+from flask_login import current_user
 from ..extensions import db
 from ..models import Benchmark, BenchmarkSection, Check
 from ..models.hardening import (
     HardeningTask, HardeningAsset, HardeningAssetBenchmark, HardeningCheckResult
 )
+from ..utils.auth import hardening_required
 
 hardening_bp = Blueprint('hardening', __name__, url_prefix='/hardening')
 
 
 @hardening_bp.route('/')
-@login_required
+@hardening_required
 def list_tasks():
     tasks = HardeningTask.query.filter_by(
         user_id=current_user.id
@@ -20,7 +21,7 @@ def list_tasks():
 
 
 @hardening_bp.route('/new', methods=['GET', 'POST'])
-@login_required
+@hardening_required
 def new_task():
     if request.method == 'POST':
         title = request.form.get('title', '').strip()
@@ -44,7 +45,7 @@ def new_task():
 
 
 @hardening_bp.route('/<int:task_id>')
-@login_required
+@hardening_required
 def task_detail(task_id):
     task = HardeningTask.query.get_or_404(task_id)
     if task.user_id != current_user.id:
@@ -54,7 +55,7 @@ def task_detail(task_id):
 
 
 @hardening_bp.route('/<int:task_id>/edit', methods=['POST'])
-@login_required
+@hardening_required
 def edit_task(task_id):
     task = HardeningTask.query.get_or_404(task_id)
     if task.user_id != current_user.id:
@@ -78,7 +79,7 @@ def edit_task(task_id):
 
 
 @hardening_bp.route('/<int:task_id>/delete', methods=['POST'])
-@login_required
+@hardening_required
 def delete_task(task_id):
     task = HardeningTask.query.get_or_404(task_id)
     if task.user_id != current_user.id:
@@ -94,7 +95,7 @@ def delete_task(task_id):
 
 
 @hardening_bp.route('/<int:task_id>/assets/new', methods=['GET', 'POST'])
-@login_required
+@hardening_required
 def new_asset(task_id):
     task = HardeningTask.query.get_or_404(task_id)
     if task.user_id != current_user.id:
@@ -127,7 +128,7 @@ def new_asset(task_id):
 
 
 @hardening_bp.route('/<int:task_id>/assets/<int:asset_id>/delete', methods=['POST'])
-@login_required
+@hardening_required
 def delete_asset(task_id, asset_id):
     task = HardeningTask.query.get_or_404(task_id)
     if task.user_id != current_user.id:
@@ -147,7 +148,7 @@ def delete_asset(task_id, asset_id):
 
 
 @hardening_bp.route('/<int:task_id>/assets/<int:asset_id>/benchmarks', methods=['GET', 'POST'])
-@login_required
+@hardening_required
 def asset_benchmarks(task_id, asset_id):
     task = HardeningTask.query.get_or_404(task_id)
     if task.user_id != current_user.id:
@@ -202,7 +203,7 @@ def _generate_check_results_for_asset(asset):
 
 
 @hardening_bp.route('/<int:task_id>/start', methods=['POST'])
-@login_required
+@hardening_required
 def start_task(task_id):
     task = HardeningTask.query.get_or_404(task_id)
     if task.user_id != current_user.id:
@@ -235,7 +236,7 @@ def start_task(task_id):
 
 
 @hardening_bp.route('/<int:task_id>/assets/<int:asset_id>')
-@login_required
+@hardening_required
 def asset_detail(task_id, asset_id):
     task = HardeningTask.query.get_or_404(task_id)
     if task.user_id != current_user.id:
@@ -254,7 +255,7 @@ def asset_detail(task_id, asset_id):
 
 
 @hardening_bp.route('/<int:task_id>/assets/<int:asset_id>/check/<int:check_id>', methods=['POST'])
-@login_required
+@hardening_required
 def update_check(task_id, asset_id, check_id):
     task = HardeningTask.query.get_or_404(task_id)
     if task.user_id != current_user.id:
@@ -290,7 +291,7 @@ def update_check(task_id, asset_id, check_id):
 
 
 @hardening_bp.route('/<int:task_id>/assets/<int:asset_id>/bulk-update', methods=['POST'])
-@login_required
+@hardening_required
 def bulk_update_checks(task_id, asset_id):
     task = HardeningTask.query.get_or_404(task_id)
     if task.user_id != current_user.id:
@@ -330,7 +331,7 @@ def bulk_update_checks(task_id, asset_id):
 
 
 @hardening_bp.route('/<int:task_id>/complete', methods=['POST'])
-@login_required
+@hardening_required
 def complete_task(task_id):
     task = HardeningTask.query.get_or_404(task_id)
     if task.user_id != current_user.id:

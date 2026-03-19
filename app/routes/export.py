@@ -4,6 +4,7 @@ from ..models import Benchmark, Check
 from ..models.audit import AuditSession, AuditAsset, AuditResult
 from ..models.hardening import HardeningTask, HardeningCheckResult, HardeningAsset
 from ..utils.excel_export import export_benchmark_to_excel, export_audit_to_excel, export_hardening_to_excel
+from ..utils.auth import auditor_required, hardening_required
 
 export_bp = Blueprint('export', __name__, url_prefix='/export')
 
@@ -29,7 +30,7 @@ def export_benchmark(benchmark_id):
 
 
 @export_bp.route('/audit/<int:session_id>')
-@login_required
+@auditor_required
 def export_audit(session_id):
     from flask import abort
     session = AuditSession.query.get_or_404(session_id)
@@ -50,7 +51,7 @@ def export_audit(session_id):
 
 
 @export_bp.route('/hardening/<int:task_id>/excel')
-@login_required
+@hardening_required
 def export_hardening_excel(task_id):
     from flask import abort
     task = HardeningTask.query.get_or_404(task_id)
@@ -71,7 +72,7 @@ def export_hardening_excel(task_id):
 
 
 @export_bp.route('/hardening/<int:task_id>/html')
-@login_required
+@hardening_required
 def export_hardening_html(task_id):
     from flask import abort
     task = HardeningTask.query.get_or_404(task_id)
