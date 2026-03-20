@@ -158,6 +158,20 @@ def seed_platforms():
             'description': 'Microsoft Windows Server 2022'
         },
         {
+            'name': 'Windows 10',
+            'slug': 'windows-10',
+            'os_family': 'Windows',
+            'icon': 'windows',
+            'description': 'Microsoft Windows 10'
+        },
+        {
+            'name': 'Windows 11',
+            'slug': 'windows-11',
+            'os_family': 'Windows',
+            'icon': 'windows',
+            'description': 'Microsoft Windows 11'
+        },
+        {
             'name': 'RHEL 9',
             'slug': 'rhel-9',
             'os_family': 'Linux',
