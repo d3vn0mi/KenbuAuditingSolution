@@ -1,11 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
-  <!-- Shield outline -->
-  <path d="M16 2L4 7v7c0 7.73 5.12 14.96 12 17 6.88-2.04 12-9.27 12-17V7L16 2z"
-        stroke="#00eeff" stroke-width="1.5" fill="none" opacity="0.3"/>
-  <path d="M16 4L6 8.2v5.8c0 6.72 4.28 13.04 10 14.9 5.72-1.86 10-8.18 10-14.9V8.2L16 4z"
-        stroke="#00eeff" stroke-width="1.2" fill="none" opacity="0.6"/>
-
-  <!-- Inner eye shape - the "ken" (見) observation eye -->
+  <!-- Eye shape - the "ken" (見) observation eye -->
   <path d="M8 16c0 0 3.5-5 8-5s8 5 8 5-3.5 5-8 5-8-5-8-5z"
         stroke="#00eeff" stroke-width="1.4" fill="none"/>
 
