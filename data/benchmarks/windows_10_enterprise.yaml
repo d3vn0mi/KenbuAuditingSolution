@@ -1,0 +1,1492 @@
+benchmark:
+  name: "CIS Microsoft Windows 10 Enterprise Benchmark"
+  version: "3.0.0"
+  platform: "windows-10"
+  release_date: "2024-06-01"
+  description: "Security configuration benchmark for Microsoft Windows 10 Enterprise (domain-joined)"
+  url: "https://www.cisecurity.org/benchmark/microsoft_windows_desktop"
+
+sections:
+  # ---------------------------------------------------------------------------
+  # 1  Account Policies
+  # ---------------------------------------------------------------------------
+  - number: "1"
+    title: "Account Policies"
+    children:
+      - number: "1.1"
+        title: "Password Policy"
+        checks:
+          - number: "1.1.1"
+            title: "Ensure 'Enforce password history' is set to '24 or more password(s)'"
+            description: >
+              This policy setting determines the number of renewed, unique
+              passwords that must be associated with a user account before an
+              old password can be reused.
+            rationale: >
+              The longer a user uses the same password, the greater the chance
+              that an attacker can determine the password through brute-force
+              attacks.
+            level: 1
+            scored: true
+            audit_command: |
+              net accounts | findstr /i "password history"
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Computer Configuration > Policies > Windows Settings >
+                 Security Settings > Account Policies > Password Policy.
+              3. Verify that 'Enforce password history' is set to '24 or more password(s)'.
+            expected_output: |
+              Length of password history maintained: 24 or more
+            remediation: |
+              Set the following Group Policy path to '24 or more password(s)':
+              Computer Configuration > Policies > Windows Settings > Security Settings >
+              Account Policies > Password Policy > Enforce password history
+
+          - number: "1.1.2"
+            title: "Ensure 'Maximum password age' is set to '365 or fewer days, but not 0'"
+            description: >
+              This policy setting defines how long a user can use their
+              password before it expires.
+            rationale: >
+              The longer a password exists the higher the likelihood that it
+              will be compromised.
+            level: 1
+            scored: true
+            audit_command: |
+              net accounts | findstr /i "Maximum password age"
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Computer Configuration > Policies > Windows Settings >
+                 Security Settings > Account Policies > Password Policy.
+              3. Verify that 'Maximum password age' is set to '365 or fewer days, but not 0'.
+            expected_output: |
+              Maximum password age (days): 365 or fewer, but not 0
+            remediation: |
+              Set the following Group Policy path to '365 or fewer days, but not 0':
+              Computer Configuration > Policies > Windows Settings > Security Settings >
+              Account Policies > Password Policy > Maximum password age
+
+          - number: "1.1.3"
+            title: "Ensure 'Minimum password age' is set to '1 or more day(s)'"
+            description: >
+              This policy setting determines the number of days that a
+              password must be used before the user can change it.
+            rationale: >
+              Setting a minimum password age prevents users from cycling
+              quickly through passwords to return to an old favourite.
+            level: 1
+            scored: true
+            audit_command: |
+              net accounts | findstr /i "Minimum password age"
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Computer Configuration > Policies > Windows Settings >
+                 Security Settings > Account Policies > Password Policy.
+              3. Verify that 'Minimum password age' is set to '1 or more day(s)'.
+            expected_output: |
+              Minimum password age (days): 1 or more
+            remediation: |
+              Set the following Group Policy path to '1 or more day(s)':
+              Computer Configuration > Policies > Windows Settings > Security Settings >
+              Account Policies > Password Policy > Minimum password age
+
+          - number: "1.1.4"
+            title: "Ensure 'Minimum password length' is set to '14 or more character(s)'"
+            description: >
+              This policy setting determines the least number of characters
+              that make up a password for a user account.
+            rationale: >
+              Longer passwords are exponentially more resistant to
+              brute-force attacks.
+            level: 1
+            scored: true
+            audit_command: |
+              net accounts | findstr /i "Minimum password length"
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Computer Configuration > Policies > Windows Settings >
+                 Security Settings > Account Policies > Password Policy.
+              3. Verify that 'Minimum password length' is set to '14 or more character(s)'.
+            expected_output: |
+              Minimum password length: 14 or more
+            remediation: |
+              Set the following Group Policy path to '14 or more character(s)':
+              Computer Configuration > Policies > Windows Settings > Security Settings >
+              Account Policies > Password Policy > Minimum password length
+
+          - number: "1.1.5"
+            title: "Ensure 'Password must meet complexity requirements' is set to 'Enabled'"
+            description: >
+              This policy setting checks all new passwords to ensure that
+              they meet basic requirements for strong passwords.
+            rationale: >
+              Passwords that contain only alphanumeric characters are
+              extremely easy to discover with publicly available tools.
+            level: 1
+            scored: true
+            audit_command: |
+              secedit /export /cfg C:\Windows\Temp\secpol.cfg /quiet
+              findstr "PasswordComplexity" C:\Windows\Temp\secpol.cfg
+              del C:\Windows\Temp\secpol.cfg
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Computer Configuration > Policies > Windows Settings >
+                 Security Settings > Account Policies > Password Policy.
+              3. Verify that 'Password must meet complexity requirements' is set to 'Enabled'.
+            expected_output: |
+              PasswordComplexity = 1
+            remediation: |
+              Set the following Group Policy path to 'Enabled':
+              Computer Configuration > Policies > Windows Settings > Security Settings >
+              Account Policies > Password Policy > Password must meet complexity requirements
+
+          - number: "1.1.6"
+            title: "Ensure 'Store passwords using reversible encryption' is set to 'Disabled'"
+            description: >
+              This policy setting determines whether the operating system
+              stores passwords using reversible encryption.
+            rationale: >
+              Storing passwords using reversible encryption is essentially
+              the same as storing plaintext versions.
+            level: 1
+            scored: true
+            audit_command: |
+              secedit /export /cfg C:\Windows\Temp\secpol.cfg /quiet
+              findstr "ClearTextPassword" C:\Windows\Temp\secpol.cfg
+              del C:\Windows\Temp\secpol.cfg
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Computer Configuration > Policies > Windows Settings >
+                 Security Settings > Account Policies > Password Policy.
+              3. Verify that 'Store passwords using reversible encryption' is set to 'Disabled'.
+            expected_output: |
+              ClearTextPassword = 0
+            remediation: |
+              Set the following Group Policy path to 'Disabled':
+              Computer Configuration > Policies > Windows Settings > Security Settings >
+              Account Policies > Password Policy > Store passwords using reversible encryption
+
+      - number: "1.2"
+        title: "Account Lockout Policy"
+        checks:
+          - number: "1.2.1"
+            title: "Ensure 'Account lockout duration' is set to '15 or more minute(s)'"
+            description: >
+              This policy setting determines the length of time that must
+              pass before a locked-out account is unlocked.
+            rationale: >
+              Setting a lockout duration balances security with usability.
+            level: 1
+            scored: true
+            audit_command: |
+              net accounts | findstr /i "Lockout duration"
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Computer Configuration > Policies > Windows Settings >
+                 Security Settings > Account Policies > Account Lockout Policy.
+              3. Verify that 'Account lockout duration' is set to '15 or more minute(s)'.
+            expected_output: |
+              Lockout duration (minutes): 15 or more
+            remediation: |
+              Set the following Group Policy path to '15 or more minute(s)':
+              Computer Configuration > Policies > Windows Settings > Security Settings >
+              Account Policies > Account Lockout Policy > Account lockout duration
+
+          - number: "1.2.2"
+            title: "Ensure 'Account lockout threshold' is set to '5 or fewer invalid logon attempt(s), but not 0'"
+            description: >
+              This policy setting determines the number of failed logon
+              attempts before the account is locked.
+            rationale: >
+              Setting an account lockout threshold reduces the likelihood
+              that a brute-force attack will be successful.
+            level: 1
+            scored: true
+            audit_command: |
+              net accounts | findstr /i "Lockout threshold"
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Computer Configuration > Policies > Windows Settings >
+                 Security Settings > Account Policies > Account Lockout Policy.
+              3. Verify that 'Account lockout threshold' is '5 or fewer, but not 0'.
+            expected_output: |
+              Lockout threshold: between 1 and 5
+            remediation: |
+              Set the following Group Policy path to '5 or fewer, but not 0':
+              Computer Configuration > Policies > Windows Settings > Security Settings >
+              Account Policies > Account Lockout Policy > Account lockout threshold
+
+          - number: "1.2.3"
+            title: "Ensure 'Reset account lockout counter after' is set to '15 or more minute(s)'"
+            description: >
+              This policy setting determines the length of time before the
+              Account lockout threshold resets to zero.
+            rationale: >
+              Setting a reasonable reset counter reduces accidental lockouts.
+            level: 1
+            scored: true
+            audit_command: |
+              net accounts | findstr /i "Lockout observation"
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Computer Configuration > Policies > Windows Settings >
+                 Security Settings > Account Policies > Account Lockout Policy.
+              3. Verify that 'Reset account lockout counter after' is set to '15 or more minute(s)'.
+            expected_output: |
+              Lockout observation window (minutes): 15 or more
+            remediation: |
+              Set the following Group Policy path to '15 or more minute(s)':
+              Computer Configuration > Policies > Windows Settings > Security Settings >
+              Account Policies > Account Lockout Policy > Reset account lockout counter after
+
+  # ---------------------------------------------------------------------------
+  # 2  Local Policies
+  # ---------------------------------------------------------------------------
+  - number: "2"
+    title: "Local Policies"
+    children:
+      - number: "2.1"
+        title: "Audit Policy"
+        checks:
+          - number: "2.1.1"
+            title: "Ensure 'Audit Credential Validation' is set to 'Success and Failure'"
+            description: >
+              This subcategory reports the results of validation tests on
+              credentials submitted for a user account logon request.
+            rationale: >
+              Auditing both successful and failed credential validation
+              provides visibility into authentication attempts.
+            level: 1
+            scored: true
+            audit_command: |
+              auditpol /get /subcategory:"Credential Validation"
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Computer Configuration > Policies > Windows Settings >
+                 Security Settings > Advanced Audit Policy Configuration >
+                 Account Logon > Audit Credential Validation.
+              3. Verify it is set to 'Success and Failure'.
+            expected_output: |
+              Credential Validation    Success and Failure
+            remediation: |
+              Configure via Group Policy:
+              Computer Configuration > Policies > Windows Settings > Security Settings >
+              Advanced Audit Policy Configuration > Account Logon >
+              Audit Credential Validation = Success and Failure
+
+          - number: "2.1.2"
+            title: "Ensure 'Audit Logon' is set to 'Success and Failure'"
+            description: >
+              This policy setting allows you to audit events generated by
+              user account logon attempts on the computer.
+            rationale: >
+              Tracking logon events is essential for detecting unauthorized
+              access attempts.
+            level: 1
+            scored: true
+            audit_command: |
+              auditpol /get /subcategory:"Logon"
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Computer Configuration > Policies > Windows Settings >
+                 Security Settings > Advanced Audit Policy Configuration >
+                 Logon/Logoff > Audit Logon.
+              3. Verify it is set to 'Success and Failure'.
+            expected_output: |
+              Logon    Success and Failure
+            remediation: |
+              Configure via Group Policy:
+              Computer Configuration > Policies > Windows Settings > Security Settings >
+              Advanced Audit Policy Configuration > Logon/Logoff >
+              Audit Logon = Success and Failure
+
+          - number: "2.1.3"
+            title: "Ensure 'Audit Logoff' is set to 'Success'"
+            description: >
+              This policy audits events generated by the closing of
+              a logon session.
+            rationale: >
+              Auditing logoff events helps correlate user sessions and
+              detect anomalous activity patterns.
+            level: 1
+            scored: true
+            audit_command: |
+              auditpol /get /subcategory:"Logoff"
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Advanced Audit Policy Configuration >
+                 Logon/Logoff > Audit Logoff.
+              3. Verify it is set to 'Success'.
+            expected_output: |
+              Logoff    Success
+            remediation: |
+              Configure via Group Policy:
+              Advanced Audit Policy Configuration > Logon/Logoff >
+              Audit Logoff = Success
+
+          - number: "2.1.4"
+            title: "Ensure 'Audit Account Lockout' is set to 'Failure'"
+            description: >
+              This policy audits events generated when an account cannot
+              log on because it is locked out.
+            rationale: >
+              Monitoring account lockout events helps detect brute-force
+              password attacks.
+            level: 1
+            scored: true
+            audit_command: |
+              auditpol /get /subcategory:"Account Lockout"
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Advanced Audit Policy Configuration >
+                 Logon/Logoff > Audit Account Lockout.
+              3. Verify it is set to 'Failure'.
+            expected_output: |
+              Account Lockout    Failure
+            remediation: |
+              Configure via Group Policy:
+              Advanced Audit Policy Configuration > Logon/Logoff >
+              Audit Account Lockout = Failure
+
+          - number: "2.1.5"
+            title: "Ensure 'Audit Policy Change' is set to 'Success and Failure'"
+            description: >
+              This policy setting audits changes to security audit
+              policy settings.
+            rationale: >
+              Auditing policy changes ensures modifications to security
+              settings are tracked.
+            level: 1
+            scored: true
+            audit_command: |
+              auditpol /get /subcategory:"Audit Policy Change"
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Advanced Audit Policy Configuration >
+                 Policy Change > Audit Policy Change.
+              3. Verify it is set to 'Success and Failure'.
+            expected_output: |
+              Audit Policy Change    Success and Failure
+            remediation: |
+              Configure via Group Policy:
+              Advanced Audit Policy Configuration > Policy Change >
+              Audit Policy Change = Success and Failure
+
+          - number: "2.1.6"
+            title: "Ensure 'Audit User Account Management' is set to 'Success and Failure'"
+            description: >
+              This policy audits changes to user accounts such as
+              creation, deletion, and modification.
+            rationale: >
+              Auditing user account management provides visibility into
+              administrative actions.
+            level: 1
+            scored: true
+            audit_command: |
+              auditpol /get /subcategory:"User Account Management"
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Advanced Audit Policy Configuration >
+                 Account Management > Audit User Account Management.
+              3. Verify it is set to 'Success and Failure'.
+            expected_output: |
+              User Account Management    Success and Failure
+            remediation: |
+              Configure via Group Policy:
+              Advanced Audit Policy Configuration > Account Management >
+              Audit User Account Management = Success and Failure
+
+          - number: "2.1.7"
+            title: "Ensure 'Audit Security Group Management' is set to 'Success'"
+            description: >
+              This policy audits events generated by changes to
+              security groups.
+            rationale: >
+              Tracking security group changes helps detect unauthorized
+              privilege escalation attempts.
+            level: 1
+            scored: true
+            audit_command: |
+              auditpol /get /subcategory:"Security Group Management"
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Advanced Audit Policy Configuration >
+                 Account Management > Audit Security Group Management.
+              3. Verify it is set to 'Success'.
+            expected_output: |
+              Security Group Management    Success
+            remediation: |
+              Configure via Group Policy:
+              Advanced Audit Policy Configuration > Account Management >
+              Audit Security Group Management = Success
+
+          - number: "2.1.8"
+            title: "Ensure 'Audit Process Creation' is set to 'Success'"
+            description: >
+              This policy audits events generated when a process is
+              created or starts.
+            rationale: >
+              Auditing process creation provides visibility into what
+              programs are being executed.
+            level: 1
+            scored: true
+            audit_command: |
+              auditpol /get /subcategory:"Process Creation"
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Advanced Audit Policy Configuration >
+                 Detailed Tracking > Audit Process Creation.
+              3. Verify it is set to 'Success'.
+            expected_output: |
+              Process Creation    Success
+            remediation: |
+              Configure via Group Policy:
+              Advanced Audit Policy Configuration > Detailed Tracking >
+              Audit Process Creation = Success
+
+          - number: "2.1.9"
+            title: "Ensure 'Audit Kerberos Authentication Service' is set to 'Success and Failure'"
+            description: >
+              This policy audits events generated by Kerberos
+              authentication ticket-granting ticket (TGT) requests.
+            rationale: >
+              In a domain environment, auditing Kerberos authentication
+              helps detect Pass-the-Ticket and Golden Ticket attacks.
+            level: 1
+            scored: true
+            audit_command: |
+              auditpol /get /subcategory:"Kerberos Authentication Service"
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Advanced Audit Policy Configuration >
+                 Account Logon > Audit Kerberos Authentication Service.
+              3. Verify it is set to 'Success and Failure'.
+            expected_output: |
+              Kerberos Authentication Service    Success and Failure
+            remediation: |
+              Configure via Group Policy:
+              Advanced Audit Policy Configuration > Account Logon >
+              Audit Kerberos Authentication Service = Success and Failure
+
+          - number: "2.1.10"
+            title: "Ensure 'Audit Kerberos Service Ticket Operations' is set to 'Success and Failure'"
+            description: >
+              This policy audits events generated by Kerberos service
+              ticket requests.
+            rationale: >
+              Auditing Kerberos service ticket operations helps detect
+              Kerberoasting attacks in domain environments.
+            level: 1
+            scored: true
+            audit_command: |
+              auditpol /get /subcategory:"Kerberos Service Ticket Operations"
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Advanced Audit Policy Configuration >
+                 Account Logon > Audit Kerberos Service Ticket Operations.
+              3. Verify it is set to 'Success and Failure'.
+            expected_output: |
+              Kerberos Service Ticket Operations    Success and Failure
+            remediation: |
+              Configure via Group Policy:
+              Advanced Audit Policy Configuration > Account Logon >
+              Audit Kerberos Service Ticket Operations = Success and Failure
+
+      - number: "2.2"
+        title: "User Rights Assignment"
+        checks:
+          - number: "2.2.1"
+            title: "Ensure 'Access this computer from the network' is set to 'Administrators, Remote Desktop Users'"
+            description: >
+              This policy setting determines which users can connect to
+              the computer from the network.
+            rationale: >
+              Restricting network access limits the attack surface.
+            level: 1
+            scored: true
+            audit_command: |
+              secedit /export /cfg C:\Windows\Temp\secpol.cfg /quiet
+              findstr "SeNetworkLogonRight" C:\Windows\Temp\secpol.cfg
+              del C:\Windows\Temp\secpol.cfg
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Computer Configuration > Policies > Windows Settings >
+                 Security Settings > Local Policies > User Rights Assignment.
+              3. Verify 'Access this computer from the network' includes only
+                 Administrators and Remote Desktop Users.
+            expected_output: |
+              SeNetworkLogonRight = *S-1-5-32-544,*S-1-5-32-555
+            remediation: |
+              Configure via Group Policy to 'Administrators, Remote Desktop Users':
+              Computer Configuration > Policies > Windows Settings > Security Settings >
+              Local Policies > User Rights Assignment >
+              Access this computer from the network
+
+          - number: "2.2.2"
+            title: "Ensure 'Deny access to this computer from the network' includes 'Guests, Local account and member of Administrators group'"
+            description: >
+              This policy setting determines which users are prevented
+              from connecting to a computer from the network.
+            rationale: >
+              In a domain environment, local admin accounts should not
+              be used for network access to prevent lateral movement.
+            level: 1
+            scored: true
+            audit_command: |
+              secedit /export /cfg C:\Windows\Temp\secpol.cfg /quiet
+              findstr "SeDenyNetworkLogonRight" C:\Windows\Temp\secpol.cfg
+              del C:\Windows\Temp\secpol.cfg
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Computer Configuration > Policies > Windows Settings >
+                 Security Settings > Local Policies > User Rights Assignment.
+              3. Verify setting includes Guests and Local account and member of
+                 Administrators group.
+            expected_output: |
+              SeDenyNetworkLogonRight = *S-1-5-32-546,*S-1-5-114
+            remediation: |
+              Configure via Group Policy to include 'Guests, Local account and
+              member of Administrators group':
+              Local Policies > User Rights Assignment >
+              Deny access to this computer from the network
+
+          - number: "2.2.3"
+            title: "Ensure 'Deny log on through Remote Desktop Services' includes 'Guests, Local account'"
+            description: >
+              This policy setting determines which users are prevented
+              from logging on via Remote Desktop Services.
+            rationale: >
+              Preventing guest and local accounts from RDP reduces
+              the risk of unauthorized remote sessions.
+            level: 1
+            scored: true
+            audit_command: |
+              secedit /export /cfg C:\Windows\Temp\secpol.cfg /quiet
+              findstr "SeDenyRemoteInteractiveLogonRight" C:\Windows\Temp\secpol.cfg
+              del C:\Windows\Temp\secpol.cfg
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Local Policies > User Rights Assignment.
+              3. Verify 'Deny log on through Remote Desktop Services' includes
+                 Guests and Local account.
+            expected_output: |
+              SeDenyRemoteInteractiveLogonRight = *S-1-5-32-546,*S-1-5-113
+            remediation: |
+              Configure via Group Policy to include 'Guests, Local account':
+              Local Policies > User Rights Assignment >
+              Deny log on through Remote Desktop Services
+
+      - number: "2.3"
+        title: "Security Options"
+        checks:
+          - number: "2.3.1"
+            title: "Ensure 'Accounts: Administrator account status' is set to 'Disabled'"
+            description: >
+              This policy setting enables or disables the Administrator
+              account during normal operation.
+            rationale: >
+              The built-in Administrator account is a well-known target.
+              Disabling it forces use of named administrator accounts.
+            level: 1
+            scored: true
+            audit_command: |
+              Get-LocalUser -Name "Administrator" | Select-Object -ExpandProperty Enabled
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Computer Configuration > Policies > Windows Settings >
+                 Security Settings > Local Policies > Security Options.
+              3. Verify 'Accounts: Administrator account status' is 'Disabled'.
+            expected_output: |
+              False
+            remediation: |
+              Configure via Group Policy to 'Disabled':
+              Local Policies > Security Options >
+              Accounts: Administrator account status
+
+          - number: "2.3.2"
+            title: "Ensure 'Accounts: Guest account status' is set to 'Disabled'"
+            description: >
+              This policy setting determines whether the Guest account
+              is enabled or disabled.
+            rationale: >
+              The Guest account allows unauthenticated access and
+              should be disabled.
+            level: 1
+            scored: true
+            audit_command: |
+              Get-LocalUser -Name "Guest" | Select-Object -ExpandProperty Enabled
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Local Policies > Security Options.
+              3. Verify 'Accounts: Guest account status' is 'Disabled'.
+            expected_output: |
+              False
+            remediation: |
+              Configure via Group Policy to 'Disabled':
+              Local Policies > Security Options >
+              Accounts: Guest account status
+
+          - number: "2.3.3"
+            title: "Ensure 'Interactive logon: Do not display last user name' is set to 'Enabled'"
+            description: >
+              This policy setting determines whether the name of the last
+              user to log on is displayed on the logon screen.
+            rationale: >
+              An attacker who can see the last logged-on username can
+              target password attacks.
+            level: 1
+            scored: true
+            audit_command: |
+              Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "DontDisplayLastUserName" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty DontDisplayLastUserName
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Local Policies > Security Options.
+              3. Verify 'Interactive logon: Do not display last user name' is 'Enabled'.
+            expected_output: |
+              1
+            remediation: |
+              Configure via Group Policy to 'Enabled':
+              Local Policies > Security Options >
+              Interactive logon: Do not display last user name
+
+          - number: "2.3.4"
+            title: "Ensure 'Interactive logon: Machine inactivity limit' is set to '900 or fewer second(s)'"
+            description: >
+              This policy specifies the amount of consecutive idle time
+              before the machine is locked.
+            rationale: >
+              An inactivity timeout provides automatic protection when
+              a user forgets to lock their computer.
+            level: 1
+            scored: true
+            audit_command: |
+              Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "InactivityTimeoutSecs" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty InactivityTimeoutSecs
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Local Policies > Security Options.
+              3. Verify machine inactivity limit is '900 or fewer'.
+            expected_output: |
+              900 or fewer (but not 0)
+            remediation: |
+              Configure via Group Policy to '900 or fewer second(s), but not 0':
+              Local Policies > Security Options >
+              Interactive logon: Machine inactivity limit
+
+          - number: "2.3.5"
+            title: "Ensure 'Microsoft network client: Digitally sign communications (always)' is set to 'Enabled'"
+            description: >
+              This policy setting determines whether packet signing is
+              required by the SMB client component.
+            rationale: >
+              Session hijacking uses tools to allow attackers who have
+              access to the same network to disrupt in-progress sessions.
+              Enabling SMB signing prevents this.
+            level: 1
+            scored: true
+            audit_command: |
+              Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -Name "RequireSecuritySignature" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty RequireSecuritySignature
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Local Policies > Security Options.
+              3. Verify 'Microsoft network client: Digitally sign communications (always)' is 'Enabled'.
+            expected_output: |
+              1
+            remediation: |
+              Configure via Group Policy to 'Enabled':
+              Local Policies > Security Options >
+              Microsoft network client: Digitally sign communications (always)
+
+          - number: "2.3.6"
+            title: "Ensure 'Network access: Do not allow anonymous enumeration of SAM accounts' is set to 'Enabled'"
+            description: >
+              This policy controls the ability to anonymously enumerate
+              SAM accounts.
+            rationale: >
+              An unauthorized user could anonymously list account names
+              and use the information for further attacks.
+            level: 1
+            scored: true
+            audit_command: |
+              Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "RestrictAnonymousSAM" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty RestrictAnonymousSAM
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Local Policies > Security Options.
+              3. Verify setting is 'Enabled'.
+            expected_output: |
+              1
+            remediation: |
+              Configure via Group Policy to 'Enabled':
+              Local Policies > Security Options >
+              Network access: Do not allow anonymous enumeration of SAM accounts
+
+          - number: "2.3.7"
+            title: "Ensure 'User Account Control: Admin Approval Mode for the Built-in Administrator account' is set to 'Enabled'"
+            description: >
+              This policy controls the behavior of Admin Approval Mode
+              for the built-in Administrator account.
+            rationale: >
+              Without Admin Approval Mode, the built-in Administrator
+              runs all applications with full privileges.
+            level: 1
+            scored: true
+            audit_command: |
+              Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "FilterAdministratorToken" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FilterAdministratorToken
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Local Policies > Security Options.
+              3. Verify UAC Admin Approval Mode for built-in admin is 'Enabled'.
+            expected_output: |
+              1
+            remediation: |
+              Configure via Group Policy to 'Enabled':
+              Local Policies > Security Options >
+              User Account Control: Admin Approval Mode for the Built-in Administrator account
+
+          - number: "2.3.8"
+            title: "Ensure 'User Account Control: Run all administrators in Admin Approval Mode' is set to 'Enabled'"
+            description: >
+              This policy controls the behavior of all UAC policy settings.
+            rationale: >
+              This is the master switch for UAC. If disabled, UAC is
+              effectively turned off.
+            level: 1
+            scored: true
+            audit_command: |
+              Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "EnableLUA" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty EnableLUA
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Local Policies > Security Options.
+              3. Verify 'Run all administrators in Admin Approval Mode' is 'Enabled'.
+            expected_output: |
+              1
+            remediation: |
+              Configure via Group Policy to 'Enabled':
+              Local Policies > Security Options >
+              User Account Control: Run all administrators in Admin Approval Mode
+
+  # ---------------------------------------------------------------------------
+  # 5  Windows Firewall with Advanced Security
+  # ---------------------------------------------------------------------------
+  - number: "5"
+    title: "Windows Firewall with Advanced Security"
+    children:
+      - number: "5.1"
+        title: "Domain Profile"
+        checks:
+          - number: "5.1.1"
+            title: "Ensure 'Windows Firewall: Domain: Firewall state' is set to 'On'"
+            description: >
+              This setting controls whether Windows Firewall is on or off
+              for the Domain profile.
+            rationale: >
+              If the firewall is off, the computer is more vulnerable to
+              network-based attacks.
+            level: 1
+            scored: true
+            audit_command: |
+              netsh advfirewall show domainprofile state
+            audit_steps: |
+              1. Open Windows Defender Firewall with Advanced Security.
+              2. Verify Domain Profile Firewall state is 'On'.
+            expected_output: |
+              State    ON
+            remediation: |
+              Set the Domain Profile Firewall state to 'On' via
+              Group Policy or Windows Defender Firewall.
+
+          - number: "5.1.2"
+            title: "Ensure 'Windows Firewall: Domain: Inbound connections' is set to 'Block (default)'"
+            description: >
+              This setting determines the behavior for inbound connections
+              that do not match an inbound firewall rule.
+            rationale: >
+              Blocking inbound connections by default ensures only
+              explicitly allowed traffic can reach the system.
+            level: 1
+            scored: true
+            audit_command: |
+              netsh advfirewall show domainprofile firewallpolicy
+            audit_steps: |
+              1. Open Windows Defender Firewall with Advanced Security.
+              2. Verify Domain Profile inbound connections are 'Block (default)'.
+            expected_output: |
+              Inbound policy    BlockInbound
+            remediation: |
+              Set Domain Profile inbound connections to 'Block (default)'.
+
+      - number: "5.2"
+        title: "Private Profile"
+        checks:
+          - number: "5.2.1"
+            title: "Ensure 'Windows Firewall: Private: Firewall state' is set to 'On'"
+            description: >
+              This setting controls whether Windows Firewall is on or off
+              for the Private profile.
+            rationale: >
+              The firewall should be enabled on all profiles.
+            level: 1
+            scored: true
+            audit_command: |
+              netsh advfirewall show privateprofile state
+            audit_steps: |
+              1. Open Windows Defender Firewall with Advanced Security.
+              2. Verify Private Profile Firewall state is 'On'.
+            expected_output: |
+              State    ON
+            remediation: |
+              Set the Private Profile Firewall state to 'On'.
+
+          - number: "5.2.2"
+            title: "Ensure 'Windows Firewall: Private: Inbound connections' is set to 'Block (default)'"
+            description: >
+              This setting determines the behavior for inbound connections
+              on the Private profile.
+            rationale: >
+              Blocking inbound connections by default provides
+              defense-in-depth.
+            level: 1
+            scored: true
+            audit_command: |
+              netsh advfirewall show privateprofile firewallpolicy
+            audit_steps: |
+              1. Open Windows Defender Firewall with Advanced Security.
+              2. Verify Private Profile inbound connections are 'Block (default)'.
+            expected_output: |
+              Inbound policy    BlockInbound
+            remediation: |
+              Set Private Profile inbound connections to 'Block (default)'.
+
+      - number: "5.3"
+        title: "Public Profile"
+        checks:
+          - number: "5.3.1"
+            title: "Ensure 'Windows Firewall: Public: Firewall state' is set to 'On'"
+            description: >
+              This setting controls whether Windows Firewall is on or off
+              for the Public profile.
+            rationale: >
+              Public networks are inherently untrusted. The firewall
+              must be enabled.
+            level: 1
+            scored: true
+            audit_command: |
+              netsh advfirewall show publicprofile state
+            audit_steps: |
+              1. Open Windows Defender Firewall with Advanced Security.
+              2. Verify Public Profile Firewall state is 'On'.
+            expected_output: |
+              State    ON
+            remediation: |
+              Set the Public Profile Firewall state to 'On'.
+
+          - number: "5.3.2"
+            title: "Ensure 'Windows Firewall: Public: Inbound connections' is set to 'Block (default)'"
+            description: >
+              This setting determines the behavior for inbound connections
+              on the Public profile.
+            rationale: >
+              All inbound connections on public networks should be
+              blocked by default.
+            level: 1
+            scored: true
+            audit_command: |
+              netsh advfirewall show publicprofile firewallpolicy
+            audit_steps: |
+              1. Open Windows Defender Firewall with Advanced Security.
+              2. Verify Public Profile inbound connections are 'Block (default)'.
+            expected_output: |
+              Inbound policy    BlockInbound
+            remediation: |
+              Set Public Profile inbound connections to 'Block (default)'.
+
+  # ---------------------------------------------------------------------------
+  # 9  Windows Defender and Security
+  # ---------------------------------------------------------------------------
+  - number: "9"
+    title: "Windows Defender and Security"
+    children:
+      - number: "9.1"
+        title: "Windows Defender Antivirus"
+        checks:
+          - number: "9.1.1"
+            title: "Ensure 'Turn off Windows Defender AntiVirus' is set to 'Disabled'"
+            description: >
+              This policy setting turns off Microsoft Defender Antivirus.
+            rationale: >
+              Disabling Defender leaves the system without real-time
+              malware protection.
+            level: 1
+            scored: true
+            audit_command: |
+              Get-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Name "DisableAntiSpyware" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty DisableAntiSpyware
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Computer Configuration > Policies > Administrative Templates >
+                 Windows Components > Microsoft Defender Antivirus.
+              3. Verify 'Turn off Microsoft Defender Antivirus' is 'Disabled'.
+            expected_output: |
+              0 (or not configured)
+            remediation: |
+              Configure via Group Policy to 'Disabled':
+              Computer Configuration > Policies > Administrative Templates >
+              Windows Components > Microsoft Defender Antivirus >
+              Turn off Microsoft Defender Antivirus
+
+          - number: "9.1.2"
+            title: "Ensure 'Configure real-time protection' is set to 'Enabled'"
+            description: >
+              This policy enables real-time protection for
+              malware detection.
+            rationale: >
+              Real-time protection is essential for detecting threats
+              as they occur.
+            level: 1
+            scored: true
+            audit_command: |
+              Get-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection" -Name "DisableRealtimeMonitoring" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty DisableRealtimeMonitoring
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Windows Components > Microsoft Defender Antivirus >
+                 Real-time Protection.
+              3. Verify 'Turn off real-time protection' is 'Disabled'.
+            expected_output: |
+              0 (or not configured)
+            remediation: |
+              Configure via Group Policy to 'Disabled':
+              Windows Components > Microsoft Defender Antivirus >
+              Real-time Protection > Turn off real-time protection
+
+      - number: "9.2"
+        title: "Credential Guard"
+        checks:
+          - number: "9.2.1"
+            title: "Ensure 'Turn On Virtualization Based Security' is set to 'Enabled'"
+            description: >
+              Virtualization Based Security (VBS) uses the Windows
+              Hypervisor to provide support for security services.
+            rationale: >
+              VBS is required for Credential Guard, which protects
+              domain credentials from theft.
+            level: 1
+            scored: true
+            audit_command: |
+              Get-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeviceGuard" -Name "EnableVirtualizationBasedSecurity" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty EnableVirtualizationBasedSecurity
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Computer Configuration > Policies > Administrative Templates >
+                 System > Device Guard.
+              3. Verify 'Turn On Virtualization Based Security' is 'Enabled'.
+            expected_output: |
+              1
+            remediation: |
+              Configure via Group Policy to 'Enabled':
+              Computer Configuration > Policies > Administrative Templates >
+              System > Device Guard > Turn On Virtualization Based Security
+
+          - number: "9.2.2"
+            title: "Ensure 'Credential Guard Configuration' is set to 'Enabled with UEFI lock'"
+            description: >
+              Credential Guard uses virtualization-based security to
+              isolate secrets so that only privileged system software
+              can access them.
+            rationale: >
+              Credential Guard prevents credential theft attacks like
+              Pass-the-Hash and Pass-the-Ticket by isolating NTLM
+              hashes and Kerberos tickets.
+            level: 1
+            scored: true
+            audit_command: |
+              Get-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeviceGuard" -Name "LsaCfgFlags" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty LsaCfgFlags
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Computer Configuration > Policies > Administrative Templates >
+                 System > Device Guard.
+              3. Verify Credential Guard Configuration is 'Enabled with UEFI lock'.
+            expected_output: |
+              1
+            remediation: |
+              Configure via Group Policy to 'Enabled with UEFI lock':
+              Computer Configuration > Policies > Administrative Templates >
+              System > Device Guard > Turn On Virtualization Based Security >
+              Credential Guard Configuration
+
+  # ---------------------------------------------------------------------------
+  # 3  Network Configuration
+  # ---------------------------------------------------------------------------
+  - number: "3"
+    title: "Network Configuration"
+    children:
+      - number: "3.1"
+        title: "SMB Hardening"
+        checks:
+          - number: "3.1.1"
+            title: "Ensure 'SMB v1 client' is set to 'Disabled'"
+            description: >
+              SMB v1 is a legacy protocol with known security
+              vulnerabilities including EternalBlue.
+            rationale: >
+              SMB v1 has been exploited by ransomware like WannaCry
+              and should be disabled.
+            level: 1
+            scored: true
+            audit_command: |
+              Get-WindowsOptionalFeature -Online -FeatureName SMB1Protocol | Select-Object -ExpandProperty State
+            audit_steps: |
+              1. Open PowerShell as Administrator.
+              2. Run: Get-WindowsOptionalFeature -Online -FeatureName SMB1Protocol
+              3. Verify State is 'Disabled'.
+            expected_output: |
+              Disabled
+            remediation: |
+              Disable-WindowsOptionalFeature -Online -FeatureName SMB1Protocol -NoRestart
+
+          - number: "3.1.2"
+            title: "Ensure 'SMB v1 server' is set to 'Disabled'"
+            description: >
+              This setting controls whether the SMB v1 server component
+              is enabled.
+            rationale: >
+              The SMB v1 server should be disabled to prevent
+              exploitation.
+            level: 1
+            scored: true
+            audit_command: |
+              Get-SmbServerConfiguration | Select-Object -ExpandProperty EnableSMB1Protocol
+            audit_steps: |
+              1. Open PowerShell as Administrator.
+              2. Run: Get-SmbServerConfiguration | Select-Object EnableSMB1Protocol
+              3. Verify it returns 'False'.
+            expected_output: |
+              False
+            remediation: |
+              Set-SmbServerConfiguration -EnableSMB1Protocol $false -Force
+
+          - number: "3.1.3"
+            title: "Ensure 'SMB signing' is required"
+            description: >
+              This setting determines whether packet signing is
+              required by the SMB server.
+            rationale: >
+              SMB signing prevents man-in-the-middle attacks.
+            level: 1
+            scored: true
+            audit_command: |
+              Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanManServer\Parameters" -Name "RequireSecuritySignature" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty RequireSecuritySignature
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Local Policies > Security Options.
+              3. Verify 'Microsoft network server: Digitally sign communications (always)' is 'Enabled'.
+            expected_output: |
+              1
+            remediation: |
+              Configure via Group Policy to 'Enabled':
+              Local Policies > Security Options >
+              Microsoft network server: Digitally sign communications (always)
+
+      - number: "3.2"
+        title: "NTLM Hardening"
+        checks:
+          - number: "3.2.1"
+            title: "Ensure 'Network security: LAN Manager authentication level' is set to 'Send NTLMv2 response only. Refuse LM & NTLM'"
+            description: >
+              This policy setting determines which challenge/response
+              authentication protocol is used for network logons.
+            rationale: >
+              NTLMv1 and LM are significantly weaker than NTLMv2.
+            level: 1
+            scored: true
+            audit_command: |
+              Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "LmCompatibilityLevel" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty LmCompatibilityLevel
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Local Policies > Security Options.
+              3. Verify LAN Manager authentication level is set to
+                 'Send NTLMv2 response only. Refuse LM & NTLM'.
+            expected_output: |
+              5
+            remediation: |
+              Configure via Group Policy:
+              Local Policies > Security Options >
+              Network security: LAN Manager authentication level =
+              Send NTLMv2 response only. Refuse LM & NTLM
+
+          - number: "3.2.2"
+            title: "Ensure 'Network security: Restrict NTLM: Audit Incoming NTLM Traffic' is set to 'Enable auditing for all accounts'"
+            description: >
+              This policy allows auditing of incoming NTLM traffic
+              to identify applications still using NTLM.
+            rationale: >
+              In an enterprise environment, NTLM usage should be
+              monitored as a step toward reducing NTLM dependency.
+            level: 1
+            scored: true
+            audit_command: |
+              Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0" -Name "AuditReceivingNTLMTraffic" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty AuditReceivingNTLMTraffic
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Local Policies > Security Options.
+              3. Verify NTLM audit is set to 'Enable auditing for all accounts'.
+            expected_output: |
+              2
+            remediation: |
+              Configure via Group Policy:
+              Local Policies > Security Options >
+              Network security: Restrict NTLM: Audit Incoming NTLM Traffic
+
+      - number: "3.3"
+        title: "Remote Desktop Hardening"
+        checks:
+          - number: "3.3.1"
+            title: "Ensure 'Do not allow drive redirection' for RDP is set to 'Enabled'"
+            description: >
+              This policy prevents users from sharing local drives
+              with Remote Desktop Servers.
+            rationale: >
+              Drive redirection through RDP could allow data
+              exfiltration.
+            level: 1
+            scored: true
+            audit_command: |
+              Get-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" -Name "fDisableCdm" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty fDisableCdm
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Computer Configuration > Policies > Administrative Templates >
+                 Windows Components > Remote Desktop Services >
+                 Remote Desktop Session Host > Device and Resource Redirection.
+              3. Verify 'Do not allow drive redirection' is 'Enabled'.
+            expected_output: |
+              1
+            remediation: |
+              Configure via Group Policy to 'Enabled':
+              Windows Components > Remote Desktop Services >
+              Remote Desktop Session Host > Device and Resource Redirection >
+              Do not allow drive redirection
+
+          - number: "3.3.2"
+            title: "Ensure 'Always prompt for password upon connection' for RDP is set to 'Enabled'"
+            description: >
+              This policy specifies whether Remote Desktop Services
+              always prompts for a password upon connection.
+            rationale: >
+              Without password prompts, cached credentials could be
+              leveraged for unauthorized sessions.
+            level: 1
+            scored: true
+            audit_command: |
+              Get-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" -Name "fPromptForPassword" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty fPromptForPassword
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Windows Components > Remote Desktop Services >
+                 Remote Desktop Session Host > Security.
+              3. Verify 'Always prompt for password upon connection' is 'Enabled'.
+            expected_output: |
+              1
+            remediation: |
+              Configure via Group Policy to 'Enabled':
+              Windows Components > Remote Desktop Services >
+              Remote Desktop Session Host > Security >
+              Always prompt for password upon connection
+
+          - number: "3.3.3"
+            title: "Ensure 'Require Network Level Authentication' for RDP is set to 'Enabled'"
+            description: >
+              This policy requires Network Level Authentication (NLA)
+              for remote connections.
+            rationale: >
+              NLA completes user authentication before a full RDP
+              connection is established.
+            level: 1
+            scored: true
+            audit_command: |
+              Get-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" -Name "UserAuthentication" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty UserAuthentication
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Windows Components > Remote Desktop Services >
+                 Remote Desktop Session Host > Security.
+              3. Verify NLA is 'Enabled'.
+            expected_output: |
+              1
+            remediation: |
+              Configure via Group Policy to 'Enabled':
+              Windows Components > Remote Desktop Services >
+              Remote Desktop Session Host > Security >
+              Require user authentication for remote connections by using NLA
+
+  # ---------------------------------------------------------------------------
+  # 17  Services Hardening
+  # ---------------------------------------------------------------------------
+  - number: "17"
+    title: "Services Hardening"
+    children:
+      - number: "17.1"
+        title: "Unnecessary Services"
+        checks:
+          - number: "17.1.1"
+            title: "Ensure 'Remote Registry (RemoteRegistry)' is set to 'Disabled'"
+            description: >
+              The Remote Registry service enables remote users to modify
+              registry settings on this computer.
+            rationale: >
+              Remote registry access could allow an attacker to modify
+              security settings.
+            level: 1
+            scored: true
+            audit_command: |
+              Get-Service -Name "RemoteRegistry" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty StartType
+            audit_steps: |
+              1. Open services.msc.
+              2. Locate 'Remote Registry'.
+              3. Verify StartType is 'Disabled'.
+            expected_output: |
+              Disabled
+            remediation: |
+              Set-Service -Name "RemoteRegistry" -StartupType Disabled
+
+          - number: "17.1.2"
+            title: "Ensure 'Xbox services' are set to 'Disabled'"
+            description: >
+              Xbox-related services provide gaming functionality
+              unnecessary in enterprise environments.
+            rationale: >
+              Xbox services are unnecessary on enterprise workstations
+              and increase the attack surface.
+            level: 2
+            scored: true
+            audit_command: |
+              Get-Service -Name "XblAuthManager","XblGameSave","XboxGipSvc","XboxNetApiSvc" -ErrorAction SilentlyContinue | Select-Object Name, StartType
+            audit_steps: |
+              1. Open services.msc.
+              2. Locate Xbox-related services.
+              3. Verify all are set to 'Disabled'.
+            expected_output: |
+              All Xbox services: StartType = Disabled
+            remediation: |
+              "XblAuthManager","XblGameSave","XboxGipSvc","XboxNetApiSvc" | ForEach-Object { Set-Service -Name $_ -StartupType Disabled }
+
+          - number: "17.1.3"
+            title: "Ensure 'Windows Search (WSearch)' is evaluated and hardened"
+            description: >
+              The Windows Search service indexes files for fast search.
+            rationale: >
+              In enterprise environments, the search indexer may expose
+              sensitive content. Evaluate whether it needs to run.
+            level: 2
+            scored: true
+            audit_command: |
+              Get-Service -Name "WSearch" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty StartType
+            audit_steps: |
+              1. Open services.msc.
+              2. Locate 'Windows Search'.
+              3. Evaluate whether the service needs to run.
+            expected_output: |
+              Disabled (or justified as required)
+            remediation: |
+              If not required, disable: Set-Service -Name "WSearch" -StartupType Disabled
+
+  # ---------------------------------------------------------------------------
+  # 18  Administrative Templates
+  # ---------------------------------------------------------------------------
+  - number: "18"
+    title: "Administrative Templates"
+    children:
+      - number: "18.1"
+        title: "AutoPlay and AutoRun"
+        checks:
+          - number: "18.1.1"
+            title: "Ensure 'Turn off Autoplay' is set to 'Enabled: All drives'"
+            description: >
+              AutoPlay starts to read from a drive as soon as media
+              is inserted.
+            rationale: >
+              An attacker could use AutoPlay to automatically execute
+              malicious code from removable media.
+            level: 1
+            scored: true
+            audit_command: |
+              Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Name "NoDriveTypeAutoRun" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty NoDriveTypeAutoRun
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Computer Configuration > Policies > Administrative Templates >
+                 Windows Components > AutoPlay Policies.
+              3. Verify 'Turn off Autoplay' is 'Enabled: All drives'.
+            expected_output: |
+              255
+            remediation: |
+              Configure via Group Policy to 'Enabled: All drives':
+              Windows Components > AutoPlay Policies > Turn off Autoplay
+
+          - number: "18.1.2"
+            title: "Ensure 'Set the default behavior for AutoRun' is set to 'Enabled: Do not execute any autorun commands'"
+            description: >
+              This policy sets the default behavior for autorun commands.
+            rationale: >
+              Autorun commands can enable malware to spread via
+              removable media.
+            level: 1
+            scored: true
+            audit_command: |
+              Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Name "NoAutorun" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty NoAutorun
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Windows Components > AutoPlay Policies.
+              3. Verify AutoRun default behavior is 'Do not execute any autorun commands'.
+            expected_output: |
+              1
+            remediation: |
+              Configure via Group Policy:
+              Windows Components > AutoPlay Policies >
+              Set the default behavior for AutoRun
+
+      - number: "18.2"
+        title: "BitLocker Drive Encryption"
+        checks:
+          - number: "18.2.1"
+            title: "Ensure 'Require additional authentication at startup' is set to 'Enabled'"
+            description: >
+              This policy configures whether BitLocker requires
+              additional authentication each time the computer starts.
+            rationale: >
+              Without additional authentication, BitLocker only
+              protects against offline attacks.
+            level: 1
+            scored: true
+            audit_command: |
+              Get-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\FVE" -Name "UseAdvancedStartup" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty UseAdvancedStartup
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Computer Configuration > Policies > Administrative Templates >
+                 Windows Components > BitLocker Drive Encryption > Operating System Drives.
+              3. Verify 'Require additional authentication at startup' is 'Enabled'.
+            expected_output: |
+              1
+            remediation: |
+              Configure via Group Policy to 'Enabled':
+              Windows Components > BitLocker Drive Encryption >
+              Operating System Drives > Require additional authentication at startup
+
+      - number: "18.3"
+        title: "WinRM Configuration"
+        checks:
+          - number: "18.3.1"
+            title: "Ensure 'Allow Basic authentication' for WinRM Client is set to 'Disabled'"
+            description: >
+              This policy manages whether the WinRM client uses
+              Basic authentication.
+            rationale: >
+              Basic authentication sends credentials in clear text.
+            level: 1
+            scored: true
+            audit_command: |
+              Get-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WinRM\Client" -Name "AllowBasic" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty AllowBasic
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Windows Components > Windows Remote Management (WinRM) > WinRM Client.
+              3. Verify 'Allow Basic authentication' is 'Disabled'.
+            expected_output: |
+              0
+            remediation: |
+              Configure via Group Policy to 'Disabled':
+              Windows Components > Windows Remote Management (WinRM) > WinRM Client >
+              Allow Basic authentication
+
+          - number: "18.3.2"
+            title: "Ensure 'Allow unencrypted traffic' for WinRM Client is set to 'Disabled'"
+            description: >
+              This policy manages whether the WinRM client sends
+              and receives unencrypted messages.
+            rationale: >
+              Encrypting WinRM traffic prevents eavesdropping.
+            level: 1
+            scored: true
+            audit_command: |
+              Get-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WinRM\Client" -Name "AllowUnencryptedTraffic" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty AllowUnencryptedTraffic
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Windows Components > Windows Remote Management (WinRM) > WinRM Client.
+              3. Verify 'Allow unencrypted traffic' is 'Disabled'.
+            expected_output: |
+              0
+            remediation: |
+              Configure via Group Policy to 'Disabled':
+              Windows Components > Windows Remote Management (WinRM) > WinRM Client >
+              Allow unencrypted traffic
+
+  # ---------------------------------------------------------------------------
+  # 19  Privacy and Telemetry
+  # ---------------------------------------------------------------------------
+  - number: "19"
+    title: "Privacy and Telemetry"
+    children:
+      - number: "19.1"
+        title: "Telemetry Settings"
+        checks:
+          - number: "19.1.1"
+            title: "Ensure 'Allow Telemetry' is set to '0 - Security'"
+            description: >
+              This policy determines the amount of diagnostic and usage
+              data reported to Microsoft. Enterprise edition supports
+              the '0 - Security' level.
+            rationale: >
+              Minimizing telemetry reduces potentially sensitive data
+              sent to external servers.
+            level: 1
+            scored: true
+            audit_command: |
+              Get-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -Name "AllowTelemetry" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty AllowTelemetry
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Computer Configuration > Policies > Administrative Templates >
+                 Windows Components > Data Collection and Preview Builds.
+              3. Verify 'Allow Diagnostic Data' is set to '0 - Security'.
+            expected_output: |
+              0
+            remediation: |
+              Configure via Group Policy to '0 - Security [Enterprise Only]':
+              Windows Components > Data Collection and Preview Builds >
+              Allow Diagnostic Data
+
+          - number: "19.1.2"
+            title: "Ensure 'Do not show feedback notifications' is set to 'Enabled'"
+            description: >
+              This policy prevents devices from showing feedback
+              questions from Microsoft.
+            rationale: >
+              Feedback notifications can transmit usage information
+              and distract users.
+            level: 1
+            scored: true
+            audit_command: |
+              Get-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -Name "DoNotShowFeedbackNotifications" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty DoNotShowFeedbackNotifications
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Windows Components > Data Collection and Preview Builds.
+              3. Verify 'Do not show feedback notifications' is 'Enabled'.
+            expected_output: |
+              1
+            remediation: |
+              Configure via Group Policy to 'Enabled':
+              Windows Components > Data Collection and Preview Builds >
+              Do not show feedback notifications
+
+          - number: "19.1.3"
+            title: "Ensure 'Disable pre-release features or settings' is set to 'Enabled: Disabled'"
+            description: >
+              This policy controls whether pre-release features and
+              settings are available on enterprise devices.
+            rationale: >
+              Pre-release features may introduce instability and
+              security risks in production environments.
+            level: 1
+            scored: true
+            audit_command: |
+              Get-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\PreviewBuilds" -Name "EnableConfigFlighting" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty EnableConfigFlighting
+            audit_steps: |
+              1. Open the Group Policy Management Console (gpmc.msc).
+              2. Navigate to Windows Components > Data Collection and Preview Builds.
+              3. Verify 'Toggle user control over Insider builds' is 'Disabled'.
+            expected_output: |
+              0
+            remediation: |
+              Configure via Group Policy to 'Disabled':
+              Windows Components > Data Collection and Preview Builds >
+              Toggle user control over Insider builds
