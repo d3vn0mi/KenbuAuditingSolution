@@ -1,0 +1,810 @@
+benchmark:
+  name: "CIS Sophos Firewall Benchmark"
+  version: "1.0.0"
+  platform: "sophos-firewall"
+  release_date: "2024-03-01"
+  description: "Security configuration benchmark for Sophos XG/XGS Firewall"
+  url: "https://www.cisecurity.org/benchmark/sophos"
+
+sections:
+  # ===========================================================================
+  # Section 1: Management Plane
+  # ===========================================================================
+  - number: "1"
+    title: "Management Plane"
+    children:
+      - number: "1.1"
+        title: "Authentication and Access Control"
+        checks:
+          - number: "1.1.1"
+            title: "Ensure admin password meets complexity requirements"
+            description: "The administrator password should meet minimum complexity requirements including length, uppercase, lowercase, digits, and special characters."
+            rationale: "A strong administrator password helps protect the firewall from unauthorized access through brute force or dictionary attacks."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to Administration > Device Access
+              3. Verify password complexity policy is enabled
+              4. Ensure minimum password length is 12 or more characters
+            expected_output: |
+              Password complexity policy is enabled with minimum 12 characters
+            remediation: |
+              1. Navigate to Administration > Device Access
+              2. Enable password complexity requirements
+              3. Set minimum length to 12 characters
+              4. Require uppercase, lowercase, digits, and special characters
+
+          - number: "1.1.2"
+            title: "Ensure multi-factor authentication is enabled for admin access"
+            description: "Multi-factor authentication (MFA) adds an additional layer of security to the admin login process by requiring a second form of verification."
+            rationale: "MFA significantly reduces the risk of unauthorized administrative access even if the password is compromised."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to Authentication > Multi-factor Authentication
+              3. Verify that MFA is enabled for admin users
+            expected_output: |
+              MFA is enabled for all administrative accounts
+            remediation: |
+              1. Navigate to Authentication > Multi-factor Authentication
+              2. Enable one-time password (OTP) for admin accounts
+              3. Configure OTP settings with appropriate token timeout
+
+          - number: "1.1.3"
+            title: "Ensure default admin account name is changed"
+            description: "The default admin account name should be changed from the factory default to reduce the risk of targeted attacks."
+            rationale: "Changing the default admin username makes it harder for attackers to guess valid credentials for the administrative interface."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to Authentication > Users
+              3. Verify the default admin account name has been changed
+            expected_output: |
+              Default admin account name has been changed from factory default
+            remediation: |
+              1. Navigate to Authentication > Users
+              2. Create a new administrator account with a non-default name
+              3. Assign full administrative privileges
+              4. Disable or remove the default admin account
+
+          - number: "1.1.4"
+            title: "Ensure login banner is configured"
+            description: "A login banner should be displayed before authentication to warn unauthorized users about legal consequences of unauthorized access."
+            rationale: "Displaying a warning banner provides legal notice and can deter unauthorized access attempts."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to Administration > Admin Settings
+              3. Verify login disclaimer/banner is configured and enabled
+            expected_output: |
+              Login banner is enabled with appropriate warning text
+            remediation: |
+              1. Navigate to Administration > Admin Settings
+              2. Enable login disclaimer
+              3. Enter appropriate warning text per organizational policy
+
+      - number: "1.2"
+        title: "Admin Services"
+        checks:
+          - number: "1.2.1"
+            title: "Ensure HTTPS admin access is enabled"
+            description: "Administrative access to the firewall should only be permitted over HTTPS to ensure encryption of management traffic."
+            rationale: "HTTPS ensures that administrative credentials and configuration data are encrypted in transit, preventing eavesdropping."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to Administration > Admin Settings
+              3. Verify HTTPS is the only enabled protocol for admin access
+            expected_output: |
+              HTTPS admin access is enabled; HTTP is disabled
+            remediation: |
+              1. Navigate to Administration > Admin Settings
+              2. Ensure HTTPS admin port is configured (default 4444)
+              3. Disable HTTP admin access if enabled
+
+          - number: "1.2.2"
+            title: "Ensure admin access is restricted to specific networks"
+            description: "Administrative access should be restricted to specific trusted network ranges rather than being open to all networks."
+            rationale: "Limiting admin access to specific IP ranges reduces the attack surface by preventing unauthorized networks from reaching the management interface."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to Administration > Device Access
+              3. Verify admin services are only enabled on required zones
+              4. Check that ACL rules restrict admin access to specific IPs
+            expected_output: |
+              Admin access is restricted to specific trusted networks
+            remediation: |
+              1. Navigate to Administration > Device Access
+              2. Disable admin services on WAN zone
+              3. Enable admin services only on LAN/management zone
+              4. Configure ACL to restrict admin access to specific IP ranges
+
+          - number: "1.2.3"
+            title: "Ensure SSH access is restricted"
+            description: "SSH access to the firewall should be restricted to authorized administrators and specific network ranges."
+            rationale: "Unrestricted SSH access increases the risk of brute force attacks and unauthorized command-line access to the firewall."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to Administration > Device Access
+              3. Verify SSH is disabled on WAN zone
+              4. Verify SSH is only enabled on management/LAN zone
+            expected_output: |
+              SSH is restricted to LAN/management zone only
+            remediation: |
+              1. Navigate to Administration > Device Access
+              2. Disable SSH on WAN and DMZ zones
+              3. Enable SSH only on LAN or management zone
+              4. Restrict SSH access to specific IP addresses
+
+          - number: "1.2.4"
+            title: "Ensure admin session timeout is configured"
+            description: "Administrative sessions should automatically timeout after a period of inactivity to prevent unauthorized access from unattended sessions."
+            rationale: "Automatic session timeout helps protect against unauthorized access when an administrator leaves their workstation unattended."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to Administration > Admin Settings
+              3. Verify session timeout is set to 10 minutes or less
+            expected_output: |
+              Admin session timeout is set to 10 minutes or less
+            remediation: |
+              1. Navigate to Administration > Admin Settings
+              2. Set admin session timeout to 10 minutes or less
+              3. Apply changes
+
+      - number: "1.3"
+        title: "Firmware and Updates"
+        checks:
+          - number: "1.3.1"
+            title: "Ensure firmware is up to date"
+            description: "The Sophos Firewall firmware should be kept up to date with the latest stable release to ensure all security patches are applied."
+            rationale: "Running outdated firmware may expose the firewall to known vulnerabilities that have been patched in newer releases."
+            level: 1
+            scored: false
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to Administration > Firmware
+              3. Check the current firmware version against the latest available
+            expected_output: |
+              Firmware is running the latest stable release
+            remediation: |
+              1. Download the latest stable firmware from Sophos support
+              2. Navigate to Administration > Firmware
+              3. Upload and install the firmware update
+              4. Schedule a maintenance window and reboot
+
+          - number: "1.3.2"
+            title: "Ensure automatic pattern updates are enabled"
+            description: "Pattern updates for IPS, antivirus, and application control should be configured to update automatically."
+            rationale: "Automatic updates ensure the firewall has the latest threat signatures to protect against new and emerging threats."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to Administration > Updates
+              3. Verify automatic updates are enabled for all pattern databases
+            expected_output: |
+              Automatic pattern updates are enabled
+            remediation: |
+              1. Navigate to Administration > Updates
+              2. Enable automatic updates for IPS patterns
+              3. Enable automatic updates for antivirus definitions
+              4. Enable automatic updates for application signatures
+
+  # ===========================================================================
+  # Section 2: Network and Firewall Policies
+  # ===========================================================================
+  - number: "2"
+    title: "Network and Firewall Policies"
+    children:
+      - number: "2.1"
+        title: "Firewall Rules"
+        checks:
+          - number: "2.1.1"
+            title: "Ensure default deny policy is configured"
+            description: "The firewall should be configured with a default deny policy that blocks all traffic not explicitly permitted by a firewall rule."
+            rationale: "A default deny policy ensures that only traffic that has been explicitly allowed will pass through the firewall, reducing the risk of unauthorized access."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to Rules and Policies > Firewall Rules
+              3. Verify the last rule is a drop-all/deny-all rule
+              4. Ensure no overly permissive allow-all rules exist
+            expected_output: |
+              Default deny policy is in place; no allow-all rules present
+            remediation: |
+              1. Navigate to Rules and Policies > Firewall Rules
+              2. Review and remove any allow-all rules
+              3. Ensure a deny-all rule exists at the bottom of the rule set
+              4. Create specific allow rules only for required traffic
+
+          - number: "2.1.2"
+            title: "Ensure unused firewall rules are disabled or removed"
+            description: "Firewall rules that are no longer needed should be disabled or removed to minimize the attack surface."
+            rationale: "Unused rules may inadvertently allow traffic that is no longer required, increasing the attack surface."
+            level: 1
+            scored: false
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to Rules and Policies > Firewall Rules
+              3. Review hit counts and last-used dates for all rules
+              4. Identify rules with zero or very low hit counts
+            expected_output: |
+              No unused or stale firewall rules present
+            remediation: |
+              1. Review all firewall rules periodically
+              2. Disable rules with zero hit counts after investigation
+              3. Remove confirmed unused rules
+              4. Document all rule changes
+
+          - number: "2.1.3"
+            title: "Ensure firewall rules are documented"
+            description: "Each firewall rule should have a descriptive name and comment explaining its purpose."
+            rationale: "Documented firewall rules facilitate auditing, troubleshooting, and change management processes."
+            level: 1
+            scored: false
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to Rules and Policies > Firewall Rules
+              3. Verify each rule has a descriptive name and comment
+            expected_output: |
+              All firewall rules have descriptive names and comments
+            remediation: |
+              1. Review each firewall rule
+              2. Add a descriptive name indicating the purpose
+              3. Add a comment with justification and approval reference
+
+          - number: "2.1.4"
+            title: "Ensure source and destination are specific in firewall rules"
+            description: "Firewall rules should use specific source and destination addresses rather than 'Any' where possible."
+            rationale: "Using specific source and destination addresses in firewall rules limits the scope of allowed traffic and reduces the attack surface."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to Rules and Policies > Firewall Rules
+              3. Review each rule for use of 'Any' in source or destination
+              4. Verify that specific hosts, networks, or groups are used
+            expected_output: |
+              Firewall rules use specific source and destination addresses
+            remediation: |
+              1. Review each rule using 'Any' for source or destination
+              2. Replace 'Any' with specific host, network, or group objects
+              3. Test rule changes to ensure required traffic is not disrupted
+
+      - number: "2.2"
+        title: "Network Address Translation"
+        checks:
+          - number: "2.2.1"
+            title: "Ensure NAT rules are properly configured"
+            description: "Network Address Translation (NAT) rules should be configured to hide internal network addresses from external networks."
+            rationale: "Proper NAT configuration helps protect internal network topology from external observation and reduces the attack surface."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to Rules and Policies > NAT Rules
+              3. Verify outbound NAT is configured for internal networks
+              4. Verify inbound NAT only exposes required services
+            expected_output: |
+              NAT rules properly configured for outbound and inbound traffic
+            remediation: |
+              1. Configure masquerade NAT for outbound internal traffic
+              2. Review inbound DNAT rules for necessity
+              3. Remove any unnecessary port forwarding rules
+
+          - number: "2.2.2"
+            title: "Ensure only required services are published via DNAT"
+            description: "Destination NAT (DNAT) rules should only be configured for services that must be accessible from external networks."
+            rationale: "Publishing unnecessary services via DNAT increases the attack surface by exposing internal services to external threats."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to Rules and Policies > NAT Rules
+              3. Review all DNAT/port forwarding rules
+              4. Verify each published service is required
+            expected_output: |
+              Only required services are published via DNAT
+            remediation: |
+              1. Review all DNAT rules
+              2. Remove DNAT rules for services no longer needed
+              3. Restrict source addresses for DNAT rules where possible
+
+      - number: "2.3"
+        title: "Zone Configuration"
+        checks:
+          - number: "2.3.1"
+            title: "Ensure network zones are properly segmented"
+            description: "Network zones should be configured to segment the network into logical security domains such as LAN, WAN, DMZ, and Guest."
+            rationale: "Network segmentation through zones limits the blast radius of a security breach and controls traffic flow between different security domains."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to Network > Zones
+              3. Verify appropriate zones exist (LAN, WAN, DMZ, Guest)
+              4. Verify interfaces are assigned to correct zones
+            expected_output: |
+              Network zones are properly configured and segmented
+            remediation: |
+              1. Navigate to Network > Zones
+              2. Create zones for each network segment
+              3. Assign interfaces to appropriate zones
+              4. Configure inter-zone firewall rules
+
+          - number: "2.3.2"
+            title: "Ensure guest network is isolated"
+            description: "Guest networks should be isolated from internal production networks with appropriate firewall rules."
+            rationale: "Guest network isolation prevents potentially untrusted guest devices from accessing sensitive internal resources."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to Rules and Policies > Firewall Rules
+              3. Verify no rules allow guest zone to access LAN zone
+              4. Verify guest zone only has internet access
+            expected_output: |
+              Guest network is isolated from internal networks
+            remediation: |
+              1. Create a dedicated guest zone
+              2. Configure firewall rules to block guest-to-LAN traffic
+              3. Allow only internet-bound traffic from guest zone
+              4. Enable captive portal for guest authentication
+
+  # ===========================================================================
+  # Section 3: Intrusion Prevention and Threat Protection
+  # ===========================================================================
+  - number: "3"
+    title: "Intrusion Prevention and Threat Protection"
+    children:
+      - number: "3.1"
+        title: "Intrusion Prevention System"
+        checks:
+          - number: "3.1.1"
+            title: "Ensure IPS is enabled"
+            description: "The Intrusion Prevention System (IPS) should be enabled to detect and prevent network-based attacks."
+            rationale: "IPS provides an additional layer of defense by detecting and blocking known attack patterns and exploit attempts."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to Intrusion Prevention > IPS Policies
+              3. Verify IPS is enabled and applied to relevant firewall rules
+            expected_output: |
+              IPS is enabled and applied to firewall rules
+            remediation: |
+              1. Navigate to Intrusion Prevention > IPS Policies
+              2. Create or enable an IPS policy
+              3. Apply the IPS policy to relevant firewall rules
+              4. Set action to "Drop" for high-severity signatures
+
+          - number: "3.1.2"
+            title: "Ensure IPS policy blocks high-severity threats"
+            description: "The IPS policy should be configured to drop packets matching high-severity threat signatures."
+            rationale: "Blocking high-severity threats automatically prevents known critical attacks from reaching internal systems."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to Intrusion Prevention > IPS Policies
+              3. Verify the active IPS policy action for critical and high severity
+            expected_output: |
+              High and critical severity signatures are set to Drop
+            remediation: |
+              1. Edit the active IPS policy
+              2. Set action to "Drop" for Critical severity
+              3. Set action to "Drop" for High severity
+              4. Set action to "Alert" or "Drop" for Medium severity
+
+      - number: "3.2"
+        title: "Web Protection"
+        checks:
+          - number: "3.2.1"
+            title: "Ensure web filtering is enabled"
+            description: "Web filtering should be enabled to block access to malicious and inappropriate web content."
+            rationale: "Web filtering helps prevent users from accessing known malicious websites that could deliver malware or phishing attacks."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to Web > General Settings
+              3. Verify web filtering is enabled
+              4. Check that web filter policies are applied to firewall rules
+            expected_output: |
+              Web filtering is enabled and applied to relevant rules
+            remediation: |
+              1. Navigate to Web > General Settings
+              2. Enable web filtering
+              3. Create or configure web filter policies
+              4. Apply web filter policies to outbound firewall rules
+
+          - number: "3.2.2"
+            title: "Ensure HTTPS scanning is enabled"
+            description: "HTTPS scanning decrypts and inspects encrypted web traffic for threats."
+            rationale: "Without HTTPS inspection, encrypted traffic cannot be scanned for malware, phishing, or policy violations, leaving a significant blind spot."
+            level: 2
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to Web > General Settings
+              3. Verify HTTPS scanning/decryption is enabled
+            expected_output: |
+              HTTPS scanning is enabled
+            remediation: |
+              1. Generate or import a CA certificate for HTTPS inspection
+              2. Deploy the CA certificate to client devices
+              3. Enable HTTPS scanning in web filter policies
+              4. Configure exclusions for sensitive sites as needed
+
+          - number: "3.2.3"
+            title: "Ensure malicious website categories are blocked"
+            description: "Web filter policies should block categories known to host malicious content such as malware, phishing, and spam URLs."
+            rationale: "Blocking known malicious web categories provides proactive protection against web-based threats."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to Web > Policies
+              3. Review web filter policies for blocked categories
+              4. Verify malware, phishing, and spam URL categories are blocked
+            expected_output: |
+              Malicious website categories are blocked in web filter policies
+            remediation: |
+              1. Edit the web filter policy
+              2. Block categories: Malware, Phishing, Spam URLs, Botnets
+              3. Block categories: Anonymizer/Proxy, Cryptocurrency Mining
+              4. Apply the policy to relevant firewall rules
+
+      - number: "3.3"
+        title: "Email Protection"
+        checks:
+          - number: "3.3.1"
+            title: "Ensure email protection is configured"
+            description: "Email protection should be configured to scan inbound and outbound email for malware, spam, and phishing."
+            rationale: "Email is one of the most common attack vectors. Scanning email traffic helps prevent malware delivery and phishing attacks."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to Email > General Settings
+              3. Verify email scanning is enabled for SMTP and POP/IMAP
+            expected_output: |
+              Email protection is enabled for inbound and outbound email
+            remediation: |
+              1. Navigate to Email > General Settings
+              2. Enable SMTP scanning for inbound and outbound mail
+              3. Enable anti-spam and anti-malware scanning
+              4. Configure SPF, DKIM, and DMARC validation
+
+          - number: "3.3.2"
+            title: "Ensure email quarantine is configured"
+            description: "An email quarantine should be configured to hold suspicious emails for review."
+            rationale: "Quarantining suspicious emails allows administrators to review and release legitimate emails while preventing delivery of malicious content."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to Email > Quarantine
+              3. Verify quarantine is enabled and configured
+            expected_output: |
+              Email quarantine is enabled and configured
+            remediation: |
+              1. Navigate to Email > Quarantine settings
+              2. Enable quarantine for spam and suspected malware
+              3. Configure quarantine digest notifications
+              4. Set appropriate retention period
+
+  # ===========================================================================
+  # Section 4: VPN Configuration
+  # ===========================================================================
+  - number: "4"
+    title: "VPN Configuration"
+    children:
+      - number: "4.1"
+        title: "IPsec VPN"
+        checks:
+          - number: "4.1.1"
+            title: "Ensure IPsec VPN uses strong encryption"
+            description: "IPsec VPN connections should use strong encryption algorithms such as AES-256 and SHA-256 or higher."
+            rationale: "Weak encryption algorithms can be exploited by attackers to decrypt VPN traffic and access sensitive data."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to VPN > IPsec Connections
+              3. Review encryption settings for each IPsec connection
+              4. Verify AES-256 and SHA-256 or higher are used
+            expected_output: |
+              IPsec VPN uses AES-256 and SHA-256 or higher
+            remediation: |
+              1. Edit each IPsec connection
+              2. Set encryption to AES-256
+              3. Set authentication to SHA-256 or SHA-512
+              4. Set DH Group to 14 (2048-bit) or higher
+
+          - number: "4.1.2"
+            title: "Ensure IPsec VPN uses strong DH groups"
+            description: "IPsec VPN should use Diffie-Hellman (DH) groups of 14 (2048-bit) or higher for key exchange."
+            rationale: "Weak DH groups can be vulnerable to attacks that compromise the key exchange, allowing attackers to decrypt VPN traffic."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to VPN > IPsec Connections
+              3. Review DH Group settings for Phase 1 and Phase 2
+            expected_output: |
+              DH Group 14 or higher is used for key exchange
+            remediation: |
+              1. Edit each IPsec connection
+              2. Set Phase 1 DH Group to 14 or higher
+              3. Set Phase 2 PFS group to 14 or higher
+
+          - number: "4.1.3"
+            title: "Ensure dead peer detection is enabled"
+            description: "Dead Peer Detection (DPD) should be enabled to detect when a VPN peer becomes unreachable and tear down the tunnel."
+            rationale: "DPD ensures that stale VPN tunnels are cleaned up, freeing resources and preventing traffic from being sent to unreachable peers."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to VPN > IPsec Connections
+              3. Verify Dead Peer Detection is enabled
+            expected_output: |
+              Dead Peer Detection is enabled
+            remediation: |
+              1. Edit each IPsec connection
+              2. Enable Dead Peer Detection
+              3. Set appropriate DPD interval and timeout values
+
+      - number: "4.2"
+        title: "SSL VPN"
+        checks:
+          - number: "4.2.1"
+            title: "Ensure SSL VPN uses TLS 1.2 or higher"
+            description: "SSL VPN connections should use TLS 1.2 or higher to ensure secure communication."
+            rationale: "Older TLS versions (1.0, 1.1) have known vulnerabilities and should not be used for VPN connections."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to VPN > SSL VPN (Remote Access)
+              3. Verify TLS version settings
+            expected_output: |
+              TLS 1.2 or higher is configured for SSL VPN
+            remediation: |
+              1. Navigate to VPN > SSL VPN settings
+              2. Set minimum TLS version to 1.2
+              3. Disable TLS 1.0 and TLS 1.1
+
+          - number: "4.2.2"
+            title: "Ensure SSL VPN uses strong cipher suites"
+            description: "SSL VPN should be configured to use strong cipher suites and reject weak ciphers."
+            rationale: "Weak cipher suites can be exploited by attackers to compromise VPN session security."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to VPN > SSL VPN settings
+              3. Review configured cipher suites
+            expected_output: |
+              Only strong cipher suites are enabled (AES-256-GCM, CHACHA20-POLY1305)
+            remediation: |
+              1. Configure SSL VPN to use AES-256-GCM or AES-128-GCM
+              2. Disable RC4, DES, 3DES, and NULL ciphers
+              3. Disable export-grade cipher suites
+
+          - number: "4.2.3"
+            title: "Ensure SSL VPN portal access is restricted"
+            description: "SSL VPN portal access should be restricted to authorized users and groups."
+            rationale: "Unrestricted SSL VPN access increases the risk of unauthorized remote access to the network."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to VPN > SSL VPN (Remote Access)
+              3. Verify access is restricted to specific user groups
+            expected_output: |
+              SSL VPN access is limited to authorized user groups
+            remediation: |
+              1. Create dedicated user groups for VPN access
+              2. Assign only authorized users to VPN groups
+              3. Configure SSL VPN policy to allow only VPN user groups
+
+  # ===========================================================================
+  # Section 5: Logging and Monitoring
+  # ===========================================================================
+  - number: "5"
+    title: "Logging and Monitoring"
+    children:
+      - number: "5.1"
+        title: "Logging Configuration"
+        checks:
+          - number: "5.1.1"
+            title: "Ensure logging is enabled for all firewall rules"
+            description: "Logging should be enabled for all firewall rules to provide audit trail and forensic data."
+            rationale: "Without logging, it is impossible to detect, investigate, or respond to security incidents involving firewall rule matches."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to Rules and Policies > Firewall Rules
+              3. Verify logging is enabled for each firewall rule
+            expected_output: |
+              Logging is enabled for all firewall rules
+            remediation: |
+              1. Edit each firewall rule
+              2. Enable "Log Firewall Traffic" option
+              3. Ensure both allowed and dropped traffic is logged
+
+          - number: "5.1.2"
+            title: "Ensure syslog is configured for remote logging"
+            description: "Firewall logs should be forwarded to a remote syslog server for centralized log management and analysis."
+            rationale: "Remote logging ensures log data is preserved even if the firewall is compromised and provides centralized visibility."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to System Services > Log Settings
+              3. Verify a remote syslog server is configured
+            expected_output: |
+              Remote syslog server is configured and active
+            remediation: |
+              1. Navigate to System Services > Log Settings
+              2. Add a syslog server with IP address and port
+              3. Select log categories to forward
+              4. Use TCP with TLS for secure log transport
+
+          - number: "5.1.3"
+            title: "Ensure log retention policy is configured"
+            description: "A log retention policy should be configured to ensure logs are retained for an appropriate period for compliance and forensic purposes."
+            rationale: "Adequate log retention ensures that historical log data is available for incident investigation and compliance auditing."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to System Services > Log Settings
+              3. Verify log retention period is configured (minimum 90 days)
+            expected_output: |
+              Log retention is configured for at least 90 days
+            remediation: |
+              1. Navigate to System Services > Log Settings
+              2. Set log retention to minimum 90 days
+              3. Configure log rotation to manage disk space
+              4. Consider archiving older logs to external storage
+
+      - number: "5.2"
+        title: "Monitoring and Alerts"
+        checks:
+          - number: "5.2.1"
+            title: "Ensure email notifications are configured for critical events"
+            description: "Email notifications should be configured to alert administrators of critical security events."
+            rationale: "Timely notification of critical events enables administrators to respond quickly to potential security incidents."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to System Services > Notification Settings
+              3. Verify email notification is configured
+              4. Verify critical event categories are selected
+            expected_output: |
+              Email notifications are configured for critical events
+            remediation: |
+              1. Navigate to System Services > Notification Settings
+              2. Configure SMTP server settings
+              3. Add notification recipients
+              4. Enable notifications for: admin login failures, firmware updates, VPN failures, IPS alerts
+
+          - number: "5.2.2"
+            title: "Ensure SNMP community strings are changed from default"
+            description: "If SNMP is enabled, the default community strings should be changed to prevent unauthorized monitoring access."
+            rationale: "Default SNMP community strings are well-known and can be exploited by attackers to gain information about the network."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to System Services > SNMP
+              3. Verify community strings are not set to 'public' or 'private'
+            expected_output: |
+              SNMP community strings are non-default; SNMPv3 preferred
+            remediation: |
+              1. If SNMP is required, use SNMPv3 with authentication
+              2. Change community strings from default values
+              3. Restrict SNMP access to specific management hosts
+              4. Disable SNMP if not required
+
+  # ===========================================================================
+  # Section 6: High Availability and Backup
+  # ===========================================================================
+  - number: "6"
+    title: "High Availability and Backup"
+    children:
+      - number: "6.1"
+        title: "Backup and Recovery"
+        checks:
+          - number: "6.1.1"
+            title: "Ensure automatic backups are configured"
+            description: "Automatic configuration backups should be scheduled to ensure the firewall configuration can be restored in case of failure."
+            rationale: "Regular backups ensure that the firewall configuration can be quickly restored after a hardware failure, firmware corruption, or misconfiguration."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to Backup & Firmware > Backup
+              3. Verify automatic backup schedule is configured
+              4. Verify backup is stored on external storage or email
+            expected_output: |
+              Automatic backups are scheduled and stored externally
+            remediation: |
+              1. Navigate to Backup & Firmware > Backup
+              2. Enable scheduled backups
+              3. Set backup frequency (daily recommended)
+              4. Configure backup destination (FTP, email, or cloud)
+
+          - number: "6.1.2"
+            title: "Ensure backup encryption is enabled"
+            description: "Configuration backups should be encrypted to protect sensitive configuration data including passwords and certificates."
+            rationale: "Unencrypted backups may expose sensitive configuration data including pre-shared keys, certificates, and credential information."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to Backup & Firmware > Backup
+              3. Verify backup encryption is enabled
+            expected_output: |
+              Backup encryption is enabled
+            remediation: |
+              1. Navigate to Backup & Firmware > Backup
+              2. Enable backup encryption
+              3. Set a strong encryption password
+              4. Store the encryption password securely
+
+          - number: "6.1.3"
+            title: "Ensure backup integrity is verified"
+            description: "Configuration backups should be periodically tested to ensure they can be successfully restored."
+            rationale: "Untested backups may fail when needed, leaving the organization unable to recover from a disaster."
+            level: 2
+            scored: false
+            audit_steps: |
+              1. Review backup logs for successful completion
+              2. Schedule periodic restore tests on a lab device
+              3. Document backup test results
+            expected_output: |
+              Backup integrity has been verified through restore testing
+            remediation: |
+              1. Establish a backup testing schedule (quarterly recommended)
+              2. Maintain a test/lab firewall for restore testing
+              3. Document restore test procedures and results
+
+      - number: "6.2"
+        title: "High Availability"
+        checks:
+          - number: "6.2.1"
+            title: "Ensure high availability is configured for critical deployments"
+            description: "For critical deployments, high availability (HA) should be configured with a secondary firewall to ensure continued operation in case of primary failure."
+            rationale: "High availability ensures network security services remain operational even when the primary firewall experiences a failure."
+            level: 2
+            scored: false
+            audit_steps: |
+              1. Log in to the Sophos Firewall web admin console
+              2. Navigate to System Services > High Availability
+              3. Verify HA is configured with active-passive or active-active mode
+            expected_output: |
+              High availability is configured with appropriate failover mode
+            remediation: |
+              1. Obtain a secondary Sophos Firewall appliance
+              2. Navigate to System Services > High Availability
+              3. Configure HA with dedicated HA link
+              4. Set appropriate failover mode (active-passive recommended)
+              5. Test failover to verify operation
