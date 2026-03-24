@@ -1,0 +1,1038 @@
+benchmark:
+  name: "CIS Red Hat Enterprise Linux 7 Benchmark"
+  version: "3.1.1"
+  platform: "rhel-7"
+  release_date: "2023-09-01"
+  description: "Security configuration benchmark for Red Hat Enterprise Linux 7"
+  url: "https://www.cisecurity.org/benchmark/red_hat_linux"
+
+sections:
+  # ===========================================================================
+  # Section 1: Initial Setup
+  # ===========================================================================
+  - number: "1"
+    title: "Initial Setup"
+    children:
+      - number: "1.1"
+        title: "Filesystem Configuration"
+        checks:
+          - number: "1.1.1"
+            title: "Ensure mounting of cramfs filesystems is disabled"
+            description: "The cramfs filesystem type is a compressed read-only Linux filesystem embedded in small footprint systems."
+            rationale: "Removing support for unneeded filesystem types reduces the local attack surface of the server. If this filesystem type is not needed, disable it."
+            level: 1
+            scored: true
+            audit_command: |
+              modprobe -n -v cramfs 2>/dev/null | grep -E '(cramfs|install)'; lsmod | grep cramfs
+            expected_output: |
+              install /bin/true
+            remediation: |
+              echo "install cramfs /bin/true" >> /etc/modprobe.d/CIS.conf
+              rmmod cramfs 2>/dev/null
+
+          - number: "1.1.2"
+            title: "Ensure mounting of vFAT filesystems is limited"
+            description: "The vFAT filesystem format is primarily used on older Windows systems and portable USB drives or floppy disks."
+            rationale: "Removing support for unneeded filesystem types reduces the local attack surface of the server."
+            level: 1
+            scored: true
+            audit_command: |
+              modprobe -n -v vfat 2>/dev/null | grep -E '(vfat|install)'; lsmod | grep vfat
+            expected_output: |
+              install /bin/true
+            remediation: |
+              echo "install vfat /bin/true" >> /etc/modprobe.d/CIS.conf
+              rmmod vfat 2>/dev/null
+
+          - number: "1.1.3"
+            title: "Ensure mounting of squashfs filesystems is disabled"
+            description: "The squashfs filesystem type is a compressed read-only Linux filesystem embedded in small footprint systems."
+            rationale: "Removing support for unneeded filesystem types reduces the local attack surface of the server."
+            level: 1
+            scored: true
+            audit_command: |
+              modprobe -n -v squashfs 2>/dev/null | grep -E '(squashfs|install)'; lsmod | grep squashfs
+            expected_output: |
+              install /bin/true
+            remediation: |
+              echo "install squashfs /bin/true" >> /etc/modprobe.d/CIS.conf
+              rmmod squashfs 2>/dev/null
+
+          - number: "1.1.4"
+            title: "Ensure mounting of udf filesystems is disabled"
+            description: "The udf filesystem type is the universal disk format used to implement ISO/IEC 13346 and ECMA-167 based file systems."
+            rationale: "Removing support for unneeded filesystem types reduces the local attack surface of the server."
+            level: 1
+            scored: true
+            audit_command: |
+              modprobe -n -v udf 2>/dev/null | grep -E '(udf|install)'; lsmod | grep udf
+            expected_output: |
+              install /bin/true
+            remediation: |
+              echo "install udf /bin/true" >> /etc/modprobe.d/CIS.conf
+              rmmod udf 2>/dev/null
+
+          - number: "1.1.5"
+            title: "Ensure /tmp is configured as a separate partition"
+            description: "The /tmp directory is a world-writable directory used for temporary storage by all users and some applications."
+            rationale: "Since the /tmp directory is intended to be world-writable, there is a risk of resource exhaustion if it is not bound to a separate partition."
+            level: 1
+            scored: true
+            audit_command: |
+              mount | grep -E '\s/tmp\s'
+            expected_output: |
+              tmpfs on /tmp type tmpfs
+            remediation: |
+              systemctl unmask tmp.mount
+              systemctl enable tmp.mount
+              echo "tmpfs /tmp tmpfs defaults,rw,nosuid,nodev,noexec,relatime 0 0" >> /etc/fstab
+
+          - number: "1.1.6"
+            title: "Ensure separate partition exists for /var"
+            description: "The /var directory is used by daemons and other system services to temporarily store dynamic data."
+            rationale: "Since the /var directory may contain world-writable files and directories, there is a risk of resource exhaustion if it is not bound to a separate partition."
+            level: 2
+            scored: true
+            audit_command: |
+              mount | grep -E '\s/var\s'
+            expected_output: |
+              /var is a separate partition
+            remediation: |
+              Create a separate partition for /var during installation or migrate data to a new partition.
+
+      - number: "1.2"
+        title: "Configure Software Updates"
+        checks:
+          - number: "1.2.1"
+            title: "Ensure GPG keys are configured"
+            description: "Most packages managers implement GPG key signing to verify package integrity during installation."
+            rationale: "It is important to ensure that updates are obtained from a valid source to protect against spoofing that could lead to the inadvertent installation of malware on the system."
+            level: 1
+            scored: false
+            audit_command: |
+              rpm -q gpg-pubkey --qf '%{name}-%{version}-%{release} --> %{summary}\n'
+            expected_output: |
+              gpg-pubkey
+            remediation: |
+              rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
+
+          - number: "1.2.2"
+            title: "Ensure Red Hat Subscription Manager connection is configured"
+            description: "Systems need to be registered with the Red Hat Subscription Manager to receive patches and updates."
+            rationale: "If a system is not properly registered, important patches may not be applied, leaving the system vulnerable."
+            level: 1
+            scored: false
+            audit_command: |
+              subscription-manager identity
+            expected_output: |
+              system identity (registered)
+            remediation: |
+              subscription-manager register
+
+          - number: "1.2.3"
+            title: "Ensure package manager repositories are configured"
+            description: "Systems need to have package manager repositories configured to ensure they receive the latest patches and updates."
+            rationale: "If a system's package repositories are misconfigured, important patches may not be installed."
+            level: 1
+            scored: false
+            audit_command: |
+              yum repolist
+            expected_output: |
+              repo id
+            remediation: |
+              Configure your package manager repositories according to site policy.
+
+      - number: "1.3"
+        title: "Secure Boot Settings"
+        checks:
+          - number: "1.3.1"
+            title: "Ensure GRUB2 bootloader password is set"
+            description: "Setting the boot loader password will require that anyone rebooting the system must enter a password before being able to set command line boot parameters."
+            rationale: "Requiring a boot password upon execution of the boot loader will prevent an unauthorized user from entering boot parameters or changing the boot partition."
+            level: 1
+            scored: true
+            audit_command: |
+              grep "^GRUB2_PASSWORD" /boot/grub2/user.cfg 2>/dev/null
+            expected_output: |
+              GRUB2_PASSWORD=
+            remediation: |
+              grub2-setpassword
+              grub2-mkconfig -o /boot/grub2/grub.cfg
+
+          - number: "1.3.2"
+            title: "Ensure permissions on bootloader config are configured"
+            description: "The grub configuration file contains information on boot settings and passwords for unlocking boot options."
+            rationale: "Setting the permissions to read and write for root only prevents non-root users from seeing the boot parameters or changing them."
+            level: 1
+            scored: true
+            audit_command: |
+              stat -c "%a %u %g" /boot/grub2/grub.cfg
+            expected_output: |
+              600 0 0
+            remediation: |
+              chown root:root /boot/grub2/grub.cfg
+              chmod 600 /boot/grub2/grub.cfg
+
+      - number: "1.4"
+        title: "Mandatory Access Control"
+        checks:
+          - number: "1.4.1"
+            title: "Ensure SELinux is installed"
+            description: "SELinux provides Mandatory Access Controls (MAC) to Red Hat Enterprise Linux."
+            rationale: "Without a Mandatory Access Control system installed only the default Discretionary Access Control system will be available."
+            level: 1
+            scored: true
+            audit_command: |
+              rpm -q libselinux
+            expected_output: |
+              libselinux-
+            remediation: |
+              yum install libselinux
+
+          - number: "1.4.2"
+            title: "Ensure SELinux is not disabled in bootloader configuration"
+            description: "Configure SELINUX to be enabled at boot time and verify that it has not been overwritten by the grub boot parameters."
+            rationale: "SELinux must be enabled at boot time to ensure that the controls it provides are not overridden."
+            level: 1
+            scored: true
+            audit_command: |
+              grep -E 'kernelopts=(\S+\s+)*selinux=0' /boot/grub2/grubenv; grep -E 'kernelopts=(\S+\s+)*enforcing=0' /boot/grub2/grubenv
+            expected_output: ""
+            remediation: |
+              Remove selinux=0 and enforcing=0 from kernel boot parameters.
+              grub2-mkconfig -o /boot/grub2/grub.cfg
+
+          - number: "1.4.3"
+            title: "Ensure SELinux policy is configured"
+            description: "Configure SELinux to meet or exceed the default targeted policy."
+            rationale: "Security configuration requirements state that at a minimum, the default targeted policy is used."
+            level: 1
+            scored: true
+            audit_command: |
+              grep -E '^\s*SELINUXTYPE=' /etc/selinux/config; sestatus | grep "Loaded policy"
+            expected_output: |
+              SELINUXTYPE=targeted
+            remediation: |
+              sed -i 's/^SELINUXTYPE=.*/SELINUXTYPE=targeted/' /etc/selinux/config
+
+          - number: "1.4.4"
+            title: "Ensure SELinux mode is enforcing"
+            description: "Set SELinux to enable when the system is booted and verify it is in enforcing mode."
+            rationale: "SELinux must be enabled at boot time to ensure full protection of the system."
+            level: 2
+            scored: true
+            audit_command: |
+              getenforce; grep -Ei '^\s*SELINUX=enforcing' /etc/selinux/config
+            expected_output: |
+              Enforcing
+            remediation: |
+              sed -i 's/^SELINUX=.*/SELINUX=enforcing/' /etc/selinux/config
+              setenforce 1
+
+  # ===========================================================================
+  # Section 2: Services
+  # ===========================================================================
+  - number: "2"
+    title: "Services"
+    children:
+      - number: "2.1"
+        title: "inetd Services"
+        checks:
+          - number: "2.1.1"
+            title: "Ensure xinetd is not installed"
+            description: "The eXtended InterNET Daemon (xinetd) is an open source super daemon that replaced the original inetd daemon."
+            rationale: "If there are no xinetd services required, it is recommended that the package be removed to reduce the attack surface."
+            level: 1
+            scored: true
+            audit_command: |
+              rpm -q xinetd
+            expected_output: |
+              package xinetd is not installed
+            remediation: |
+              yum remove xinetd
+
+      - number: "2.2"
+        title: "Special Purpose Services"
+        checks:
+          - number: "2.2.1"
+            title: "Ensure time synchronization is in use"
+            description: "System time should be synchronized between all systems in an environment using NTP or chrony."
+            rationale: "Time synchronization is important to support time sensitive security mechanisms and to ensure log management is consistent across the enterprise."
+            level: 1
+            scored: true
+            audit_command: |
+              rpm -q chrony ntp
+            expected_output: |
+              chrony- or ntp- package is installed
+            remediation: |
+              yum install chrony
+              systemctl enable chronyd
+              systemctl start chronyd
+
+          - number: "2.2.2"
+            title: "Ensure X Window System is not installed"
+            description: "The X Window System provides a GUI interface. It is typically used on desktops or for remote graphical administration."
+            rationale: "Unless your organization specifically requires graphical login access via X Windows, remove it to reduce the potential attack surface."
+            level: 1
+            scored: true
+            audit_command: |
+              rpm -qa xorg-x11*
+            expected_output: ""
+            remediation: |
+              yum remove xorg-x11*
+              yum group remove "X Window System"
+
+          - number: "2.2.3"
+            title: "Ensure Avahi Server is not installed"
+            description: "Avahi is a free zeroconf implementation, including a system for multicast DNS/DNS-SD service discovery."
+            rationale: "Since servers are not normally combineely browsed by other computers, this service is not needed unless a specific need exists."
+            level: 1
+            scored: true
+            audit_command: |
+              rpm -q avahi-autoipd avahi
+            expected_output: |
+              package avahi is not installed
+            remediation: |
+              systemctl stop avahi-daemon
+              yum remove avahi-autoipd avahi
+
+          - number: "2.2.4"
+            title: "Ensure CUPS is not installed"
+            description: "The Common Unix Print System (CUPS) provides the ability to print to both local and network printers."
+            rationale: "If the system does not need to print jobs or accept print jobs from other systems, it is recommended that CUPS be removed."
+            level: 1
+            scored: true
+            audit_command: |
+              rpm -q cups
+            expected_output: |
+              package cups is not installed
+            remediation: |
+              yum remove cups
+
+          - number: "2.2.5"
+            title: "Ensure DHCP Server is not installed"
+            description: "The Dynamic Host Configuration Protocol (DHCP) is a service that allows machines to be automatically configured with an IP address."
+            rationale: "Unless a system is specifically set up to act as a DHCP server, it is recommended to remove DHCP to reduce the attack surface."
+            level: 1
+            scored: true
+            audit_command: |
+              rpm -q dhcp
+            expected_output: |
+              package dhcp is not installed
+            remediation: |
+              yum remove dhcp
+
+          - number: "2.2.6"
+            title: "Ensure LDAP server is not installed"
+            description: "The Lightweight Directory Access Protocol (LDAP) provides directory services to a network."
+            rationale: "If the system will not need to act as an LDAP server, it is recommended that the software be removed to reduce the potential attack surface."
+            level: 1
+            scored: true
+            audit_command: |
+              rpm -q openldap-servers
+            expected_output: |
+              package openldap-servers is not installed
+            remediation: |
+              yum remove openldap-servers
+
+          - number: "2.2.7"
+            title: "Ensure DNS Server is not installed"
+            description: "The Domain Name System (DNS) is a hierarchical naming system that maps domain names to IP addresses."
+            rationale: "Unless a system is specifically designated to act as a DNS server, it is recommended to remove the package."
+            level: 1
+            scored: true
+            audit_command: |
+              rpm -q bind
+            expected_output: |
+              package bind is not installed
+            remediation: |
+              yum remove bind
+
+          - number: "2.2.8"
+            title: "Ensure FTP Server is not installed"
+            description: "FTP allows users to transfer files between systems over a network."
+            rationale: "FTP does not protect the confidentiality of data or authentication credentials. It is recommended to use SFTP instead."
+            level: 1
+            scored: true
+            audit_command: |
+              rpm -q vsftpd
+            expected_output: |
+              package vsftpd is not installed
+            remediation: |
+              yum remove vsftpd
+
+          - number: "2.2.9"
+            title: "Ensure HTTP server is not installed"
+            description: "HTTP or web servers provide the ability to host web site content."
+            rationale: "Unless there is a need to run the system as a web server, it is recommended that the package be removed."
+            level: 1
+            scored: true
+            audit_command: |
+              rpm -q httpd
+            expected_output: |
+              package httpd is not installed
+            remediation: |
+              yum remove httpd
+
+          - number: "2.2.10"
+            title: "Ensure IMAP and POP3 server is not installed"
+            description: "Dovecot provides IMAP and POP3 services for email retrieval."
+            rationale: "Unless POP3 or IMAP servers are to be provided by this system, it is recommended that the package be removed."
+            level: 1
+            scored: true
+            audit_command: |
+              rpm -q dovecot
+            expected_output: |
+              package dovecot is not installed
+            remediation: |
+              yum remove dovecot
+
+          - number: "2.2.11"
+            title: "Ensure Samba is not installed"
+            description: "The Samba daemon allows system administrators to configure their Linux systems to share file systems and directories with Windows desktops."
+            rationale: "If there is no need to mount directories and file systems from Windows servers, then this service should be removed."
+            level: 1
+            scored: true
+            audit_command: |
+              rpm -q samba
+            expected_output: |
+              package samba is not installed
+            remediation: |
+              yum remove samba
+
+          - number: "2.2.12"
+            title: "Ensure NFS is not installed"
+            description: "The Network File System (NFS) is one of the first and most widely distributed file systems in the UNIX environment."
+            rationale: "If the system does not export NFS shares, the nfs-utils package can be removed to reduce the attack surface."
+            level: 1
+            scored: true
+            audit_command: |
+              rpm -q nfs-utils
+            expected_output: |
+              package nfs-utils is not installed
+            remediation: |
+              yum remove nfs-utils
+
+  # ===========================================================================
+  # Section 3: Network Configuration
+  # ===========================================================================
+  - number: "3"
+    title: "Network Configuration"
+    children:
+      - number: "3.1"
+        title: "Network Parameters (Host Only)"
+        checks:
+          - number: "3.1.1"
+            title: "Ensure IP forwarding is disabled"
+            description: "The net.ipv4.ip_forward flag is used to tell the system that it can forward packets between interfaces."
+            rationale: "Setting the flag to 0 ensures that a system with multiple interfaces does not forward packets between interfaces, which is only appropriate for routers."
+            level: 1
+            scored: true
+            audit_command: |
+              sysctl net.ipv4.ip_forward; grep -E '^\s*net\.ipv4\.ip_forward\s*=\s*0' /etc/sysctl.conf /etc/sysctl.d/*
+            expected_output: |
+              net.ipv4.ip_forward = 0
+            remediation: |
+              echo "net.ipv4.ip_forward = 0" >> /etc/sysctl.d/CIS.conf
+              sysctl -w net.ipv4.ip_forward=0
+              sysctl -w net.ipv4.route.flush=1
+
+          - number: "3.1.2"
+            title: "Ensure packet redirect sending is disabled"
+            description: "ICMP Redirects are used to send routing information to other hosts."
+            rationale: "An attacker could use a compromised host to send invalid ICMP redirects to other router devices to corrupt routing and have users access a system set up by the attacker."
+            level: 1
+            scored: true
+            audit_command: |
+              sysctl net.ipv4.conf.all.send_redirects; sysctl net.ipv4.conf.default.send_redirects
+            expected_output: |
+              net.ipv4.conf.all.send_redirects = 0
+              net.ipv4.conf.default.send_redirects = 0
+            remediation: |
+              echo "net.ipv4.conf.all.send_redirects = 0" >> /etc/sysctl.d/CIS.conf
+              echo "net.ipv4.conf.default.send_redirects = 0" >> /etc/sysctl.d/CIS.conf
+              sysctl -w net.ipv4.conf.all.send_redirects=0
+              sysctl -w net.ipv4.conf.default.send_redirects=0
+
+      - number: "3.2"
+        title: "Network Parameters (Host and Router)"
+        checks:
+          - number: "3.2.1"
+            title: "Ensure source routed packets are not accepted"
+            description: "In networking, source routing allows a sender to partially or fully specify the route packets take through a network."
+            rationale: "Setting net.ipv4.conf.all.accept_source_route to 0 disables the system from accepting source routed packets."
+            level: 1
+            scored: true
+            audit_command: |
+              sysctl net.ipv4.conf.all.accept_source_route; sysctl net.ipv4.conf.default.accept_source_route
+            expected_output: |
+              net.ipv4.conf.all.accept_source_route = 0
+              net.ipv4.conf.default.accept_source_route = 0
+            remediation: |
+              echo "net.ipv4.conf.all.accept_source_route = 0" >> /etc/sysctl.d/CIS.conf
+              echo "net.ipv4.conf.default.accept_source_route = 0" >> /etc/sysctl.d/CIS.conf
+              sysctl -w net.ipv4.conf.all.accept_source_route=0
+
+          - number: "3.2.2"
+            title: "Ensure ICMP redirects are not accepted"
+            description: "ICMP redirect messages are packets that convey routing information and tell your host to send packets via an alternate path."
+            rationale: "Attackers could use bogus ICMP redirect messages to maliciously alter the system routing tables and get them to send packets to incorrect networks."
+            level: 1
+            scored: true
+            audit_command: |
+              sysctl net.ipv4.conf.all.accept_redirects; sysctl net.ipv4.conf.default.accept_redirects
+            expected_output: |
+              net.ipv4.conf.all.accept_redirects = 0
+              net.ipv4.conf.default.accept_redirects = 0
+            remediation: |
+              echo "net.ipv4.conf.all.accept_redirects = 0" >> /etc/sysctl.d/CIS.conf
+              echo "net.ipv4.conf.default.accept_redirects = 0" >> /etc/sysctl.d/CIS.conf
+              sysctl -w net.ipv4.conf.all.accept_redirects=0
+
+          - number: "3.2.3"
+            title: "Ensure secure ICMP redirects are not accepted"
+            description: "Secure ICMP redirects are the same as ICMP redirects, except they come from gateways listed on the default gateway list."
+            rationale: "It is still possible for even known gateways to be compromised. Setting this value to 0 protects the system from routing table updates by possibly compromised known gateways."
+            level: 1
+            scored: true
+            audit_command: |
+              sysctl net.ipv4.conf.all.secure_redirects; sysctl net.ipv4.conf.default.secure_redirects
+            expected_output: |
+              net.ipv4.conf.all.secure_redirects = 0
+              net.ipv4.conf.default.secure_redirects = 0
+            remediation: |
+              echo "net.ipv4.conf.all.secure_redirects = 0" >> /etc/sysctl.d/CIS.conf
+              echo "net.ipv4.conf.default.secure_redirects = 0" >> /etc/sysctl.d/CIS.conf
+              sysctl -w net.ipv4.conf.all.secure_redirects=0
+
+          - number: "3.2.4"
+            title: "Ensure suspicious packets are logged"
+            description: "When enabled, this feature logs packets with un-routable source addresses to the kernel log."
+            rationale: "Enabling this feature and logging these packets allows an administrator to investigate the possibility that an attacker is sending spoofed packets to their system."
+            level: 1
+            scored: true
+            audit_command: |
+              sysctl net.ipv4.conf.all.log_martians; sysctl net.ipv4.conf.default.log_martians
+            expected_output: |
+              net.ipv4.conf.all.log_martians = 1
+              net.ipv4.conf.default.log_martians = 1
+            remediation: |
+              echo "net.ipv4.conf.all.log_martians = 1" >> /etc/sysctl.d/CIS.conf
+              echo "net.ipv4.conf.default.log_martians = 1" >> /etc/sysctl.d/CIS.conf
+              sysctl -w net.ipv4.conf.all.log_martians=1
+
+      - number: "3.3"
+        title: "Firewall Configuration"
+        checks:
+          - number: "3.3.1"
+            title: "Ensure firewalld is installed"
+            description: "firewalld is a firewall management tool implemented as a wrapper around nftables/iptables."
+            rationale: "A firewall utility is required to configure the Linux kernel's netfilter framework via iptables/nftables rules."
+            level: 1
+            scored: true
+            audit_command: |
+              rpm -q firewalld
+            expected_output: |
+              firewalld-
+            remediation: |
+              yum install firewalld
+
+          - number: "3.3.2"
+            title: "Ensure firewalld service is enabled and running"
+            description: "Ensure that the firewalld service is enabled to protect the system from unauthorized network access."
+            rationale: "firewalld needs to be enabled and running to filter network traffic and protect the system."
+            level: 1
+            scored: true
+            audit_command: |
+              systemctl is-enabled firewalld; systemctl is-active firewalld
+            expected_output: |
+              enabled
+              active
+            remediation: |
+              systemctl enable firewalld
+              systemctl start firewalld
+
+          - number: "3.3.3"
+            title: "Ensure default zone is set"
+            description: "A firewall zone defines the trust level for a connection, interface, or source address binding."
+            rationale: "The default zone should be set to drop or block to ensure that any packets not explicitly permitted by the firewall policy are dropped."
+            level: 1
+            scored: true
+            audit_command: |
+              firewall-cmd --get-default-zone
+            expected_output: |
+              public (or drop)
+            remediation: |
+              firewall-cmd --set-default-zone=public
+
+  # ===========================================================================
+  # Section 4: Logging and Auditing
+  # ===========================================================================
+  - number: "4"
+    title: "Logging and Auditing"
+    children:
+      - number: "4.1"
+        title: "Configure System Accounting (auditd)"
+        checks:
+          - number: "4.1.1"
+            title: "Ensure auditd is installed"
+            description: "auditd is the userspace component to the Linux Auditing System. It is responsible for writing audit records to the disk."
+            rationale: "The capturing of system events provides system administrators with information to allow them to determine if unauthorized access to their system is occurring."
+            level: 2
+            scored: true
+            audit_command: |
+              rpm -q audit audit-libs
+            expected_output: |
+              audit-
+              audit-libs-
+            remediation: |
+              yum install audit audit-libs
+
+          - number: "4.1.2"
+            title: "Ensure auditd service is enabled"
+            description: "Enable and start the auditd daemon to record system events."
+            rationale: "The capturing of system events provides system administrators with evidence of unauthorized activity."
+            level: 2
+            scored: true
+            audit_command: |
+              systemctl is-enabled auditd
+            expected_output: |
+              enabled
+            remediation: |
+              systemctl enable auditd
+
+          - number: "4.1.3"
+            title: "Ensure auditing for processes that start prior to auditd is enabled"
+            description: "Configure grub so that processes that are capable of being audited can be audited even if they start up prior to auditd startup."
+            rationale: "Audit events need to be captured on processes that start up prior to auditd, so that potential malicious activity cannot go undetected."
+            level: 2
+            scored: true
+            audit_command: |
+              grep "^\s*linux" /boot/grub2/grub.cfg | grep -v "audit=1"
+            expected_output: ""
+            remediation: |
+              Edit /etc/default/grub and add audit=1 to GRUB_CMDLINE_LINUX.
+              grub2-mkconfig -o /boot/grub2/grub.cfg
+
+          - number: "4.1.4"
+            title: "Ensure events that modify date and time information are collected"
+            description: "Capture events where the system date or time has been modified."
+            rationale: "Unexpected changes in system date or time could be a sign of malicious activity on the system."
+            level: 2
+            scored: true
+            audit_command: |
+              grep time-change /etc/audit/rules.d/*.rules
+            expected_output: |
+              -a always,exit -F arch=b64 -S adjtimex -S settimeofday -k time-change
+            remediation: |
+              echo "-a always,exit -F arch=b64 -S adjtimex -S settimeofday -k time-change" >> /etc/audit/rules.d/time-change.rules
+              echo "-a always,exit -F arch=b32 -S adjtimex -S settimeofday -S stime -k time-change" >> /etc/audit/rules.d/time-change.rules
+              echo "-w /etc/localtime -p wa -k time-change" >> /etc/audit/rules.d/time-change.rules
+
+          - number: "4.1.5"
+            title: "Ensure events that modify user/group information are collected"
+            description: "Record events affecting the group, passwd, shadow, gshadow and opasswd files."
+            rationale: "Unexpected changes to these files could be an indication that the system has been compromised."
+            level: 2
+            scored: true
+            audit_command: |
+              grep identity /etc/audit/rules.d/*.rules
+            expected_output: |
+              -w /etc/group -p wa -k identity
+              -w /etc/passwd -p wa -k identity
+              -w /etc/shadow -p wa -k identity
+            remediation: |
+              echo "-w /etc/group -p wa -k identity" >> /etc/audit/rules.d/identity.rules
+              echo "-w /etc/passwd -p wa -k identity" >> /etc/audit/rules.d/identity.rules
+              echo "-w /etc/gshadow -p wa -k identity" >> /etc/audit/rules.d/identity.rules
+              echo "-w /etc/shadow -p wa -k identity" >> /etc/audit/rules.d/identity.rules
+              echo "-w /etc/security/opasswd -p wa -k identity" >> /etc/audit/rules.d/identity.rules
+
+      - number: "4.2"
+        title: "Configure Logging"
+        checks:
+          - number: "4.2.1"
+            title: "Ensure rsyslog is installed"
+            description: "The rsyslog software is a recommended replacement to the original syslogd daemon."
+            rationale: "The security enhancements of rsyslog and the additional logging capabilities of rsyslog such as connection-oriented (TCP) transmission of logs, the option to log to database formats, and the encryption of log data en route to a central logging server warrant the use of rsyslog."
+            level: 1
+            scored: true
+            audit_command: |
+              rpm -q rsyslog
+            expected_output: |
+              rsyslog-
+            remediation: |
+              yum install rsyslog
+
+          - number: "4.2.2"
+            title: "Ensure rsyslog service is enabled"
+            description: "Enable the rsyslog service to ensure system logging is active."
+            rationale: "If the rsyslog service is not activated the system may default to the syslogd service or lack a logging system entirely."
+            level: 1
+            scored: true
+            audit_command: |
+              systemctl is-enabled rsyslog
+            expected_output: |
+              enabled
+            remediation: |
+              systemctl enable rsyslog
+
+          - number: "4.2.3"
+            title: "Ensure rsyslog default file permissions configured"
+            description: "rsyslog will create logfiles that do not already exist on the system. This setting controls what permissions will be applied to newly created files."
+            rationale: "It is important to ensure that log files have the correct permissions to ensure that sensitive data is archived and protected."
+            level: 1
+            scored: true
+            audit_command: |
+              grep '^\$FileCreateMode' /etc/rsyslog.conf /etc/rsyslog.d/*.conf
+            expected_output: |
+              $FileCreateMode 0640
+            remediation: |
+              echo '$FileCreateMode 0640' >> /etc/rsyslog.conf
+              systemctl restart rsyslog
+
+  # ===========================================================================
+  # Section 5: Access, Authentication and Authorization
+  # ===========================================================================
+  - number: "5"
+    title: "Access, Authentication and Authorization"
+    children:
+      - number: "5.1"
+        title: "Configure cron"
+        checks:
+          - number: "5.1.1"
+            title: "Ensure cron daemon is enabled"
+            description: "The cron daemon is used to execute batch jobs on the system."
+            rationale: "While there may not be user jobs that need to be run on the system, the system does have maintenance jobs that may include security monitoring that have to run, and cron is used to execute them."
+            level: 1
+            scored: true
+            audit_command: |
+              systemctl is-enabled crond
+            expected_output: |
+              enabled
+            remediation: |
+              systemctl enable crond
+
+          - number: "5.1.2"
+            title: "Ensure permissions on /etc/crontab are configured"
+            description: "The /etc/crontab file is used by cron to control its own jobs."
+            rationale: "This file contains information on what system jobs are run by cron. Write access to these files could provide unprivileged users with the ability to elevate their privileges."
+            level: 1
+            scored: true
+            audit_command: |
+              stat -c "%a %U %G" /etc/crontab
+            expected_output: |
+              600 root root
+            remediation: |
+              chown root:root /etc/crontab
+              chmod 600 /etc/crontab
+
+      - number: "5.2"
+        title: "SSH Server Configuration"
+        checks:
+          - number: "5.2.1"
+            title: "Ensure permissions on /etc/ssh/sshd_config are configured"
+            description: "The /etc/ssh/sshd_config file contains configuration specifications for sshd."
+            rationale: "The /etc/ssh/sshd_config file needs to be protected from unauthorized changes by non-privileged users."
+            level: 1
+            scored: true
+            audit_command: |
+              stat -c "%a %U %G" /etc/ssh/sshd_config
+            expected_output: |
+              600 root root
+            remediation: |
+              chown root:root /etc/ssh/sshd_config
+              chmod 600 /etc/ssh/sshd_config
+
+          - number: "5.2.2"
+            title: "Ensure SSH Protocol is set to 2"
+            description: "SSH supports two different and incompatible protocols: SSH1 and SSH2."
+            rationale: "SSH v1 suffers from insecurities that do not affect SSH v2. Using SSH v2 is strongly recommended."
+            level: 1
+            scored: true
+            audit_command: |
+              grep -Ei '^\s*Protocol\s+2' /etc/ssh/sshd_config
+            expected_output: |
+              Protocol 2
+            remediation: |
+              echo "Protocol 2" >> /etc/ssh/sshd_config
+              systemctl restart sshd
+
+          - number: "5.2.3"
+            title: "Ensure SSH LogLevel is set to INFO"
+            description: "The INFO parameter specifies that login and logout activity will be logged."
+            rationale: "SSH provides several logging levels with varying amounts of verbosity. INFO level is the basic level that only records login activity of SSH users."
+            level: 1
+            scored: true
+            audit_command: |
+              grep -Ei '^\s*LogLevel\s+INFO' /etc/ssh/sshd_config
+            expected_output: |
+              LogLevel INFO
+            remediation: |
+              sed -i 's/^#*LogLevel.*/LogLevel INFO/' /etc/ssh/sshd_config
+              systemctl restart sshd
+
+          - number: "5.2.4"
+            title: "Ensure SSH root login is disabled"
+            description: "The PermitRootLogin parameter specifies if the root user can log in using ssh."
+            rationale: "Disallowing root logins over SSH requires system admins to authenticate using their own individual account, then escalating to root. This limits opportunity for non-repudiation."
+            level: 1
+            scored: true
+            audit_command: |
+              grep -Ei '^\s*PermitRootLogin\s+no' /etc/ssh/sshd_config
+            expected_output: |
+              PermitRootLogin no
+            remediation: |
+              sed -i 's/^#*PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
+              systemctl restart sshd
+
+          - number: "5.2.5"
+            title: "Ensure SSH PermitEmptyPasswords is disabled"
+            description: "The PermitEmptyPasswords parameter specifies if the SSH server allows login to accounts with empty password strings."
+            rationale: "Disallowing remote shell access to accounts that have an empty password reduces the probability of unauthorized access."
+            level: 1
+            scored: true
+            audit_command: |
+              grep -Ei '^\s*PermitEmptyPasswords\s+no' /etc/ssh/sshd_config
+            expected_output: |
+              PermitEmptyPasswords no
+            remediation: |
+              sed -i 's/^#*PermitEmptyPasswords.*/PermitEmptyPasswords no/' /etc/ssh/sshd_config
+              systemctl restart sshd
+
+          - number: "5.2.6"
+            title: "Ensure SSH MaxAuthTries is set to 4 or less"
+            description: "The MaxAuthTries parameter specifies the maximum number of authentication attempts permitted per connection."
+            rationale: "Setting the MaxAuthTries parameter to a low number will minimize the risk of successful brute force attacks to the SSH server."
+            level: 1
+            scored: true
+            audit_command: |
+              grep -Ei '^\s*MaxAuthTries\s+[1-4]' /etc/ssh/sshd_config
+            expected_output: |
+              MaxAuthTries 4
+            remediation: |
+              sed -i 's/^#*MaxAuthTries.*/MaxAuthTries 4/' /etc/ssh/sshd_config
+              systemctl restart sshd
+
+      - number: "5.3"
+        title: "Configure PAM"
+        checks:
+          - number: "5.3.1"
+            title: "Ensure password creation requirements are configured"
+            description: "The pam_pwquality.so module checks the strength of passwords. It performs checks such as making sure a password is not a dictionary word."
+            rationale: "Strong passwords protect systems from being hacked through brute force methods."
+            level: 1
+            scored: true
+            audit_command: |
+              grep pam_pwquality.so /etc/pam.d/password-auth /etc/pam.d/system-auth
+            expected_output: |
+              password requisite pam_pwquality.so try_first_pass retry=3
+            remediation: |
+              Edit /etc/security/pwquality.conf:
+              minlen = 14
+              dcredit = -1
+              ucredit = -1
+              ocredit = -1
+              lcredit = -1
+
+          - number: "5.3.2"
+            title: "Ensure lockout for failed password attempts is configured"
+            description: "Lock out users after a configurable number of unsuccessful consecutive login attempts."
+            rationale: "Locking out user IDs after unsuccessful consecutive attempts mitigates brute force password attacks."
+            level: 1
+            scored: true
+            audit_command: |
+              grep pam_faillock /etc/pam.d/password-auth /etc/pam.d/system-auth
+            expected_output: |
+              auth required pam_faillock.so
+            remediation: |
+              Edit /etc/pam.d/password-auth and /etc/pam.d/system-auth:
+              auth required pam_faillock.so preauth audit silent deny=5 unlock_time=900
+              auth [default=die] pam_faillock.so authfail audit deny=5 unlock_time=900
+
+          - number: "5.3.3"
+            title: "Ensure password reuse is limited"
+            description: "The /etc/security/opasswd file stores the users' old passwords and can be checked to ensure that users are not recycling recent passwords."
+            rationale: "Forcing users not to reuse their past passwords reduces the risk that an attacker will be able to guess the password."
+            level: 1
+            scored: true
+            audit_command: |
+              grep -E '^\s*password\s+sufficient\s+pam_unix.so.*remember=' /etc/pam.d/system-auth
+            expected_output: |
+              password sufficient pam_unix.so ... remember=5
+            remediation: |
+              Edit /etc/pam.d/system-auth and /etc/pam.d/password-auth:
+              password sufficient pam_unix.so remember=5
+
+      - number: "5.4"
+        title: "User Accounts and Environment"
+        checks:
+          - number: "5.4.1"
+            title: "Ensure password expiration is 365 days or less"
+            description: "The PASS_MAX_DAYS parameter in /etc/login.defs allows an administrator to force passwords to expire once they reach a defined age."
+            rationale: "The window of opportunity for an attacker to leverage compromised credentials or successfully compromise credentials via an online brute force attack is limited by the age of the password."
+            level: 1
+            scored: true
+            audit_command: |
+              grep PASS_MAX_DAYS /etc/login.defs
+            expected_output: |
+              PASS_MAX_DAYS 365
+            remediation: |
+              sed -i 's/^PASS_MAX_DAYS.*/PASS_MAX_DAYS 365/' /etc/login.defs
+
+          - number: "5.4.2"
+            title: "Ensure minimum days between password changes is 7 or more"
+            description: "The PASS_MIN_DAYS parameter in /etc/login.defs allows an administrator to prevent users from changing their password until a minimum number of days have passed."
+            rationale: "By restricting the frequency of password changes, an administrator can prevent users from repeatedly changing their password to defeat the password reuse controls."
+            level: 1
+            scored: true
+            audit_command: |
+              grep PASS_MIN_DAYS /etc/login.defs
+            expected_output: |
+              PASS_MIN_DAYS 7
+            remediation: |
+              sed -i 's/^PASS_MIN_DAYS.*/PASS_MIN_DAYS 7/' /etc/login.defs
+
+          - number: "5.4.3"
+            title: "Ensure password expiration warning days is 7 or more"
+            description: "The PASS_WARN_AGE parameter in /etc/login.defs allows an administrator to notify users that their password will expire in a defined number of days."
+            rationale: "Providing an advance warning that a password will be expiring gives users time to think of a secure password."
+            level: 1
+            scored: true
+            audit_command: |
+              grep PASS_WARN_AGE /etc/login.defs
+            expected_output: |
+              PASS_WARN_AGE 7
+            remediation: |
+              sed -i 's/^PASS_WARN_AGE.*/PASS_WARN_AGE 7/' /etc/login.defs
+
+          - number: "5.4.4"
+            title: "Ensure inactive password lock is 30 days or less"
+            description: "User accounts that have been inactive for an extended period of time can be automatically disabled."
+            rationale: "Inactive accounts pose a threat to system security since the users are not logging in to notice failed login attempts or other anomalies."
+            level: 1
+            scored: true
+            audit_command: |
+              useradd -D | grep INACTIVE
+            expected_output: |
+              INACTIVE=30
+            remediation: |
+              useradd -D -f 30
+
+  # ===========================================================================
+  # Section 6: System Maintenance
+  # ===========================================================================
+  - number: "6"
+    title: "System Maintenance"
+    children:
+      - number: "6.1"
+        title: "System File Permissions"
+        checks:
+          - number: "6.1.1"
+            title: "Ensure permissions on /etc/passwd are configured"
+            description: "The /etc/passwd file contains user account information that is used by many system utilities and must be readable."
+            rationale: "It is critical to ensure that the /etc/passwd file is protected from unauthorized write access."
+            level: 1
+            scored: true
+            audit_command: |
+              stat -c "%a %U %G" /etc/passwd
+            expected_output: |
+              644 root root
+            remediation: |
+              chown root:root /etc/passwd
+              chmod 644 /etc/passwd
+
+          - number: "6.1.2"
+            title: "Ensure permissions on /etc/shadow are configured"
+            description: "The /etc/shadow file is used to store the information about user accounts that is critical to the security of those accounts."
+            rationale: "If attackers can gain read access to the /etc/shadow file, they can easily run a password cracking program against the hashed passwords."
+            level: 1
+            scored: true
+            audit_command: |
+              stat -c "%a %U %G" /etc/shadow
+            expected_output: |
+              000 root root
+            remediation: |
+              chown root:root /etc/shadow
+              chmod 000 /etc/shadow
+
+          - number: "6.1.3"
+            title: "Ensure permissions on /etc/group are configured"
+            description: "The /etc/group file contains a list of all the valid groups defined in the system."
+            rationale: "The /etc/group file needs to be protected from unauthorized changes by non-privileged users."
+            level: 1
+            scored: true
+            audit_command: |
+              stat -c "%a %U %G" /etc/group
+            expected_output: |
+              644 root root
+            remediation: |
+              chown root:root /etc/group
+              chmod 644 /etc/group
+
+          - number: "6.1.4"
+            title: "Ensure permissions on /etc/gshadow are configured"
+            description: "The /etc/gshadow file is used to store the information about groups that is critical to the security of those groups."
+            rationale: "If attackers can gain read access to the /etc/gshadow file, they can easily run a password cracking program against the hashed passwords."
+            level: 1
+            scored: true
+            audit_command: |
+              stat -c "%a %U %G" /etc/gshadow
+            expected_output: |
+              000 root root
+            remediation: |
+              chown root:root /etc/gshadow
+              chmod 000 /etc/gshadow
+
+      - number: "6.2"
+        title: "User and Group Settings"
+        checks:
+          - number: "6.2.1"
+            title: "Ensure no duplicate UIDs exist"
+            description: "Although the useradd program will not let you create a duplicate UID, it is possible for an administrator to manually edit /etc/passwd and change the UID field."
+            rationale: "Users must be assigned unique UIDs for accountability and to ensure appropriate access protections."
+            level: 1
+            scored: true
+            audit_command: |
+              cut -f3 -d":" /etc/passwd | sort -n | uniq -c | awk '$1 > 1 {print}'
+            expected_output: ""
+            remediation: |
+              Based on the results, establish unique UIDs and review all files owned by the shared UIDs to determine which UID they are supposed to belong to.
+
+          - number: "6.2.2"
+            title: "Ensure no duplicate GIDs exist"
+            description: "Although the groupadd program will not let you create a duplicate GID, it is possible for an administrator to manually edit /etc/group."
+            rationale: "Groups must be assigned unique GIDs for accountability and to ensure appropriate access protections."
+            level: 1
+            scored: true
+            audit_command: |
+              cut -d: -f3 /etc/group | sort | uniq -d
+            expected_output: ""
+            remediation: |
+              Based on the results, establish unique GIDs and review all files owned by the shared GIDs.
+
+          - number: "6.2.3"
+            title: "Ensure root is the only UID 0 account"
+            description: "Any account with UID 0 has superuser privileges on the system."
+            rationale: "This access must be limited to only the default root account and only from the system console."
+            level: 1
+            scored: true
+            audit_command: |
+              awk -F: '($3 == 0) { print $1 }' /etc/passwd
+            expected_output: |
+              root
+            remediation: |
+              Remove any users other than root with UID 0 or assign them a new UID.
+
+          - number: "6.2.4"
+            title: "Ensure root PATH integrity"
+            description: "The root user can execute any command on the system and could be tricked into executing programs unintentionally if the PATH is not set correctly."
+            rationale: "Ensuring that the root PATH does not contain world-writable or group-writable directories prevents an attacker from gaining superuser access by placing a malicious program in the PATH."
+            level: 1
+            scored: true
+            audit_command: |
+              echo $PATH | tr ':' '\n' | while read dir; do ls -ldH "$dir" 2>/dev/null; done
+            expected_output: |
+              No world-writable or group-writable directories in PATH
+            remediation: |
+              Correct or justify any items discovered in the audit.
