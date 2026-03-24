@@ -172,6 +172,20 @@ def seed_platforms():
             'description': 'Microsoft Windows 11'
         },
         {
+            'name': 'RHEL 7',
+            'slug': 'rhel-7',
+            'os_family': 'Linux',
+            'icon': 'redhat',
+            'description': 'Red Hat Enterprise Linux 7'
+        },
+        {
+            'name': 'RHEL 8',
+            'slug': 'rhel-8',
+            'os_family': 'Linux',
+            'icon': 'redhat',
+            'description': 'Red Hat Enterprise Linux 8'
+        },
+        {
             'name': 'RHEL 9',
             'slug': 'rhel-9',
             'os_family': 'Linux',
@@ -205,6 +219,27 @@ def seed_platforms():
             'os_family': 'Network',
             'icon': 'cisco',
             'description': 'Cisco IOS XE 17'
+        },
+        {
+            'name': 'Sophos Firewall',
+            'slug': 'sophos-firewall',
+            'os_family': 'Network',
+            'icon': 'sophos',
+            'description': 'Sophos Firewall (SFOS)'
+        },
+        {
+            'name': 'SUSE Linux Enterprise 15',
+            'slug': 'sles-15',
+            'os_family': 'Linux',
+            'icon': 'suse',
+            'description': 'SUSE Linux Enterprise Server 15'
+        },
+        {
+            'name': 'HP iLO 5',
+            'slug': 'hp-ilo-5',
+            'os_family': 'Firmware',
+            'icon': 'hp',
+            'description': 'HP Integrated Lights-Out 5 (iLO 5)'
         },
     ]
 

@@ -977,3 +977,472 @@ sections:
               ip authentication mode eigrp 1 md5
               ip authentication key-chain eigrp 1 EIGRP_KEY
               end
+
+  # ===========================================================================
+  # Section 4: Interface and Network Security
+  # ===========================================================================
+  - number: "4"
+    title: "Interface and Network Security"
+    children:
+      - number: "4.1"
+        title: "Interface Configuration"
+        checks:
+          - number: "4.1.1"
+            title: "Ensure unused interfaces are shut down"
+            description: "All unused interfaces should be administratively shut down to prevent unauthorized access."
+            rationale: "An attacker could connect to an unused interface to gain network access. Shutting down unused interfaces eliminates this attack vector."
+            level: 1
+            scored: true
+            audit_command: |
+              show ip interface brief | include down
+            expected_output: |
+              All unused interfaces show administratively down
+            remediation: |
+              interface <unused-interface>
+               shutdown
+               description UNUSED
+
+          - number: "4.1.2"
+            title: "Ensure 'no ip proxy-arp' is set on all interfaces"
+            description: "Proxy ARP should be disabled on all interfaces to prevent the router from responding to ARP requests on behalf of hosts on other networks."
+            rationale: "Proxy ARP can be exploited by an attacker to intercept network traffic. Disabling it reduces the risk of man-in-the-middle attacks."
+            level: 2
+            scored: true
+            audit_command: |
+              show running-config | section interface | include proxy-arp
+            expected_output: |
+              no ip proxy-arp on each interface
+            remediation: |
+              interface <interface>
+               no ip proxy-arp
+
+          - number: "4.1.3"
+            title: "Ensure 'ip unreachables' is disabled on all interfaces"
+            description: "ICMP unreachable messages should be disabled on all interfaces to prevent information disclosure."
+            rationale: "ICMP unreachable messages can be used by attackers to map the network and identify firewall rules. Disabling them reduces information leakage."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | section interface | include unreachables
+            expected_output: |
+              no ip unreachables on each interface
+            remediation: |
+              interface <interface>
+               no ip unreachables
+
+          - number: "4.1.4"
+            title: "Ensure 'no ip directed-broadcast' is set on all interfaces"
+            description: "IP directed broadcasts should be disabled on all interfaces to prevent smurf-style attacks."
+            rationale: "An attacker can use IP directed broadcasts to launch denial-of-service amplification attacks (smurf attacks)."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | section interface | include directed-broadcast
+            expected_output: |
+              no ip directed-broadcast (default in IOS)
+            remediation: |
+              interface <interface>
+               no ip directed-broadcast
+
+          - number: "4.1.5"
+            title: "Ensure Unicast Reverse Path Forwarding (uRPF) is enabled"
+            description: "uRPF should be enabled on all external-facing interfaces to prevent IP spoofing."
+            rationale: "uRPF drops packets with source addresses that do not match the routing table, preventing IP spoofing attacks."
+            level: 2
+            scored: true
+            audit_command: |
+              show running-config | section interface | include verify
+            expected_output: |
+              ip verify unicast source reachable-via rx
+            remediation: |
+              interface <external-interface>
+               ip verify unicast source reachable-via rx
+
+      - number: "4.2"
+        title: "Port Security"
+        checks:
+          - number: "4.2.1"
+            title: "Ensure port security is enabled on access ports"
+            description: "Port security should be enabled on all access ports to limit the number of MAC addresses learned per port."
+            rationale: "Port security prevents CAM table overflow attacks and limits unauthorized devices from connecting to the network."
+            level: 1
+            scored: true
+            audit_command: |
+              show port-security
+            expected_output: |
+              Port security is enabled on access ports
+            remediation: |
+              interface <access-port>
+               switchport port-security
+               switchport port-security maximum 2
+               switchport port-security violation restrict
+               switchport port-security aging time 5
+
+          - number: "4.2.2"
+            title: "Ensure DHCP snooping is enabled"
+            description: "DHCP snooping should be enabled to prevent rogue DHCP servers from distributing incorrect network configuration."
+            rationale: "An attacker could set up a rogue DHCP server to redirect traffic through their system for interception."
+            level: 1
+            scored: true
+            audit_command: |
+              show ip dhcp snooping
+            expected_output: |
+              DHCP snooping is configured on VLANs
+            remediation: |
+              ip dhcp snooping
+              ip dhcp snooping vlan <vlan-range>
+              interface <trunk-to-dhcp-server>
+               ip dhcp snooping trust
+
+          - number: "4.2.3"
+            title: "Ensure Dynamic ARP Inspection (DAI) is enabled"
+            description: "Dynamic ARP Inspection should be enabled to validate ARP packets in the network."
+            rationale: "DAI prevents ARP spoofing attacks by intercepting and validating ARP packets against the DHCP snooping binding table."
+            level: 2
+            scored: true
+            audit_command: |
+              show ip arp inspection
+            expected_output: |
+              DAI is enabled on VLANs
+            remediation: |
+              ip arp inspection vlan <vlan-range>
+              interface <trusted-interface>
+               ip arp inspection trust
+
+      - number: "4.3"
+        title: "VLAN Security"
+        checks:
+          - number: "4.3.1"
+            title: "Ensure VLAN 1 is not used for user traffic"
+            description: "VLAN 1 is the default VLAN and should not be used for carrying user traffic."
+            rationale: "VLAN 1 is the default management VLAN and is often targeted by attackers. Using it for user traffic increases the attack surface."
+            level: 1
+            scored: true
+            audit_command: |
+              show vlan brief
+            expected_output: |
+              User ports are not assigned to VLAN 1
+            remediation: |
+              interface range <user-ports>
+               switchport access vlan <non-default-vlan>
+
+          - number: "4.3.2"
+            title: "Ensure native VLAN is not VLAN 1 on trunks"
+            description: "The native VLAN on trunk ports should be changed from the default VLAN 1 to a dedicated unused VLAN."
+            rationale: "The native VLAN carries untagged frames on trunk links. Using VLAN 1 can enable VLAN hopping attacks."
+            level: 1
+            scored: true
+            audit_command: |
+              show interfaces trunk | include native
+            expected_output: |
+              Native VLAN is not VLAN 1
+            remediation: |
+              interface <trunk-port>
+               switchport trunk native vlan <unused-vlan>
+
+          - number: "4.3.3"
+            title: "Ensure trunk ports only allow required VLANs"
+            description: "Trunk ports should be pruned to allow only necessary VLANs rather than all VLANs."
+            rationale: "Allowing all VLANs on trunk ports increases the risk of VLAN hopping attacks and unnecessary broadcast traffic."
+            level: 1
+            scored: true
+            audit_command: |
+              show interfaces trunk | include allowed
+            expected_output: |
+              Only required VLANs are listed as allowed
+            remediation: |
+              interface <trunk-port>
+               switchport trunk allowed vlan <required-vlans>
+
+  # ===========================================================================
+  # Section 5: Logging, Monitoring and NTP
+  # ===========================================================================
+  - number: "5"
+    title: "Logging, Monitoring and NTP"
+    children:
+      - number: "5.1"
+        title: "Advanced Logging"
+        checks:
+          - number: "5.1.1"
+            title: "Ensure logging to a remote syslog server is configured"
+            description: "Logs should be forwarded to a remote syslog server for centralized log management and analysis."
+            rationale: "Remote logging ensures that log data is preserved even if the device is compromised, rebooted, or its local storage fails."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include logging host
+            expected_output: |
+              logging host <syslog-server-ip>
+            remediation: |
+              logging host <syslog-server-ip>
+              logging trap informational
+
+          - number: "5.1.2"
+            title: "Ensure logging source interface is configured"
+            description: "A logging source interface should be configured to ensure syslog messages are sent from a consistent, reliable IP address."
+            rationale: "Using a stable source interface (e.g., loopback) ensures syslog messages can always be correlated to the correct device."
+            level: 2
+            scored: true
+            audit_command: |
+              show running-config | include logging source-interface
+            expected_output: |
+              logging source-interface Loopback0
+            remediation: |
+              logging source-interface Loopback0
+
+          - number: "5.1.3"
+            title: "Ensure logging with timestamps is enabled"
+            description: "Log messages should include timestamps for correlation and forensic analysis."
+            rationale: "Without timestamps, it is impossible to determine when events occurred, making incident response and forensic analysis difficult."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include service timestamps
+            expected_output: |
+              service timestamps debug datetime msec localtime show-timezone
+              service timestamps log datetime msec localtime show-timezone
+            remediation: |
+              service timestamps debug datetime msec localtime show-timezone
+              service timestamps log datetime msec localtime show-timezone
+
+          - number: "5.1.4"
+            title: "Ensure buffered logging is enabled"
+            description: "Buffered logging stores log messages in the device's RAM buffer for local review."
+            rationale: "Buffered logging provides a local copy of log messages that can be reviewed when remote syslog is unavailable."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include logging buffered
+            expected_output: |
+              logging buffered 64000 informational
+            remediation: |
+              logging buffered 64000 informational
+
+          - number: "5.1.5"
+            title: "Ensure console logging level is set appropriately"
+            description: "Console logging should be set to an appropriate level to avoid flooding the console with excessive messages."
+            rationale: "Excessive console logging can impact device performance and make it difficult for administrators to use the console effectively."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include logging console
+            expected_output: |
+              logging console critical
+            remediation: |
+              logging console critical
+
+      - number: "5.2"
+        title: "SNMP Configuration"
+        checks:
+          - number: "5.2.1"
+            title: "Ensure SNMPv3 is configured with authentication and privacy"
+            description: "If SNMP is required, SNMPv3 with both authentication and privacy (authPriv) should be used."
+            rationale: "SNMPv1 and SNMPv2c use community strings transmitted in cleartext. SNMPv3 with authPriv provides both authentication and encryption."
+            level: 1
+            scored: true
+            audit_command: |
+              show snmp group
+            expected_output: |
+              SNMPv3 group with authPriv security level
+            remediation: |
+              snmp-server group SNMPV3_GROUP v3 priv
+              snmp-server user SNMPV3_USER SNMPV3_GROUP v3 auth sha <auth-pass> priv aes 256 <priv-pass>
+
+          - number: "5.2.2"
+            title: "Ensure SNMP ACLs are configured"
+            description: "SNMP access should be restricted to specific management hosts using access control lists."
+            rationale: "Without ACLs, any host can query the device via SNMP, potentially exposing sensitive configuration and operational data."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include snmp-server
+            expected_output: |
+              snmp-server group with ACL applied
+            remediation: |
+              ip access-list standard SNMP_ACCESS
+               permit host <management-host>
+               deny any log
+              snmp-server group SNMPV3_GROUP v3 priv access SNMP_ACCESS
+
+      - number: "5.3"
+        title: "NTP Configuration"
+        checks:
+          - number: "5.3.1"
+            title: "Ensure NTP authentication is enabled"
+            description: "NTP authentication should be enabled to ensure time synchronization data comes from trusted sources."
+            rationale: "Without NTP authentication, an attacker could inject false time data, affecting log correlation, certificate validation, and time-based security mechanisms."
+            level: 2
+            scored: true
+            audit_command: |
+              show running-config | include ntp
+            expected_output: |
+              ntp authenticate
+              ntp authentication-key <key-id> md5 <key-hash>
+              ntp trusted-key <key-id>
+            remediation: |
+              ntp authenticate
+              ntp authentication-key 1 md5 <ntp-key>
+              ntp trusted-key 1
+              ntp server <ntp-server-ip> key 1
+
+          - number: "5.3.2"
+            title: "Ensure NTP source interface is configured"
+            description: "An NTP source interface should be configured to ensure NTP packets are sent from a stable IP address."
+            rationale: "Using a loopback interface for NTP source ensures consistent NTP communication regardless of interface state changes."
+            level: 2
+            scored: true
+            audit_command: |
+              show running-config | include ntp source
+            expected_output: |
+              ntp source Loopback0
+            remediation: |
+              ntp source Loopback0
+
+  # ===========================================================================
+  # Section 6: Access Control Lists and Security Features
+  # ===========================================================================
+  - number: "6"
+    title: "Access Control Lists and Security Features"
+    children:
+      - number: "6.1"
+        title: "Access Control Lists"
+        checks:
+          - number: "6.1.1"
+            title: "Ensure ACL deny logging is enabled"
+            description: "Access control lists should include logging for denied packets to enable monitoring of denied traffic."
+            rationale: "Logging denied packets provides visibility into potential attack attempts and policy violations."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include deny.*log
+            expected_output: |
+              deny ip any any log present in ACLs
+            remediation: |
+              ip access-list extended <acl-name>
+               deny ip any any log
+
+          - number: "6.1.2"
+            title: "Ensure ACL explicit deny is present at end of each ACL"
+            description: "Each ACL should have an explicit deny statement at the end for clarity and logging."
+            rationale: "While Cisco IOS has an implicit deny at the end of all ACLs, an explicit deny with logging ensures denied traffic is visible in logs."
+            level: 1
+            scored: true
+            audit_command: |
+              show access-lists
+            expected_output: |
+              Explicit deny at end of each ACL
+            remediation: |
+              ip access-list extended <acl-name>
+               deny ip any any log
+
+          - number: "6.1.3"
+            title: "Ensure inbound ACLs are applied on external interfaces"
+            description: "Inbound ACLs should be applied on all external-facing interfaces to filter traffic entering the network."
+            rationale: "Without inbound ACLs, all traffic is permitted into the network, increasing the risk of unauthorized access and attacks."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | section interface | include access-group.*in
+            expected_output: |
+              ip access-group <acl-name> in on external interfaces
+            remediation: |
+              interface <external-interface>
+               ip access-group <acl-name> in
+
+      - number: "6.2"
+        title: "Control Plane Protection"
+        checks:
+          - number: "6.2.1"
+            title: "Ensure Control Plane Policing (CoPP) is configured"
+            description: "Control Plane Policing should be configured to protect the router's control plane from DoS attacks."
+            rationale: "Without CoPP, the router's CPU can be overwhelmed by traffic directed at the control plane, causing denial of service."
+            level: 2
+            scored: true
+            audit_command: |
+              show policy-map control-plane
+            expected_output: |
+              Control plane policy-map is applied
+            remediation: |
+              class-map match-any COPP_CRITICAL
+               match access-group name COPP_CRITICAL_ACL
+              policy-map COPP_POLICY
+               class COPP_CRITICAL
+                police rate 500 pps burst 100 packets
+              control-plane
+               service-policy input COPP_POLICY
+
+          - number: "6.2.2"
+            title: "Ensure TCP keepalives are enabled for management sessions"
+            description: "TCP keepalives should be enabled to detect and clean up dead sessions."
+            rationale: "Without TCP keepalives, half-open or dead sessions can persist indefinitely, consuming resources and potentially being exploited."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include service tcp-keepalives
+            expected_output: |
+              service tcp-keepalives-in
+              service tcp-keepalives-out
+            remediation: |
+              service tcp-keepalives-in
+              service tcp-keepalives-out
+
+          - number: "6.2.3"
+            title: "Ensure gratuitous ARP is disabled"
+            description: "Gratuitous ARP should be disabled to prevent ARP spoofing attacks on the device."
+            rationale: "Gratuitous ARP packets can be used by an attacker to hijack the IP-to-MAC mappings of other hosts on the segment."
+            level: 2
+            scored: true
+            audit_command: |
+              show running-config | include gratuitous-arps
+            expected_output: |
+              no ip gratuitous-arps
+            remediation: |
+              no ip gratuitous-arps
+
+      - number: "6.3"
+        title: "Resilience Features"
+        checks:
+          - number: "6.3.1"
+            title: "Ensure resilient configuration is enabled"
+            description: "The IOS resilient configuration feature stores a secure copy of the running image and configuration that cannot be erased."
+            rationale: "Resilient configuration protects against malicious or accidental deletion of the IOS image and startup configuration."
+            level: 1
+            scored: true
+            audit_command: |
+              show secure bootset
+            expected_output: |
+              IOS resilience router id and secure archive information
+            remediation: |
+              secure boot-image
+              secure boot-config
+
+          - number: "6.3.2"
+            title: "Ensure configuration change logging is enabled"
+            description: "Configuration change notification and logging should be enabled to track all configuration modifications."
+            rationale: "Logging configuration changes provides an audit trail essential for change management and security incident investigation."
+            level: 1
+            scored: true
+            audit_command: |
+              show running-config | include archive
+            expected_output: |
+              archive log config
+            remediation: |
+              archive
+               log config
+                logging enable
+                logging size 500
+                notify syslog contenttype plaintext
+
+          - number: "6.3.3"
+            title: "Ensure memory and CPU threshold notifications are configured"
+            description: "Memory and CPU threshold notifications should be configured to alert administrators of resource exhaustion."
+            rationale: "Resource exhaustion can indicate a denial-of-service attack or misconfiguration. Early notification allows timely response."
+            level: 2
+            scored: true
+            audit_command: |
+              show running-config | include memory
+            expected_output: |
+              memory free low-watermark processor
+            remediation: |
+              memory free low-watermark processor 73198
+              memory free low-watermark io 16384
