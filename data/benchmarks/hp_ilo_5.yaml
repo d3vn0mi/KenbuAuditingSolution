@@ -1,0 +1,801 @@
+benchmark:
+  name: "CIS HP iLO 5 Benchmark"
+  version: "1.0.0"
+  platform: "hp-ilo-5"
+  release_date: "2024-06-01"
+  description: "Security configuration benchmark for HP Integrated Lights-Out 5 (iLO 5)"
+  url: "https://www.cisecurity.org/benchmark/hp"
+
+sections:
+  # ===========================================================================
+  # Section 1: Access Control
+  # ===========================================================================
+  - number: "1"
+    title: "Access Control"
+    children:
+      - number: "1.1"
+        title: "User Account Management"
+        checks:
+          - number: "1.1.1"
+            title: "Ensure default Administrator password is changed"
+            description: "The default Administrator password that is printed on the server's information tag or set during initial configuration must be changed."
+            rationale: "The default password is documented and can be easily discovered. Failing to change it allows unauthorized access to the iLO management interface."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Administration > User Administration
+              3. Verify the Administrator account password has been changed from the factory default
+            expected_output: |
+              Administrator password has been changed from factory default
+            remediation: |
+              1. Log in to iLO web interface
+              2. Navigate to Administration > User Administration
+              3. Select the Administrator account
+              4. Change the password to a strong, unique password (minimum 12 characters)
+
+          - number: "1.1.2"
+            title: "Ensure minimum password length is configured"
+            description: "The minimum password length for iLO user accounts should be set to at least 12 characters."
+            rationale: "Short passwords are more susceptible to brute force and dictionary attacks. Enforcing minimum length improves password security."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Administration > Access Settings
+              3. Verify minimum password length is set to 12 or greater
+            expected_output: |
+              Minimum password length is 12 or greater
+            remediation: |
+              1. Navigate to Administration > Access Settings
+              2. Set Minimum Password Length to 12
+              3. Click Apply
+
+          - number: "1.1.3"
+            title: "Ensure password complexity requirements are enabled"
+            description: "Password complexity requirements should be enabled to enforce the use of mixed character types in passwords."
+            rationale: "Complex passwords that include uppercase, lowercase, numbers, and special characters are significantly harder to crack."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Administration > Access Settings
+              3. Verify password complexity is enabled
+            expected_output: |
+              Password complexity enforcement is enabled
+            remediation: |
+              1. Navigate to Administration > Access Settings
+              2. Enable password complexity enforcement
+              3. Click Apply
+
+          - number: "1.1.4"
+            title: "Ensure unnecessary user accounts are removed"
+            description: "Only required user accounts should exist on the iLO. Remove any accounts that are no longer needed."
+            rationale: "Unnecessary accounts increase the attack surface. Each account is a potential entry point for unauthorized access."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Administration > User Administration
+              3. Review all user accounts and verify each is required
+            expected_output: |
+              Only required user accounts exist
+            remediation: |
+              1. Navigate to Administration > User Administration
+              2. Select each unnecessary account
+              3. Delete the account
+              4. Document the removal
+
+          - number: "1.1.5"
+            title: "Ensure user accounts use least privilege"
+            description: "Each user account should be configured with only the minimum privileges required for their role."
+            rationale: "Granting excessive privileges increases the risk of accidental or malicious misuse of the management interface."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Administration > User Administration
+              3. Review privileges assigned to each account
+              4. Verify no account has unnecessary administrative privileges
+            expected_output: |
+              User accounts are configured with least privilege
+            remediation: |
+              1. Navigate to Administration > User Administration
+              2. Edit each user account
+              3. Remove unnecessary privileges
+              4. Ensure only administrators have full iLO privileges
+
+      - number: "1.2"
+        title: "Authentication Settings"
+        checks:
+          - number: "1.2.1"
+            title: "Ensure account lockout policy is configured"
+            description: "An account lockout policy should be configured to lock accounts after a specified number of failed login attempts."
+            rationale: "Account lockout prevents brute force password attacks by temporarily disabling accounts after repeated failed authentication attempts."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Administration > Access Settings
+              3. Verify login failure lockout is enabled
+              4. Verify lockout threshold is 5 or fewer attempts
+            expected_output: |
+              Account lockout is enabled with threshold of 5 or fewer attempts
+            remediation: |
+              1. Navigate to Administration > Access Settings
+              2. Set Login Failures Before Lockout to 5
+              3. Set Login Failure Delay to 10 seconds
+              4. Click Apply
+
+          - number: "1.2.2"
+            title: "Ensure idle connection timeout is configured"
+            description: "The idle connection timeout should be configured to automatically disconnect inactive sessions."
+            rationale: "Without an idle timeout, unattended sessions remain active and could be exploited by unauthorized users with physical or network access."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Administration > Access Settings
+              3. Verify idle connection timeout is set to 30 minutes or less
+            expected_output: |
+              Idle connection timeout is 30 minutes or less
+            remediation: |
+              1. Navigate to Administration > Access Settings
+              2. Set Idle Connection Timeout to 15 or 30 minutes
+              3. Click Apply
+
+          - number: "1.2.3"
+            title: "Ensure directory authentication is configured (if applicable)"
+            description: "If the organization uses Active Directory or LDAP, iLO should be configured to authenticate against the directory service."
+            rationale: "Directory integration enables centralized authentication, password policy enforcement, and simplified account management."
+            level: 2
+            scored: false
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Administration > Directory Settings
+              3. Verify directory authentication is configured and tested
+            expected_output: |
+              Directory authentication is configured and functional
+            remediation: |
+              1. Navigate to Administration > Directory Settings
+              2. Select directory server type (Active Directory or LDAP)
+              3. Configure directory server address and credentials
+              4. Configure group mappings for iLO privileges
+              5. Test directory authentication
+
+          - number: "1.2.4"
+            title: "Ensure two-factor authentication is enabled"
+            description: "Two-factor authentication should be enabled to add an additional layer of security to iLO login."
+            rationale: "Two-factor authentication significantly reduces the risk of unauthorized access even if passwords are compromised."
+            level: 2
+            scored: true
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Administration > Access Settings
+              3. Verify two-factor authentication is enabled (certificate-based or CAC/Smart Card)
+            expected_output: |
+              Two-factor authentication is enabled
+            remediation: |
+              1. Navigate to Administration > Access Settings
+              2. Enable two-factor authentication
+              3. Configure trusted CA certificates for client certificate authentication
+              4. Test authentication with smart card or certificate
+
+  # ===========================================================================
+  # Section 2: Network Configuration
+  # ===========================================================================
+  - number: "2"
+    title: "Network Configuration"
+    children:
+      - number: "2.1"
+        title: "Network Interface"
+        checks:
+          - number: "2.1.1"
+            title: "Ensure iLO is on a dedicated management network"
+            description: "The iLO network interface should be connected to a dedicated, isolated management network separate from production traffic."
+            rationale: "Placing iLO on a dedicated management network limits exposure of the management interface to authorized administrators and reduces the attack surface."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Network > iLO Dedicated Network Port
+              3. Verify the dedicated network port is used (not shared)
+              4. Verify the management network is isolated
+            expected_output: |
+              iLO is using the dedicated network port on an isolated management network
+            remediation: |
+              1. Connect the iLO dedicated port to a management VLAN
+              2. Navigate to Network > iLO Dedicated Network Port
+              3. Configure the dedicated port with appropriate IP settings
+              4. Ensure the management network is firewalled from production
+
+          - number: "2.1.2"
+            title: "Ensure shared network port is disabled if dedicated port is used"
+            description: "If the dedicated iLO network port is in use, the shared network port should be disabled."
+            rationale: "Having both shared and dedicated ports active increases the attack surface by providing multiple paths to the management interface."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Network > Shared Network Port
+              3. Verify the shared port is disabled when dedicated port is active
+            expected_output: |
+              Shared network port is disabled
+            remediation: |
+              1. Navigate to Network > Shared Network Port
+              2. Disable the shared network port
+              3. Click Apply
+              4. Verify connectivity through the dedicated port
+
+          - number: "2.1.3"
+            title: "Ensure VLAN tagging is configured for iLO"
+            description: "If the iLO management port shares physical infrastructure, VLAN tagging should be configured to isolate management traffic."
+            rationale: "VLAN tagging provides network-level isolation of iLO management traffic from other network traffic."
+            level: 2
+            scored: true
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Network > iLO Dedicated Network Port
+              3. Verify VLAN settings are configured appropriately
+            expected_output: |
+              VLAN tagging is enabled with appropriate VLAN ID
+            remediation: |
+              1. Navigate to Network > iLO Dedicated Network Port
+              2. Enable VLAN
+              3. Set the VLAN ID to match the management VLAN
+              4. Click Apply
+
+      - number: "2.2"
+        title: "Protocol Configuration"
+        checks:
+          - number: "2.2.1"
+            title: "Ensure HTTPS is enabled and HTTP is disabled"
+            description: "The iLO web interface should only be accessible via HTTPS. HTTP access should be disabled."
+            rationale: "HTTP transmits data including credentials in plaintext. HTTPS ensures all management traffic is encrypted."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Administration > Access Settings
+              3. Verify HTTPS Port is configured (default 443)
+              4. Verify HTTP Port is disabled or redirects to HTTPS
+            expected_output: |
+              HTTPS is enabled; HTTP is disabled or redirects to HTTPS
+            remediation: |
+              1. Navigate to Administration > Access Settings
+              2. Ensure HTTPS port is enabled (default 443)
+              3. Disable HTTP access or enable HTTP to HTTPS redirect
+              4. Click Apply
+
+          - number: "2.2.2"
+            title: "Ensure SSH access is configured securely"
+            description: "If SSH access to iLO is required, it should be configured with secure settings. If not required, it should be disabled."
+            rationale: "SSH provides command-line access to iLO. If not properly secured or not needed, it should be disabled to reduce the attack surface."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Administration > Access Settings
+              3. Verify SSH is either securely configured or disabled
+            expected_output: |
+              SSH is securely configured or disabled if not required
+            remediation: |
+              1. Navigate to Administration > Access Settings
+              2. If SSH is not required, disable Secure Shell (SSH) Access
+              3. If SSH is required, ensure it uses strong ciphers
+              4. Click Apply
+
+          - number: "2.2.3"
+            title: "Ensure IPMI/DCMI over LAN is disabled"
+            description: "IPMI over LAN should be disabled if not required, as it has known security weaknesses."
+            rationale: "IPMI over LAN has well-documented security vulnerabilities including cipher zero authentication bypass and password hash exposure."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Administration > Access Settings
+              3. Verify IPMI/DCMI over LAN is disabled
+            expected_output: |
+              IPMI/DCMI over LAN is disabled
+            remediation: |
+              1. Navigate to Administration > Access Settings
+              2. Disable IPMI/DCMI over LAN
+              3. Click Apply
+
+          - number: "2.2.4"
+            title: "Ensure SNMP is configured securely or disabled"
+            description: "If SNMP is required, it should use SNMPv3 with authentication and encryption. If not required, it should be disabled."
+            rationale: "SNMPv1 and v2c community strings are sent in cleartext. SNMPv3 provides authentication and encryption. Disabling SNMP when not needed reduces the attack surface."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Administration > Management > SNMP Settings
+              3. Verify SNMPv3 is used or SNMP is disabled
+              4. If SNMPv1/v2c is used, verify community strings are non-default
+            expected_output: |
+              SNMP is disabled or SNMPv3 is configured with authentication and privacy
+            remediation: |
+              1. Navigate to Administration > Management > SNMP Settings
+              2. If SNMP is not required, disable SNMP access
+              3. If required, configure SNMPv3 with authentication (SHA) and privacy (AES)
+              4. Change all default community strings
+
+          - number: "2.2.5"
+            title: "Ensure Virtual Media is disabled when not in use"
+            description: "The Virtual Media feature allows remote mounting of ISO images and floppy disks. It should be disabled when not in use."
+            rationale: "Virtual Media can be used to boot the server from an unauthorized image, potentially bypassing security controls."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Administration > Access Settings
+              3. Verify Virtual Media is disabled when not actively needed
+            expected_output: |
+              Virtual Media is disabled
+            remediation: |
+              1. Navigate to Administration > Access Settings
+              2. Disable Virtual Media
+              3. Click Apply
+              4. Re-enable only when needed for maintenance
+
+  # ===========================================================================
+  # Section 3: Encryption and Certificate Management
+  # ===========================================================================
+  - number: "3"
+    title: "Encryption and Certificate Management"
+    children:
+      - number: "3.1"
+        title: "TLS/SSL Configuration"
+        checks:
+          - number: "3.1.1"
+            title: "Ensure TLS 1.2 or higher is enforced"
+            description: "The iLO should be configured to use only TLS 1.2 or higher. Older TLS and SSL versions should be disabled."
+            rationale: "TLS 1.0 and 1.1 have known vulnerabilities. Only TLS 1.2 and higher provide adequate security for management traffic."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Administration > Encryption Settings
+              3. Verify minimum TLS version is 1.2
+            expected_output: |
+              Minimum TLS version is 1.2 or higher
+            remediation: |
+              1. Navigate to Administration > Encryption Settings
+              2. Set Minimum TLS Version to TLS 1.2
+              3. Click Apply
+              4. Reconnect using TLS 1.2
+
+          - number: "3.1.2"
+            title: "Ensure strong cipher suites are configured"
+            description: "Only strong TLS cipher suites should be enabled. Weak ciphers such as RC4, DES, 3DES, and NULL should be disabled."
+            rationale: "Weak cipher suites can be exploited to decrypt management traffic. Only modern, strong ciphers should be used."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Administration > Encryption Settings
+              3. Verify encryption enforcement is set to a strong profile
+            expected_output: |
+              Strong cipher suites are enforced (AES-GCM preferred)
+            remediation: |
+              1. Navigate to Administration > Encryption Settings
+              2. Select a strong encryption enforcement profile
+              3. Disable weak ciphers (RC4, DES, 3DES, NULL)
+              4. Click Apply
+
+          - number: "3.1.3"
+            title: "Ensure FIPS mode is enabled (if required)"
+            description: "If the organization requires FIPS 140-2 compliance, FIPS mode should be enabled on iLO."
+            rationale: "FIPS mode ensures only FIPS-validated cryptographic modules and algorithms are used, which may be required for government or regulated environments."
+            level: 2
+            scored: false
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Administration > Encryption Settings
+              3. Check if FIPS mode is enabled
+            expected_output: |
+              FIPS mode is enabled (if required by policy)
+            remediation: |
+              1. Navigate to Administration > Encryption Settings
+              2. Enable FIPS Mode
+              3. Click Apply
+              4. Note: Enabling FIPS mode will reset iLO and may disconnect existing sessions
+
+      - number: "3.2"
+        title: "Certificate Management"
+        checks:
+          - number: "3.2.1"
+            title: "Ensure a trusted SSL certificate is installed"
+            description: "A certificate signed by a trusted Certificate Authority (CA) should be installed on iLO instead of the self-signed default certificate."
+            rationale: "Self-signed certificates do not provide identity verification and train users to ignore certificate warnings, increasing susceptibility to man-in-the-middle attacks."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Administration > SSL Certificate
+              3. Verify a CA-signed certificate is installed
+              4. Verify the certificate is not expired
+            expected_output: |
+              A valid CA-signed SSL certificate is installed
+            remediation: |
+              1. Navigate to Administration > SSL Certificate
+              2. Generate a Certificate Signing Request (CSR)
+              3. Submit the CSR to your organization's CA
+              4. Import the signed certificate
+
+          - number: "3.2.2"
+            title: "Ensure SSL certificate is not expired"
+            description: "The SSL certificate installed on iLO should be checked for expiration and renewed before it expires."
+            rationale: "An expired certificate causes browser warnings and may prevent secure connections, leading users to bypass security controls."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Administration > SSL Certificate
+              3. Verify the certificate expiration date is in the future
+            expected_output: |
+              SSL certificate is valid and not expired
+            remediation: |
+              1. Generate a new CSR before certificate expiration
+              2. Submit to CA and obtain renewed certificate
+              3. Import the renewed certificate
+              4. Set up calendar reminders for certificate renewal
+
+          - number: "3.2.3"
+            title: "Ensure trusted CA certificates are configured"
+            description: "If certificate-based authentication or directory integration is used, trusted CA certificates should be imported."
+            rationale: "Importing trusted CA certificates allows iLO to validate certificates presented by clients, directory servers, and other services."
+            level: 2
+            scored: true
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Administration > Security > Trusted Certificates
+              3. Verify appropriate CA certificates are imported
+            expected_output: |
+              Trusted CA certificates are imported and current
+            remediation: |
+              1. Navigate to Administration > Security > Trusted Certificates
+              2. Import the organization's root and intermediate CA certificates
+              3. Verify certificate chain is complete
+
+  # ===========================================================================
+  # Section 4: Firmware and Updates
+  # ===========================================================================
+  - number: "4"
+    title: "Firmware and Updates"
+    children:
+      - number: "4.1"
+        title: "Firmware Management"
+        checks:
+          - number: "4.1.1"
+            title: "Ensure iLO firmware is up to date"
+            description: "The iLO firmware should be kept up to date with the latest stable release to ensure all security patches are applied."
+            rationale: "Running outdated firmware exposes iLO to known vulnerabilities that have been patched in newer releases."
+            level: 1
+            scored: false
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Administration > Firmware
+              3. Note the current firmware version
+              4. Compare with the latest version on HPE Support Center
+            expected_output: |
+              iLO firmware is running the latest stable release
+            remediation: |
+              1. Download the latest iLO firmware from HPE Support Center
+              2. Navigate to Administration > Firmware
+              3. Upload and install the firmware update
+              4. iLO will automatically reboot after the update
+
+          - number: "4.1.2"
+            title: "Ensure firmware downgrade policy is configured"
+            description: "Firmware downgrade should be restricted to prevent rolling back to a vulnerable firmware version."
+            rationale: "Allowing unrestricted firmware downgrades could allow an attacker to revert to a version with known vulnerabilities."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Administration > Access Settings
+              3. Verify firmware downgrade policy is set to restrict downgrades
+            expected_output: |
+              Firmware downgrade is restricted or disabled
+            remediation: |
+              1. Navigate to Administration > Access Settings
+              2. Set iLO Firmware Version Downgrade Policy to not allowed
+              3. Click Apply
+
+          - number: "4.1.3"
+            title: "Ensure Server Platform Services (SPS) firmware is current"
+            description: "The Server Platform Services firmware should be maintained at current levels."
+            rationale: "SPS firmware provides platform management capabilities. Outdated SPS firmware may contain security vulnerabilities."
+            level: 2
+            scored: false
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Information > Firmware
+              3. Check Server Platform Services firmware version
+            expected_output: |
+              SPS firmware is at a current, supported version
+            remediation: |
+              1. Download the latest SPS firmware from HPE Support
+              2. Apply using the HPE Smart Update Manager or Firmware Update utility
+              3. A server reboot may be required
+
+      - number: "4.2"
+        title: "System ROM"
+        checks:
+          - number: "4.2.1"
+            title: "Ensure system BIOS/UEFI firmware is up to date"
+            description: "The server system ROM (BIOS/UEFI) should be kept current with the latest stable release."
+            rationale: "System ROM updates often contain security fixes for CPU microcode, firmware-level vulnerabilities, and other platform security issues."
+            level: 1
+            scored: false
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Information > Firmware
+              3. Check System ROM version
+              4. Compare with the latest version on HPE Support Center
+            expected_output: |
+              System ROM is at the latest stable version
+            remediation: |
+              1. Download latest System ROM from HPE Support Center
+              2. Navigate to Administration > Firmware
+              3. Upload and install the System ROM update
+              4. A server reboot is required to apply the update
+
+          - number: "4.2.2"
+            title: "Ensure Secure Boot is enabled"
+            description: "UEFI Secure Boot should be enabled to ensure only signed and trusted firmware and operating system components are loaded during boot."
+            rationale: "Secure Boot prevents rootkits and bootkits from loading during the server boot process by verifying digital signatures."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Security > Secure Boot
+              3. Verify Secure Boot is enabled
+            expected_output: |
+              Secure Boot is enabled
+            remediation: |
+              1. Navigate to Security > Secure Boot
+              2. Enable Secure Boot
+              3. Click Apply
+              4. Reboot the server for the setting to take effect
+
+  # ===========================================================================
+  # Section 5: Logging and Monitoring
+  # ===========================================================================
+  - number: "5"
+    title: "Logging and Monitoring"
+    children:
+      - number: "5.1"
+        title: "Logging Configuration"
+        checks:
+          - number: "5.1.1"
+            title: "Ensure iLO Event Log is monitored"
+            description: "The iLO Event Log should be regularly reviewed for security-relevant events."
+            rationale: "The iLO Event Log records hardware events, login attempts, and configuration changes. Regular review helps detect security incidents."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Information > iLO Event Log
+              3. Review for any suspicious or failed login attempts
+              4. Verify the log is not full (which would prevent new entries)
+            expected_output: |
+              Event log is accessible and not full; no suspicious entries
+            remediation: |
+              1. Establish a log review schedule (at least weekly)
+              2. Configure remote syslog to preserve log entries
+              3. Clear the log after archiving to ensure space for new entries
+
+          - number: "5.1.2"
+            title: "Ensure remote syslog is configured"
+            description: "iLO should be configured to forward logs to a remote syslog server for centralized logging and long-term retention."
+            rationale: "Remote syslog ensures log data is preserved even if iLO is compromised and provides centralized visibility across all managed servers."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Administration > Management > Remote Syslog
+              3. Verify remote syslog is enabled and a server is configured
+            expected_output: |
+              Remote syslog is enabled with a valid syslog server address
+            remediation: |
+              1. Navigate to Administration > Management > Remote Syslog
+              2. Enable Remote Syslog
+              3. Enter the syslog server IP address
+              4. Set the syslog port (default 514)
+              5. Click Apply
+
+          - number: "5.1.3"
+            title: "Ensure Integrated Management Log (IML) is monitored"
+            description: "The Integrated Management Log records hardware events and should be monitored for failures and warnings."
+            rationale: "Hardware failures can impact security. Monitoring the IML allows proactive response to hardware issues before they cause outages."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Information > Integrated Management Log
+              3. Review for critical hardware events
+            expected_output: |
+              IML is accessible and monitored; critical events are addressed
+            remediation: |
+              1. Review IML regularly for critical and warning events
+              2. Configure alerting for critical hardware events
+              3. Integrate with enterprise monitoring (SNMP traps or email alerts)
+
+      - number: "5.2"
+        title: "Alerting"
+        checks:
+          - number: "5.2.1"
+            title: "Ensure email alerts are configured for critical events"
+            description: "Email alerting should be configured to notify administrators of critical iLO events."
+            rationale: "Timely notification of critical events such as hardware failures, security alerts, and login failures enables rapid response."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Administration > Management > AlertMail
+              3. Verify AlertMail is enabled with valid SMTP settings
+            expected_output: |
+              AlertMail is enabled with valid SMTP server and recipient addresses
+            remediation: |
+              1. Navigate to Administration > Management > AlertMail
+              2. Enable AlertMail
+              3. Configure SMTP server address
+              4. Set sender and recipient email addresses
+              5. Send a test alert to verify
+
+          - number: "5.2.2"
+            title: "Ensure SNMP trap destinations are configured"
+            description: "If SNMP monitoring is in use, trap destinations should be configured to receive iLO alerts."
+            rationale: "SNMP traps provide real-time notifications of hardware events to enterprise monitoring systems."
+            level: 2
+            scored: true
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Administration > Management > SNMP Settings
+              3. Verify SNMP trap destinations are configured
+            expected_output: |
+              SNMP trap destinations are configured
+            remediation: |
+              1. Navigate to Administration > Management > SNMP Settings
+              2. Configure trap destination IP addresses
+              3. Set community string (or SNMPv3 credentials)
+              4. Select alert categories to include
+
+          - number: "5.2.3"
+            title: "Ensure login audit logging is enabled"
+            description: "All login attempts (successful and failed) to iLO should be logged for security auditing."
+            rationale: "Login audit logging provides a record of all access attempts, essential for detecting unauthorized access and supporting forensic investigations."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Review iLO Event Log for login events
+              3. Verify both successful and failed attempts are logged
+            expected_output: |
+              Login events are logged for both successful and failed attempts
+            remediation: |
+              1. Login auditing is enabled by default on iLO 5
+              2. Ensure remote syslog is configured to capture these events
+              3. Verify by performing a test login and checking the log
+
+  # ===========================================================================
+  # Section 6: Server Security Features
+  # ===========================================================================
+  - number: "6"
+    title: "Server Security Features"
+    children:
+      - number: "6.1"
+        title: "Hardware Security"
+        checks:
+          - number: "6.1.1"
+            title: "Ensure iLO Security Dashboard is reviewed"
+            description: "The iLO Security Dashboard provides an overview of the security posture of the iLO and server configuration."
+            rationale: "The Security Dashboard identifies security risks and provides recommendations for improving the server's security configuration."
+            level: 1
+            scored: false
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to the Security Dashboard
+              3. Review all security status indicators
+              4. Address any items not in a secure state
+            expected_output: |
+              Security Dashboard shows all items in a secure or acceptable state
+            remediation: |
+              1. Review each item on the Security Dashboard
+              2. Follow the recommended actions for each risk
+              3. Re-check the dashboard after applying changes
+
+          - number: "6.1.2"
+            title: "Ensure Server Configuration Lock is enabled"
+            description: "The Server Configuration Lock prevents unauthorized changes to the server hardware and BIOS configuration."
+            rationale: "Server Configuration Lock protects against unauthorized hardware configuration changes that could impact security or availability."
+            level: 2
+            scored: true
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Security > Server Configuration Lock
+              3. Verify the configuration lock is enabled
+            expected_output: |
+              Server Configuration Lock is enabled
+            remediation: |
+              1. Navigate to Security > Server Configuration Lock
+              2. Enable Server Configuration Lock
+              3. Click Apply
+
+          - number: "6.1.3"
+            title: "Ensure chassis intrusion detection is enabled"
+            description: "Chassis intrusion detection should be enabled to alert when the server chassis is opened."
+            rationale: "Physical access to server internals can allow an attacker to install malicious hardware, extract data from drives, or bypass security controls."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Security > Chassis Intrusion Detection
+              3. Verify intrusion detection is enabled
+            expected_output: |
+              Chassis intrusion detection is enabled
+            remediation: |
+              1. Navigate to Security > Chassis Intrusion Detection
+              2. Enable chassis intrusion detection
+              3. Configure alert notifications for intrusion events
+
+      - number: "6.2"
+        title: "Backup and Recovery"
+        checks:
+          - number: "6.2.1"
+            title: "Ensure iLO configuration backup is performed regularly"
+            description: "The iLO configuration should be backed up regularly to enable quick recovery in case of failure or misconfiguration."
+            rationale: "Without a configuration backup, recovering from iLO failure or misconfiguration requires manual reconfiguration, which is time-consuming and error-prone."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Administration > Backup/Restore
+              3. Verify a recent backup exists
+              4. Verify backup is stored securely
+            expected_output: |
+              A recent iLO configuration backup exists
+            remediation: |
+              1. Navigate to Administration > Backup/Restore
+              2. Create a configuration backup
+              3. Store the backup file securely (encrypted storage)
+              4. Schedule regular backups (monthly recommended)
+
+          - number: "6.2.2"
+            title: "Ensure iLO configuration backup is encrypted"
+            description: "iLO configuration backups should be encrypted to protect sensitive data including passwords and certificates."
+            rationale: "Unencrypted backups expose sensitive configuration data. Backup encryption protects credentials and security settings."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Administration > Backup/Restore
+              3. Verify backup encryption is enabled
+            expected_output: |
+              Backup encryption is enabled with a strong password
+            remediation: |
+              1. Navigate to Administration > Backup/Restore
+              2. Set a strong backup encryption password
+              3. Create an encrypted backup
+              4. Store the encryption password securely and separately from the backup
+
+          - number: "6.2.3"
+            title: "Ensure iLO reset to factory defaults is restricted"
+            description: "The ability to reset iLO to factory defaults should be restricted to prevent unauthorized resets that would remove all security configuration."
+            rationale: "An unauthorized factory reset would remove all security settings, user accounts, and certificates, potentially leaving the server exposed."
+            level: 1
+            scored: true
+            audit_steps: |
+              1. Log in to the iLO web interface
+              2. Navigate to Administration > Access Settings
+              3. Verify physical button reset is appropriately restricted
+            expected_output: |
+              iLO reset button is restricted or disabled
+            remediation: |
+              1. Navigate to Administration > Access Settings
+              2. Consider disabling the iLO physical reset button
+              3. Ensure physical access to the server is restricted
+              4. Document the factory default password recovery procedure

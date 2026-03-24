@@ -234,6 +234,13 @@ def seed_platforms():
             'icon': 'suse',
             'description': 'SUSE Linux Enterprise Server 15'
         },
+        {
+            'name': 'HP iLO 5',
+            'slug': 'hp-ilo-5',
+            'os_family': 'Firmware',
+            'icon': 'hp',
+            'description': 'HP Integrated Lights-Out 5 (iLO 5)'
+        },
     ]
 
     for p_data in platforms:
