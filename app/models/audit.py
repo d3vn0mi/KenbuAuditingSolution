@@ -17,7 +17,7 @@ class AuditSession(db.Model):
     notes = db.Column(db.Text)
 
     # Relationships
-    user = db.relationship('User', lazy='joined')
+    user = db.relationship('User', lazy='joined', overlaps='audit_sessions,auditor')
     standard = db.relationship('Standard', lazy='joined')
     assets = db.relationship('AuditAsset', backref='session', lazy='dynamic',
                              cascade='all, delete-orphan')
