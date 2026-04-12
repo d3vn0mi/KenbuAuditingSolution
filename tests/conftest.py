@@ -24,21 +24,13 @@ def _database(app):
 
 @pytest.fixture(autouse=True)
 def db_session(app, _database):
-    """Wrap each test in a transaction that rolls back after the test."""
+    """Provide a clean database for each test."""
     with app.app_context():
-        connection = _database.engine.connect()
-        transaction = connection.begin()
-        options = dict(bind=connection, binds={})
-        session = _database.create_scoped_session(options=options)
-        old_session = _database.session
-        _database.session = session
-
         yield _database
-
-        transaction.rollback()
-        connection.close()
-        session.remove()
-        _database.session = old_session
+        _database.session.remove()
+        for table in reversed(_database.metadata.sorted_tables):
+            _database.session.execute(table.delete())
+        _database.session.commit()
 
 
 @pytest.fixture()

@@ -29,9 +29,12 @@ class TestingConfig(Config):
 
 class ProductionConfig(Config):
     DEBUG = False
-    SECRET_KEY = os.environ.get('SECRET_KEY')
-    if not SECRET_KEY:
-        raise RuntimeError('SECRET_KEY environment variable must be set in production')
+    SECRET_KEY = os.environ.get('SECRET_KEY', '')
+
+    def __init__(self):
+        super().__init__()
+        if not self.SECRET_KEY:
+            raise RuntimeError('SECRET_KEY environment variable must be set in production')
     SQLALCHEMY_DATABASE_URI = os.environ.get(
         'DATABASE_URL',
         'postgresql://kenbu:kenbu@db:5432/kenbu'
