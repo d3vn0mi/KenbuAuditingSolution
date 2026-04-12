@@ -96,7 +96,7 @@ Returns a dict with references to all created objects for easy access in tests.
 | 5 | Search checks by keyword | GET `/checks/search?q=<keyword>` | 200, returns matching checks |
 | 6 | Search checks by level | GET `/checks/search?level=L1` | 200, returns only L1 checks |
 
-### test_audits.py — Audit Session Lifecycle (15 tests)
+### test_audits.py — Audit Session Lifecycle (17 tests)
 
 | # | Test | Action | Expected |
 |---|------|--------|----------|
