@@ -1,4 +1,5 @@
 import pytest
+from app.extensions import db
 from app.models.audit import AuditSession, AuditAsset, AuditAssetBenchmark, AuditResult
 
 
@@ -44,7 +45,7 @@ class TestAuditList:
 class TestAuditCreate:
     def test_create_audit(self, auth_client):
         sid = _create_audit(auth_client)
-        session = AuditSession.query.get(sid)
+        session = db.session.get(AuditSession, sid)
         assert session is not None
         assert session.title == 'Test Audit'
         assert session.status == 'draft'
@@ -69,7 +70,7 @@ class TestAuditDetail:
             'description': 'New description',
         }, follow_redirects=True)
         assert resp.status_code == 200
-        session = AuditSession.query.get(sid)
+        session = db.session.get(AuditSession, sid)
         assert session.title == 'Updated Title'
 
     def test_edit_non_draft_session(self, auth_client, seed_data):
@@ -88,7 +89,7 @@ class TestAuditAssets:
     def test_add_asset(self, auth_client):
         sid = _create_audit(auth_client)
         aid = _add_asset(auth_client, sid)
-        asset = AuditAsset.query.get(aid)
+        asset = db.session.get(AuditAsset, aid)
         assert asset is not None
         assert asset.name == 'Server1'
 
@@ -107,7 +108,7 @@ class TestAuditLifecycle:
         _assign_benchmarks(auth_client, sid, aid, seed_data['benchmark'].id)
         _start_audit(auth_client, sid)
 
-        session = AuditSession.query.get(sid)
+        session = db.session.get(AuditSession, sid)
         assert session.status == 'in_progress'
         assert session.started_at is not None
         results = AuditResult.query.filter_by(asset_id=aid).all()
@@ -166,7 +167,7 @@ class TestAuditLifecycle:
 
         resp = auth_client.post(f'/audits/{sid}/complete')
         assert resp.status_code == 302
-        session = AuditSession.query.get(sid)
+        session = db.session.get(AuditSession, sid)
         assert session.status == 'completed'
         assert session.completed_at is not None
 
@@ -176,7 +177,7 @@ class TestAuditDelete:
         sid = _create_audit(auth_client)
         resp = auth_client.post(f'/audits/{sid}/delete', follow_redirects=True)
         assert resp.status_code == 200
-        assert AuditSession.query.get(sid) is None
+        assert db.session.get(AuditSession, sid) is None
 
     def test_delete_non_draft_session(self, auth_client, seed_data):
         sid = _create_audit(auth_client)
@@ -186,7 +187,7 @@ class TestAuditDelete:
 
         resp = auth_client.post(f'/audits/{sid}/delete', follow_redirects=True)
         assert b'not in draft status' in resp.data
-        assert AuditSession.query.get(sid) is not None
+        assert db.session.get(AuditSession, sid) is not None
 
 
 class TestAuditAccessControl:

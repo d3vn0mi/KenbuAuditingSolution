@@ -1,4 +1,5 @@
 import pytest
+from app.extensions import db
 from app.models.hardening import HardeningTask, HardeningAsset, HardeningAssetBenchmark, HardeningCheckResult
 
 
@@ -40,7 +41,7 @@ class TestHardeningList:
 class TestHardeningCreate:
     def test_create_task(self, auth_client):
         tid = _create_task(auth_client)
-        task = HardeningTask.query.get(tid)
+        task = db.session.get(HardeningTask, tid)
         assert task is not None
         assert task.title == 'Test Hardening'
         assert task.status == 'draft'
@@ -55,7 +56,7 @@ class TestHardeningAssets:
     def test_add_asset(self, auth_client):
         tid = _create_task(auth_client)
         aid = _add_asset(auth_client, tid)
-        asset = HardeningAsset.query.get(aid)
+        asset = db.session.get(HardeningAsset, aid)
         assert asset is not None
         assert asset.name == 'Server1'
 
@@ -74,7 +75,7 @@ class TestHardeningLifecycle:
         _assign_benchmarks(auth_client, tid, aid, seed_data['benchmark'].id)
         _start_task(auth_client, tid)
 
-        task = HardeningTask.query.get(tid)
+        task = db.session.get(HardeningTask, tid)
         assert task.status == 'in_progress'
         assert task.started_at is not None
         results = HardeningCheckResult.query.filter_by(asset_id=aid).all()
@@ -126,7 +127,7 @@ class TestHardeningLifecycle:
 
         resp = auth_client.post(f'/hardening/{tid}/complete')
         assert resp.status_code == 302
-        task = HardeningTask.query.get(tid)
+        task = db.session.get(HardeningTask, tid)
         assert task.status == 'completed'
 
 
@@ -135,7 +136,7 @@ class TestHardeningDelete:
         tid = _create_task(auth_client)
         resp = auth_client.post(f'/hardening/{tid}/delete', follow_redirects=True)
         assert resp.status_code == 200
-        assert HardeningTask.query.get(tid) is None
+        assert db.session.get(HardeningTask, tid) is None
 
 
 class TestHardeningAccessControl:
