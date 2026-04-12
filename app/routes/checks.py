@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request
 from flask_login import login_required
+from ..extensions import db
 from ..models import Check, BenchmarkSection, Benchmark, Platform
 
 checks_bp = Blueprint('checks', __name__, url_prefix='/checks')
@@ -8,7 +9,7 @@ checks_bp = Blueprint('checks', __name__, url_prefix='/checks')
 @checks_bp.route('/<int:check_id>')
 @login_required
 def detail(check_id):
-    check = Check.query.get_or_404(check_id)
+    check = db.get_or_404(Check, check_id)
     section = check.section
     benchmark = section.benchmark
 

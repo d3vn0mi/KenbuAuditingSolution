@@ -1,5 +1,6 @@
 from flask import Blueprint, send_file, request, render_template, make_response
 from flask_login import login_required, current_user
+from ..extensions import db
 from ..models import Benchmark, Check
 from ..models.audit import AuditSession, AuditAsset, AuditResult
 from ..models.hardening import HardeningTask, HardeningCheckResult, HardeningAsset
@@ -12,7 +13,7 @@ export_bp = Blueprint('export', __name__, url_prefix='/export')
 @export_bp.route('/benchmark/<int:benchmark_id>')
 @login_required
 def export_benchmark(benchmark_id):
-    benchmark = Benchmark.query.get_or_404(benchmark_id)
+    benchmark = db.get_or_404(Benchmark, benchmark_id)
 
     # Optional filters
     level = request.args.get('level', type=int)
@@ -33,7 +34,7 @@ def export_benchmark(benchmark_id):
 @auditor_required
 def export_audit(session_id):
     from flask import abort
-    session = AuditSession.query.get_or_404(session_id)
+    session = db.get_or_404(AuditSession, session_id)
     if session.user_id != current_user.id:
         abort(403)
 
@@ -54,7 +55,7 @@ def export_audit(session_id):
 @hardening_required
 def export_hardening_excel(task_id):
     from flask import abort
-    task = HardeningTask.query.get_or_404(task_id)
+    task = db.get_or_404(HardeningTask, task_id)
     if task.user_id != current_user.id:
         abort(403)
 
@@ -75,7 +76,7 @@ def export_hardening_excel(task_id):
 @hardening_required
 def export_hardening_html(task_id):
     from flask import abort
-    task = HardeningTask.query.get_or_404(task_id)
+    task = db.get_or_404(HardeningTask, task_id)
     if task.user_id != current_user.id:
         abort(403)
 

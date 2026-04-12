@@ -47,7 +47,7 @@ def new_task():
 @hardening_bp.route('/<int:task_id>')
 @hardening_required
 def task_detail(task_id):
-    task = HardeningTask.query.get_or_404(task_id)
+    task = db.get_or_404(HardeningTask, task_id)
     if task.user_id != current_user.id:
         abort(403)
     assets = task.assets.all()
@@ -57,7 +57,7 @@ def task_detail(task_id):
 @hardening_bp.route('/<int:task_id>/edit', methods=['POST'])
 @hardening_required
 def edit_task(task_id):
-    task = HardeningTask.query.get_or_404(task_id)
+    task = db.get_or_404(HardeningTask, task_id)
     if task.user_id != current_user.id:
         abort(403)
     if task.status != 'draft':
@@ -81,7 +81,7 @@ def edit_task(task_id):
 @hardening_bp.route('/<int:task_id>/delete', methods=['POST'])
 @hardening_required
 def delete_task(task_id):
-    task = HardeningTask.query.get_or_404(task_id)
+    task = db.get_or_404(HardeningTask, task_id)
     if task.user_id != current_user.id:
         abort(403)
     if task.status != 'draft':
@@ -97,7 +97,7 @@ def delete_task(task_id):
 @hardening_bp.route('/<int:task_id>/assets/new', methods=['GET', 'POST'])
 @hardening_required
 def new_asset(task_id):
-    task = HardeningTask.query.get_or_404(task_id)
+    task = db.get_or_404(HardeningTask, task_id)
     if task.user_id != current_user.id:
         abort(403)
     if task.status not in ('draft', 'in_progress'):
@@ -130,14 +130,14 @@ def new_asset(task_id):
 @hardening_bp.route('/<int:task_id>/assets/<int:asset_id>/delete', methods=['POST'])
 @hardening_required
 def delete_asset(task_id, asset_id):
-    task = HardeningTask.query.get_or_404(task_id)
+    task = db.get_or_404(HardeningTask, task_id)
     if task.user_id != current_user.id:
         abort(403)
     if task.status not in ('draft', 'in_progress'):
         flash('Cannot remove assets from a completed task.', 'error')
         return redirect(url_for('hardening.task_detail', task_id=task.id))
 
-    asset = HardeningAsset.query.get_or_404(asset_id)
+    asset = db.get_or_404(HardeningAsset, asset_id)
     if asset.task_id != task.id:
         abort(404)
 
@@ -150,14 +150,14 @@ def delete_asset(task_id, asset_id):
 @hardening_bp.route('/<int:task_id>/assets/<int:asset_id>/benchmarks', methods=['GET', 'POST'])
 @hardening_required
 def asset_benchmarks(task_id, asset_id):
-    task = HardeningTask.query.get_or_404(task_id)
+    task = db.get_or_404(HardeningTask, task_id)
     if task.user_id != current_user.id:
         abort(403)
     if task.status not in ('draft', 'in_progress'):
         flash('Cannot modify benchmarks on a completed task.', 'error')
         return redirect(url_for('hardening.task_detail', task_id=task.id))
 
-    asset = HardeningAsset.query.get_or_404(asset_id)
+    asset = db.get_or_404(HardeningAsset, asset_id)
     if asset.task_id != task.id:
         abort(404)
 
@@ -205,7 +205,7 @@ def _generate_check_results_for_asset(asset):
 @hardening_bp.route('/<int:task_id>/start', methods=['POST'])
 @hardening_required
 def start_task(task_id):
-    task = HardeningTask.query.get_or_404(task_id)
+    task = db.get_or_404(HardeningTask, task_id)
     if task.user_id != current_user.id:
         abort(403)
     if task.status != 'draft':
@@ -238,11 +238,11 @@ def start_task(task_id):
 @hardening_bp.route('/<int:task_id>/assets/<int:asset_id>')
 @hardening_required
 def asset_detail(task_id, asset_id):
-    task = HardeningTask.query.get_or_404(task_id)
+    task = db.get_or_404(HardeningTask, task_id)
     if task.user_id != current_user.id:
         abort(403)
 
-    asset = HardeningAsset.query.get_or_404(asset_id)
+    asset = db.get_or_404(HardeningAsset, asset_id)
     if asset.task_id != task.id:
         abort(404)
 
@@ -257,7 +257,7 @@ def asset_detail(task_id, asset_id):
 @hardening_bp.route('/<int:task_id>/assets/<int:asset_id>/check/<int:check_id>', methods=['POST'])
 @hardening_required
 def update_check(task_id, asset_id, check_id):
-    task = HardeningTask.query.get_or_404(task_id)
+    task = db.get_or_404(HardeningTask, task_id)
     if task.user_id != current_user.id:
         abort(403)
 
@@ -293,14 +293,14 @@ def update_check(task_id, asset_id, check_id):
 @hardening_bp.route('/<int:task_id>/assets/<int:asset_id>/bulk-update', methods=['POST'])
 @hardening_required
 def bulk_update_checks(task_id, asset_id):
-    task = HardeningTask.query.get_or_404(task_id)
+    task = db.get_or_404(HardeningTask, task_id)
     if task.user_id != current_user.id:
         abort(403)
     if task.status != 'in_progress':
         flash('Task must be in progress to update checks.', 'error')
         return redirect(url_for('hardening.task_detail', task_id=task.id))
 
-    asset = HardeningAsset.query.get_or_404(asset_id)
+    asset = db.get_or_404(HardeningAsset, asset_id)
     if asset.task_id != task.id:
         abort(404)
 
@@ -333,7 +333,7 @@ def bulk_update_checks(task_id, asset_id):
 @hardening_bp.route('/<int:task_id>/complete', methods=['POST'])
 @hardening_required
 def complete_task(task_id):
-    task = HardeningTask.query.get_or_404(task_id)
+    task = db.get_or_404(HardeningTask, task_id)
     if task.user_id != current_user.id:
         abort(403)
     if task.status != 'in_progress':

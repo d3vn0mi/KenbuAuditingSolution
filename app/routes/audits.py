@@ -52,7 +52,7 @@ def new_audit():
 @audits_bp.route('/<int:session_id>')
 @auditor_required
 def session_detail(session_id):
-    session = AuditSession.query.get_or_404(session_id)
+    session = db.get_or_404(AuditSession, session_id)
     if session.user_id != current_user.id:
         abort(403)
 
@@ -67,7 +67,7 @@ def session_detail(session_id):
 @audits_bp.route('/<int:session_id>/edit', methods=['POST'])
 @auditor_required
 def edit_session(session_id):
-    session = AuditSession.query.get_or_404(session_id)
+    session = db.get_or_404(AuditSession, session_id)
     if session.user_id != current_user.id:
         abort(403)
     if session.status != 'draft':
@@ -93,7 +93,7 @@ def edit_session(session_id):
 @audits_bp.route('/<int:session_id>/delete', methods=['POST'])
 @auditor_required
 def delete_session(session_id):
-    session = AuditSession.query.get_or_404(session_id)
+    session = db.get_or_404(AuditSession, session_id)
     if session.user_id != current_user.id:
         abort(403)
     if session.status != 'draft':
@@ -109,7 +109,7 @@ def delete_session(session_id):
 @audits_bp.route('/<int:session_id>/assets/new', methods=['GET', 'POST'])
 @auditor_required
 def new_asset(session_id):
-    session = AuditSession.query.get_or_404(session_id)
+    session = db.get_or_404(AuditSession, session_id)
     if session.user_id != current_user.id:
         abort(403)
     if session.status not in ('draft', 'in_progress'):
@@ -144,14 +144,14 @@ def new_asset(session_id):
 @audits_bp.route('/<int:session_id>/assets/<int:asset_id>/delete', methods=['POST'])
 @auditor_required
 def delete_asset(session_id, asset_id):
-    session = AuditSession.query.get_or_404(session_id)
+    session = db.get_or_404(AuditSession, session_id)
     if session.user_id != current_user.id:
         abort(403)
     if session.status not in ('draft', 'in_progress'):
         flash('Cannot remove assets from a completed audit.', 'error')
         return redirect(url_for('audits.session_detail', session_id=session.id))
 
-    asset = AuditAsset.query.get_or_404(asset_id)
+    asset = db.get_or_404(AuditAsset, asset_id)
     if asset.session_id != session.id:
         abort(404)
 
@@ -164,14 +164,14 @@ def delete_asset(session_id, asset_id):
 @audits_bp.route('/<int:session_id>/assets/<int:asset_id>/benchmarks', methods=['GET', 'POST'])
 @auditor_required
 def asset_benchmarks(session_id, asset_id):
-    session = AuditSession.query.get_or_404(session_id)
+    session = db.get_or_404(AuditSession, session_id)
     if session.user_id != current_user.id:
         abort(403)
     if session.status not in ('draft', 'in_progress'):
         flash('Cannot modify benchmarks on a completed audit.', 'error')
         return redirect(url_for('audits.session_detail', session_id=session.id))
 
-    asset = AuditAsset.query.get_or_404(asset_id)
+    asset = db.get_or_404(AuditAsset, asset_id)
     if asset.session_id != session.id:
         abort(404)
 
@@ -230,7 +230,7 @@ def _generate_audit_results_for_asset(asset, standard_id=None):
 @audits_bp.route('/<int:session_id>/start', methods=['POST'])
 @auditor_required
 def start_session(session_id):
-    session = AuditSession.query.get_or_404(session_id)
+    session = db.get_or_404(AuditSession, session_id)
     if session.user_id != current_user.id:
         abort(403)
     if session.status != 'draft':
@@ -267,11 +267,11 @@ def start_session(session_id):
 @audits_bp.route('/<int:session_id>/assets/<int:asset_id>')
 @auditor_required
 def asset_detail(session_id, asset_id):
-    session = AuditSession.query.get_or_404(session_id)
+    session = db.get_or_404(AuditSession, session_id)
     if session.user_id != current_user.id:
         abort(403)
 
-    asset = AuditAsset.query.get_or_404(asset_id)
+    asset = db.get_or_404(AuditAsset, asset_id)
     if asset.session_id != session.id:
         abort(404)
 
@@ -286,7 +286,7 @@ def asset_detail(session_id, asset_id):
 @audits_bp.route('/<int:session_id>/assets/<int:asset_id>/check/<int:check_id>', methods=['POST'])
 @auditor_required
 def update_result(session_id, asset_id, check_id):
-    session = AuditSession.query.get_or_404(session_id)
+    session = db.get_or_404(AuditSession, session_id)
     if session.user_id != current_user.id:
         abort(403)
 
@@ -322,14 +322,14 @@ def update_result(session_id, asset_id, check_id):
 @audits_bp.route('/<int:session_id>/assets/<int:asset_id>/bulk-update', methods=['POST'])
 @auditor_required
 def bulk_update_results(session_id, asset_id):
-    session = AuditSession.query.get_or_404(session_id)
+    session = db.get_or_404(AuditSession, session_id)
     if session.user_id != current_user.id:
         abort(403)
     if session.status != 'in_progress':
         flash('Audit must be in progress to update checks.', 'error')
         return redirect(url_for('audits.session_detail', session_id=session.id))
 
-    asset = AuditAsset.query.get_or_404(asset_id)
+    asset = db.get_or_404(AuditAsset, asset_id)
     if asset.session_id != session.id:
         abort(404)
 
@@ -374,7 +374,7 @@ def bulk_update_results(session_id, asset_id):
 @audits_bp.route('/<int:session_id>/complete', methods=['POST'])
 @auditor_required
 def complete_session(session_id):
-    session = AuditSession.query.get_or_404(session_id)
+    session = db.get_or_404(AuditSession, session_id)
     if session.user_id != current_user.id:
         abort(403)
     if session.status != 'in_progress':

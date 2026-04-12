@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, abort
 from flask_login import login_required
+from ..extensions import db
 from ..models import Benchmark, BenchmarkSection, Check
 
 benchmarks_bp = Blueprint('benchmarks', __name__, url_prefix='/benchmarks')
@@ -15,7 +16,7 @@ def list_benchmarks():
 @benchmarks_bp.route('/<int:benchmark_id>')
 @login_required
 def detail(benchmark_id):
-    benchmark = Benchmark.query.get_or_404(benchmark_id)
+    benchmark = db.get_or_404(Benchmark, benchmark_id)
     # Get top-level sections
     sections = BenchmarkSection.query.filter_by(
         benchmark_id=benchmark_id,
@@ -29,8 +30,8 @@ def detail(benchmark_id):
 @benchmarks_bp.route('/<int:benchmark_id>/section/<int:section_id>')
 @login_required
 def section(benchmark_id, section_id):
-    benchmark = Benchmark.query.get_or_404(benchmark_id)
-    section = BenchmarkSection.query.get_or_404(section_id)
+    benchmark = db.get_or_404(Benchmark, benchmark_id)
+    section = db.get_or_404(BenchmarkSection, section_id)
     if section.benchmark_id != benchmark_id:
         abort(404)
 
