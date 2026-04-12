@@ -41,6 +41,7 @@
         {% endif %}
         {% if session.status == 'draft' %}
         <form method="POST" action="{{ url_for('audits.delete_session', session_id=session.id) }}" hx-boost="false">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="inline-flex items-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500"
                     onclick="return confirm('Delete this audit session?')">
                 Delete
@@ -49,6 +50,7 @@
         {% endif %}
         {% if session.status == 'in_progress' %}
         <form method="POST" action="{{ url_for('audits.complete_session', session_id=session.id) }}" hx-boost="false">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="inline-flex items-center rounded-md bg-accent-red hover:bg-accent-red-hover px-3 py-2 text-sm font-semibold text-white shadow-sm"
                     onclick="return confirm('Mark this audit as complete?')">
                 Complete Audit
@@ -96,6 +98,7 @@
 <div class="mb-6 bg-cyber-card border border-cyber-border rounded-lg p-6">
     <h2 class="text-lg font-semibold text-text-primary mb-4">Session Details</h2>
     <form method="POST" action="{{ url_for('audits.edit_session', session_id=session.id) }}" class="space-y-4" hx-boost="false">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
                 <label for="title" class="block text-sm font-medium text-text-primary">Title</label>
@@ -203,6 +206,7 @@
                     {% if session.status in ['draft', 'in_progress'] %}
                     <a href="{{ url_for('audits.asset_benchmarks', session_id=session.id, asset_id=asset.id) }}" class="text-accent-cyan hover:text-accent-cyan-dim">Benchmarks</a>
                     <form method="POST" action="{{ url_for('audits.delete_asset', session_id=session.id, asset_id=asset.id) }}" class="inline" hx-boost="false">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="text-red-400 hover:text-red-300" onclick="return confirm('Remove this asset{% if session.status == 'in_progress' %} and all its check results{% endif %}?')">Remove</button>
                     </form>
                     {% endif %}
@@ -216,6 +220,7 @@
 {% if session.status == 'draft' and assets %}
 <div class="mt-6">
     <form method="POST" action="{{ url_for('audits.start_session', session_id=session.id) }}" hx-boost="false">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit" class="inline-flex items-center rounded-md bg-accent-red hover:bg-accent-red-hover px-4 py-2 text-sm font-semibold text-white shadow-sm"
                 onclick="return confirm('Start this audit? Check results will be generated for all assets.')">
             <svg class="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">

@@ -16,6 +16,7 @@
 
     <div class="bg-cyber-card border border-cyber-border rounded-lg p-6">
         <form method="POST" class="space-y-6" hx-boost="false">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div>
                 <label for="name" class="block text-sm font-medium text-text-primary">Asset Name</label>
                 <input type="text" name="name" id="name" required autofocus placeholder="e.g., PROD-WEB-01"

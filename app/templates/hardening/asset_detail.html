@@ -43,6 +43,7 @@
         <span class="text-sm font-medium text-text-primary"><span id="selected-count">0</span> checks selected</span>
     </div>
     <form method="POST" action="{{ url_for('hardening.bulk_update_checks', task_id=task.id, asset_id=asset.id) }}" hx-boost="false" id="bulk-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="flex items-center space-x-3">
             <select name="bulk_status" class="text-sm rounded border-cyber-border bg-cyber-card-hover text-text-primary py-1.5 pr-8 focus:ring-accent-cyan focus:border-accent-cyan">
                 <option value="done">Done</option>

@@ -17,6 +17,7 @@
           hx-target="#result-{{ result.id }}"
           hx-swap="outerHTML"
           class="flex items-center space-x-1 justify-center">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <select name="status" onchange="this.form.requestSubmit()"
                 class="text-xs rounded border-cyber-border bg-cyber-card-hover text-text-primary py-1 pr-6 focus:ring-accent-cyan focus:border-accent-cyan
                 {% if result.status == 'pass' %}bg-green-900/30 text-green-400

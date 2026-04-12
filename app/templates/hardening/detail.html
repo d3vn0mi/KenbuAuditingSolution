@@ -45,6 +45,7 @@
         {% endif %}
         {% if task.status == 'draft' %}
         <form method="POST" action="{{ url_for('hardening.delete_task', task_id=task.id) }}" hx-boost="false">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="inline-flex items-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500"
                     onclick="return confirm('Delete this hardening task?')">
                 Delete
@@ -53,6 +54,7 @@
         {% endif %}
         {% if task.status == 'in_progress' %}
         <form method="POST" action="{{ url_for('hardening.complete_task', task_id=task.id) }}" hx-boost="false">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="inline-flex items-center rounded-md bg-accent-red hover:bg-accent-red-hover px-3 py-2 text-sm font-semibold text-white shadow-sm"
                     onclick="return confirm('Mark this hardening task as complete?')">
                 Complete Task
@@ -163,6 +165,7 @@
                     {% if task.status in ['draft', 'in_progress'] %}
                     <a href="{{ url_for('hardening.asset_benchmarks', task_id=task.id, asset_id=asset.id) }}" class="text-accent-cyan hover:text-accent-cyan-dim">Benchmarks</a>
                     <form method="POST" action="{{ url_for('hardening.delete_asset', task_id=task.id, asset_id=asset.id) }}" class="inline" hx-boost="false">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="text-red-400 hover:text-red-300" onclick="return confirm('Remove this asset{% if task.status == 'in_progress' %} and all its check results{% endif %}?')">Remove</button>
                     </form>
                     {% endif %}
@@ -176,6 +179,7 @@
 {% if task.status == 'draft' and assets %}
 <div class="mt-6">
     <form method="POST" action="{{ url_for('hardening.start_task', task_id=task.id) }}" hx-boost="false">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit" class="inline-flex items-center rounded-md bg-accent-red hover:bg-accent-red-hover px-4 py-2 text-sm font-semibold text-white shadow-sm"
                 onclick="return confirm('Start this hardening task? Check results will be generated for all assets.')">
             <svg class="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">

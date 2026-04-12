@@ -54,12 +54,14 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm space-x-2">
                             <form method="POST" action="{{ url_for('admin.approve_user', user_id=user.id) }}" class="inline" hx-boost="false">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
                                     Approve
                                 </button>
                             </form>
                             <form method="POST" action="{{ url_for('admin.reject_user', user_id=user.id) }}" class="inline" hx-boost="false"
                                   onsubmit="return confirm('Reject and delete this user?')">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="inline-flex items-center px-3 py-1.5 border border-cyber-border text-xs font-medium rounded-md text-red-400 bg-cyber-card hover:bg-red-900/20">
                                     Reject
                                 </button>
@@ -125,6 +127,7 @@
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm space-x-2">
                             {% if user.id != current_user.id %}
                             <form method="POST" action="{{ url_for('admin.set_role', user_id=user.id) }}" class="inline-flex items-center gap-2" hx-boost="false">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <select name="role" class="rounded-md bg-cyber-card border border-cyber-border py-1 pl-2 pr-6 text-xs text-text-primary focus:ring-1 focus:ring-accent-cyan focus:border-accent-cyan">
                                     <option value="user" {% if user.role == 'user' %}selected{% endif %}>user</option>
                                     <option value="security_engineer" {% if user.role == 'security_engineer' %}selected{% endif %}>security engineer</option>
@@ -137,6 +140,7 @@
                             </form>
                             <form method="POST" action="{{ url_for('admin.revoke_user', user_id=user.id) }}" class="inline" hx-boost="false"
                                   onsubmit="return confirm('Revoke access for this user?')">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="inline-flex items-center px-3 py-1.5 border border-cyber-border text-xs font-medium rounded-md text-red-400 bg-cyber-card hover:bg-red-900/20">
                                     Revoke
                                 </button>

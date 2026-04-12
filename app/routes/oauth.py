@@ -113,12 +113,11 @@ def github_callback():
         # Check if a local user has the same username
         existing = User.query.filter_by(username=github_username).first()
         if existing:
-            # Link GitHub to existing account
-            existing.github_id = github_id
-            existing.avatar_url = avatar_url
-            existing.auth_provider = 'github'
-            db.session.commit()
-            user = existing
+            # Do NOT auto-link: a matching username does not prove ownership.
+            # The user must link their GitHub account from account settings.
+            flash('A local account with that username already exists. '
+                  'Please log in with your password to link your GitHub account.', 'warning')
+            return redirect(url_for('auth.login'))
         else:
             # Create new user (pending approval)
             user = User(

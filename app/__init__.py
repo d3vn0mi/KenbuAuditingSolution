@@ -1,7 +1,7 @@
 import os
 from flask import Flask
 from .config import config
-from .extensions import db, migrate, login_manager
+from .extensions import db, migrate, login_manager, csrf, limiter
 
 
 def create_app(config_name='development'):
@@ -15,6 +15,8 @@ def create_app(config_name='development'):
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
+    csrf.init_app(app)
+    limiter.init_app(app)
 
     # Import models so they are registered with SQLAlchemy
     from . import models  # noqa: F401

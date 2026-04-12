@@ -1,12 +1,23 @@
+from urllib.parse import urlparse
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from flask_login import login_user, logout_user, login_required, current_user
-from ..extensions import db
+from ..extensions import db, limiter
 from ..models.user import User
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 
+def _is_safe_redirect_url(target):
+    """Validate that redirect target is a safe, relative URL."""
+    if not target:
+        return False
+    parsed = urlparse(target)
+    # Only allow relative URLs (no scheme, no netloc)
+    return not parsed.scheme and not parsed.netloc
+
+
 @auth_bp.route('/login', methods=['GET', 'POST'])
+@limiter.limit("10/minute", methods=["POST"])
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('main.dashboard'))
@@ -30,6 +41,8 @@ def login():
 
             login_user(user, remember=request.form.get('remember'))
             next_page = request.args.get('next')
+            if not _is_safe_redirect_url(next_page):
+                next_page = None
             return redirect(next_page or url_for('main.dashboard'))
         flash('Invalid username or password.', 'error')
 
@@ -54,6 +67,8 @@ def mfa_verify():
             next_page = session.pop('mfa_next', None)
             session.pop('mfa_user_id', None)
             login_user(user, remember=remember)
+            if not _is_safe_redirect_url(next_page):
+                next_page = None
             return redirect(next_page or url_for('main.dashboard'))
         flash('Invalid verification code. Please try again.', 'error')
 
@@ -95,7 +110,7 @@ def register():
     return render_template('auth/register.html')
 
 
-@auth_bp.route('/logout')
+@auth_bp.route('/logout', methods=['POST'])
 @login_required
 def logout():
     logout_user()

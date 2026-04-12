@@ -28,3 +28,4 @@ def admin_required(f):
 
 auditor_required = role_required('audits')
 hardening_required = role_required('hardening')
+pentest_required = role_required('pentests')

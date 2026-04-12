@@ -21,6 +21,7 @@
 
         <div class="bg-cyber-card border border-cyber-border rounded-lg p-8 card-glow transition-all">
             <form method="POST" class="space-y-6" hx-boost="false">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div>
                     <label for="username" class="block text-sm font-medium text-text-secondary">Username</label>
                     <input type="text" name="username" id="username" required autofocus

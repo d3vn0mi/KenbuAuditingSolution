@@ -49,6 +49,7 @@
           hx-post="{{ url_for('audits.bulk_update_results', session_id=session.id, asset_id=asset.id) }}"
           hx-target="#checklist-body"
           hx-swap="innerHTML">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="flex items-center space-x-3">
             <select name="bulk_status" class="text-sm rounded border-cyber-border bg-cyber-card-hover text-text-primary py-1.5 pr-8 focus:ring-accent-cyan focus:border-accent-cyan">
                 <option value="pass">Pass</option>
