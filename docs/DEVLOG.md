@@ -95,3 +95,17 @@ Running log of significant decisions. ADRs in `docs/adr/`.
 - Test suite: **111 passed**. Existing CIS functionality unaffected.
 - **Phase 2 done.** Remaining: Phase 3 (Excel + PDF evidence/readiness pack),
   Phase 4 (NIS2 incident workflow, CSA2 supplier/SBOM, RBAC + activity log).
+
+## 2026-06-17 — Phase 3 complete (evidence/readiness pack export)
+
+- `app/utils/pack.py` `build_context()` is the single source for both exporters
+  (scorecard, domain readiness, coverage, control register, evidence index w/
+  integrity hashes, remediation plan, regulation-version + date stamp).
+- Excel: `export_readiness_to_excel` (5 sheets) reusing the xlsxwriter palette.
+- PDF: WeasyPrint renders `app/templates/pack/readiness_pack.html`. Confirmed
+  WeasyPrint works in this env (pango/cairo/harfbuzz present) — emits real PDFs.
+- Routes `/readiness/<id>/export.xlsx` + `export.pdf` + dashboard buttons.
+- weasyprint==63.1 dep; Dockerfile + CI install native libs.
+- No new migration. Test suite: **117 passed**.
+- **Phase 3 done.** Remaining: Phase 4 (NIS2 incident workflow, CSA2
+  supplier/SBOM, RBAC + activity log + tenant hardening).
