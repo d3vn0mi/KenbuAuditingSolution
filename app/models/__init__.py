@@ -9,6 +9,7 @@ from .regulation import (
 from .readiness import Organization, ReadinessAssessment, ControlStatus
 from .evidence import Evidence, EvidenceVersion
 from .finding import Finding
+from .incident import Incident
 from .audit import AuditSession, AuditAsset, AuditAssetBenchmark, AuditResult
 from .hardening import HardeningTask, HardeningAsset, HardeningAssetBenchmark, HardeningCheckResult
 from .pentest import (PentestAssessment, PentestPhase, PentestChecklistItem,
@@ -32,6 +33,7 @@ __all__ = [
     'Evidence',
     'EvidenceVersion',
     'Finding',
+    'Incident',
     'AuditSession',
     'AuditAsset',
     'AuditAssetBenchmark',
