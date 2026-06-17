@@ -37,6 +37,17 @@ def _statuses(assessment):
     return assessment.control_statuses.all()
 
 
+def open_finding_severities(assessment):
+    """Map control_id -> [severities] of OPEN findings linked to controls in this
+    assessment. Feeds finding impact into the scoring functions."""
+    result = {}
+    for cs in _statuses(assessment):
+        sevs = [f.severity for f in cs.control.findings if f.status == 'open']
+        if sevs:
+            result[cs.control_id] = sevs
+    return result
+
+
 def _score_for(status):
     return STATUS_SCORE.get(status)
 

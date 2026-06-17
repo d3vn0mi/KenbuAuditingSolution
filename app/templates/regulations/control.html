@@ -74,6 +74,31 @@
             {% endfor %}
         </ul>
         {% endif %}
+
+        {% if control.evidence %}
+        <h3 class="text-xs font-semibold uppercase tracking-wider text-text-muted mt-5 mb-2">Linked evidence</h3>
+        <ul class="space-y-1">
+            {% for e in control.evidence %}
+            <li class="text-sm"><a href="{{ url_for('evidence.evidence_detail', evidence_id=e.id) }}" class="text-accent-cyan hover:text-accent-cyan-dim">{{ e.title }}</a>{% if e.is_expired %} <span class="text-accent-red text-xs">expired</span>{% endif %}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
     </div>
 </div>
+
+{% if control.findings %}
+<div class="bg-cyber-card border border-cyber-border rounded-lg p-5 mt-6">
+    <h2 class="text-sm font-semibold uppercase tracking-wider text-text-muted mb-3">Findings (offensive-led)</h2>
+    <ul class="space-y-1.5">
+        {% for f in control.findings %}
+        <li class="text-sm flex items-baseline gap-2">
+            <span class="text-xs {% if f.is_open %}text-accent-red{% else %}text-text-muted{% endif %}">{{ f.severity }}/{{ f.status }}</span>
+            <a href="{{ url_for('findings.finding_detail', finding_id=f.id) }}" class="text-accent-cyan hover:text-accent-cyan-dim">{{ f.title }}</a>
+            <span class="text-text-muted text-xs">({{ f.source }})</span>
+        </li>
+        {% endfor %}
+    </ul>
+    <p class="mt-2 text-xs text-text-muted">Open high/critical findings cap this control's readiness in any assessment.</p>
+</div>
+{% endif %}
 {% endblock %}

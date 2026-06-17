@@ -23,11 +23,13 @@ def _controls_for_regulation(reg):
 
 
 def _summary(a):
+    sevs = scoring.open_finding_severities(a)  # finding impact on readiness
     return {
-        'overall': scoring.assessment_score(a),
-        'domains': scoring.domain_scores(a),
-        'coverage': scoring.obligation_coverage(a, a.regulation) if a.regulation else None,
-        'roadmap': scoring.remediation_roadmap(a),
+        'overall': scoring.assessment_score(a, finding_severities=sevs),
+        'domains': scoring.domain_scores(a, finding_severities=sevs),
+        'coverage': (scoring.obligation_coverage(a, a.regulation, finding_severities=sevs)
+                     if a.regulation else None),
+        'roadmap': scoring.remediation_roadmap(a, finding_severities=sevs),
     }
 
 
@@ -36,7 +38,8 @@ def _summary(a):
 def list_assessments():
     assessments = ReadinessAssessment.query.order_by(
         ReadinessAssessment.created_at.desc()).all()
-    rows = [{'a': a, 'score': scoring.assessment_score(a)} for a in assessments]
+    rows = [{'a': a, 'score': scoring.assessment_score(
+        a, finding_severities=scoring.open_finding_severities(a))} for a in assessments]
     return render_template('readiness/list.html', rows=rows)
 
 
