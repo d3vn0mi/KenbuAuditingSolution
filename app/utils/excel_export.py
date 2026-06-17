@@ -210,7 +210,7 @@ def _write_audit_cover_sheet(workbook, formats, session):
     fields = [
         ('Title:', session.title),
         ('Description:', session.description or ''),
-        ('Standard:', session.standard.name if session.standard else 'All Checks'),
+        ('Regulation:', session.regulation.name if session.regulation else 'All Checks'),
         ('', ''),
         ('Auditor:', session.user.display_name or session.user.username),
         ('Created:', session.created_at.strftime('%Y-%m-%d %H:%M UTC') if session.created_at else ''),

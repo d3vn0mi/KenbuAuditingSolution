@@ -3,7 +3,7 @@ import yaml
 from datetime import date
 from ..extensions import db
 from ..models import User, Platform, Benchmark, BenchmarkSection, Check
-from ..models.standard import Standard, StandardCheck
+from ..models.regulation import Regulation, RegulationCheck
 
 
 def load_yaml(filepath):
@@ -251,54 +251,60 @@ def seed_platforms():
     db.session.commit()
 
 
-def seed_standards(data_dir):
-    """Seed compliance standards (GDPR, NIS2) from YAML files or defaults."""
+def seed_regulations(data_dir):
+    """Seed compliance regulations (GDPR, NIS2) from YAML files or defaults."""
     standards_dir = os.path.join(data_dir, 'standards')
 
     defaults = [
         {
             'name': 'GDPR',
+            'short_code': 'GDPR',
             'slug': 'gdpr',
             'description': 'General Data Protection Regulation (EU) 2016/679',
             'version': '2016/679',
+            'status': 'in_force',
+            'source_url': 'https://eur-lex.europa.eu/eli/reg/2016/679',
         },
         {
             'name': 'NIS2',
+            'short_code': 'NIS2',
             'slug': 'nis2',
             'description': 'Network and Information Security Directive (EU) 2022/2555',
             'version': '2022/2555',
+            'status': 'in_force',
+            'source_url': 'https://eur-lex.europa.eu/eli/dir/2022/2555',
         },
     ]
 
-    for std_data in defaults:
-        if not Standard.query.filter_by(slug=std_data['slug']).first():
-            standard = Standard(**std_data)
-            db.session.add(standard)
-            print(f'  Created standard: {std_data["name"]}')
+    for reg_data in defaults:
+        if not Regulation.query.filter_by(slug=reg_data['slug']).first():
+            regulation = Regulation(**reg_data)
+            db.session.add(regulation)
+            print(f'  Created regulation: {reg_data["name"]}')
 
     db.session.commit()
 
-    # Load standard-check mappings from YAML if available
+    # Load regulation-check mappings from YAML if available
     if os.path.exists(standards_dir):
         for filename in sorted(os.listdir(standards_dir)):
             if filename.endswith('.yaml') or filename.endswith('.yml'):
                 filepath = os.path.join(standards_dir, filename)
-                _seed_standard_checks(filepath)
+                _seed_regulation_checks(filepath)
 
 
-def _seed_standard_checks(filepath):
-    """Load standard-to-check mappings from a YAML file."""
+def _seed_regulation_checks(filepath):
+    """Load regulation-to-check mappings from a YAML file."""
     data = load_yaml(filepath)
     if not data:
         return
 
-    slug = data.get('standard_slug')
+    slug = data.get('regulation_slug') or data.get('standard_slug')
     if not slug:
         return
 
-    standard = Standard.query.filter_by(slug=slug).first()
-    if not standard:
-        print(f'  WARNING: Standard {slug} not found, skipping {os.path.basename(filepath)}')
+    regulation = Regulation.query.filter_by(slug=slug).first()
+    if not regulation:
+        print(f'  WARNING: Regulation {slug} not found, skipping {os.path.basename(filepath)}')
         return
 
     mappings = data.get('mappings', [])
@@ -313,22 +319,22 @@ def _seed_standard_checks(filepath):
             continue
 
         for check in checks:
-            existing = StandardCheck.query.filter_by(
-                standard_id=standard.id, check_id=check.id
+            existing = RegulationCheck.query.filter_by(
+                regulation_id=regulation.id, check_id=check.id
             ).first()
             if not existing:
-                sc = StandardCheck(
-                    standard_id=standard.id,
+                rc = RegulationCheck(
+                    regulation_id=regulation.id,
                     check_id=check.id,
                     article=mapping.get('article', ''),
                     requirement=mapping.get('requirement', ''),
                 )
-                db.session.add(sc)
+                db.session.add(rc)
                 added += 1
 
     db.session.commit()
     if added:
-        print(f'  Loaded {added} check mappings for {standard.name}')
+        print(f'  Loaded {added} check mappings for {regulation.name}')
 
 
 def seed_all(data_dir):
@@ -339,8 +345,8 @@ def seed_all(data_dir):
     print('Seeding users...')
     seed_users(data_dir)
 
-    print('Seeding standards...')
-    seed_standards(data_dir)
+    print('Seeding regulations...')
+    seed_regulations(data_dir)
 
     print('Seeding benchmarks...')
     benchmarks_dir = os.path.join(data_dir, 'benchmarks')
@@ -359,4 +365,4 @@ def seed_all(data_dir):
     print(f'  Sections: {BenchmarkSection.query.count()}')
     print(f'  Checks: {Check.query.count()}')
     print(f'  Users: {User.query.count()}')
-    print(f'  Standards: {Standard.query.count()}')
+    print(f'  Regulations: {Regulation.query.count()}')

@@ -2,7 +2,7 @@ from .user import User
 from .platform import Platform
 from .benchmark import Benchmark, BenchmarkSection
 from .check import Check
-from .standard import Standard, StandardCheck
+from .regulation import Regulation, RegulationCheck
 from .audit import AuditSession, AuditAsset, AuditAssetBenchmark, AuditResult
 from .hardening import HardeningTask, HardeningAsset, HardeningAssetBenchmark, HardeningCheckResult
 from .pentest import (PentestAssessment, PentestPhase, PentestChecklistItem,
@@ -14,8 +14,8 @@ __all__ = [
     'Benchmark',
     'BenchmarkSection',
     'Check',
-    'Standard',
-    'StandardCheck',
+    'Regulation',
+    'RegulationCheck',
     'AuditSession',
     'AuditAsset',
     'AuditAssetBenchmark',

@@ -19,7 +19,7 @@ class Check(db.Model):
     references = db.Column(db.Text)
     sort_order = db.Column(db.Integer, default=0)
 
-    # Relationships defined on AuditResult and StandardCheck sides
+    # Relationships defined on AuditResult and RegulationCheck sides
 
     @property
     def level_display(self):

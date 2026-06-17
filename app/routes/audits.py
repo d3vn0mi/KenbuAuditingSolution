@@ -4,7 +4,7 @@ from flask_login import current_user
 from ..extensions import db
 from ..models import Benchmark, BenchmarkSection, Check
 from ..models.audit import AuditSession, AuditAsset, AuditAssetBenchmark, AuditResult
-from ..models.standard import Standard, StandardCheck
+from ..models.regulation import Regulation, RegulationCheck
 from ..utils.auth import auditor_required
 
 audits_bp = Blueprint('audits', __name__, url_prefix='/audits')
@@ -25,19 +25,19 @@ def new_audit():
     if request.method == 'POST':
         title = request.form.get('title', '').strip()
         description = request.form.get('description', '').strip()
-        standard_id = request.form.get('standard_id', type=int)
+        regulation_id = request.form.get('regulation_id', type=int)
         notes = request.form.get('notes', '').strip()
 
         if not title:
             flash('Title is required.', 'error')
-            standards = Standard.query.order_by(Standard.name).all()
-            return render_template('audits/new.html', standards=standards)
+            regulations = Regulation.query.order_by(Regulation.name).all()
+            return render_template('audits/new.html', regulations=regulations)
 
         session = AuditSession(
             user_id=current_user.id,
             title=title,
             description=description or None,
-            standard_id=standard_id if standard_id else None,
+            regulation_id=regulation_id if regulation_id else None,
             notes=notes or None,
         )
         db.session.add(session)
@@ -45,8 +45,8 @@ def new_audit():
         flash('Audit session created.', 'success')
         return redirect(url_for('audits.session_detail', session_id=session.id))
 
-    standards = Standard.query.order_by(Standard.name).all()
-    return render_template('audits/new.html', standards=standards)
+    regulations = Regulation.query.order_by(Regulation.name).all()
+    return render_template('audits/new.html', regulations=regulations)
 
 
 @audits_bp.route('/<int:session_id>')
@@ -57,11 +57,10 @@ def session_detail(session_id):
         abort(403)
 
     assets = session.assets.all()
-    standards = []
+    regulations = []
     if session.status == 'draft':
-        from ..models.standard import Standard
-        standards = Standard.query.order_by(Standard.name).all()
-    return render_template('audits/detail.html', session=session, assets=assets, standards=standards)
+        regulations = Regulation.query.order_by(Regulation.name).all()
+    return render_template('audits/detail.html', session=session, assets=assets, regulations=regulations)
 
 
 @audits_bp.route('/<int:session_id>/edit', methods=['POST'])
@@ -76,14 +75,14 @@ def edit_session(session_id):
 
     title = request.form.get('title', '').strip()
     description = request.form.get('description', '').strip()
-    standard_id = request.form.get('standard_id', type=int)
+    regulation_id = request.form.get('regulation_id', type=int)
 
     if not title:
         flash('Title is required.', 'error')
     else:
         session.title = title
         session.description = description or None
-        session.standard_id = standard_id if standard_id else None
+        session.regulation_id = regulation_id if regulation_id else None
         db.session.commit()
         flash('Audit session updated.', 'success')
 
@@ -189,7 +188,7 @@ def asset_benchmarks(session_id, asset_id):
         # If session is in_progress, regenerate results for this asset
         if session.status == 'in_progress':
             AuditResult.query.filter_by(asset_id=asset.id).delete()
-            _generate_audit_results_for_asset(asset, session.standard_id)
+            _generate_audit_results_for_asset(asset, session.regulation_id)
 
         db.session.commit()
         flash(f'Benchmarks updated for "{asset.name}".', 'success')
@@ -202,9 +201,9 @@ def asset_benchmarks(session_id, asset_id):
                            benchmarks=benchmarks, assigned_ids=assigned_ids)
 
 
-def _generate_audit_results_for_asset(asset, standard_id=None):
+def _generate_audit_results_for_asset(asset, regulation_id=None):
     """Generate AuditResult records for all checks in the asset's benchmarks,
-    optionally filtered by a compliance standard."""
+    optionally filtered by a compliance regulation."""
     benchmark_ids = [ab.benchmark_id for ab in asset.benchmarks]
     if not benchmark_ids:
         return 0
@@ -213,12 +212,12 @@ def _generate_audit_results_for_asset(asset, standard_id=None):
         BenchmarkSection.benchmark_id.in_(benchmark_ids)
     )
 
-    # If a standard is selected, filter to only standard-mapped checks
-    if standard_id:
-        standard_check_ids = db.session.query(StandardCheck.check_id).filter(
-            StandardCheck.standard_id == standard_id
+    # If a regulation is selected, filter to only regulation-mapped checks
+    if regulation_id:
+        regulation_check_ids = db.session.query(RegulationCheck.check_id).filter(
+            RegulationCheck.regulation_id == regulation_id
         ).subquery()
-        checks_query = checks_query.filter(Check.id.in_(standard_check_ids))
+        checks_query = checks_query.filter(Check.id.in_(regulation_check_ids))
 
     checks = checks_query.all()
     for check in checks:
@@ -251,16 +250,16 @@ def start_session(session_id):
     # Generate audit results for all assets
     total_checks = 0
     for asset in assets:
-        total_checks += _generate_audit_results_for_asset(asset, session.standard_id)
+        total_checks += _generate_audit_results_for_asset(asset, session.regulation_id)
 
     session.status = 'in_progress'
     session.started_at = datetime.now(timezone.utc)
     db.session.commit()
 
-    standard_note = ''
-    if session.standard_id:
-        standard_note = f' (filtered by {session.standard.name})'
-    flash(f'Audit started with {total_checks} checks across {len(assets)} assets{standard_note}.', 'success')
+    regulation_note = ''
+    if session.regulation_id:
+        regulation_note = f' (filtered by {session.regulation.name})'
+    flash(f'Audit started with {total_checks} checks across {len(assets)} assets{regulation_note}.', 'success')
     return redirect(url_for('audits.session_detail', session_id=session.id))
 
 
