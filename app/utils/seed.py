@@ -8,6 +8,7 @@ from ..models.regulation import (
     Regulation, RegulationCheck, Obligation, Control,
     EvidenceRequirement, ControlReference,
 )
+from ..models.readiness import Organization
 
 
 def load_yaml(filepath):
@@ -511,8 +512,19 @@ def seed_regulatory_layer(data_dir):
                 seed_mappings_file(os.path.join(mappings_dir, filename))
 
 
+def seed_organization():
+    """Ensure a default organization exists (single-tenant MVP anchor)."""
+    if not Organization.query.filter_by(slug='default').first():
+        db.session.add(Organization(name='Default Organization', slug='default'))
+        db.session.commit()
+        print('  Created default organization')
+
+
 def seed_all(data_dir):
     """Run all seed operations."""
+    print('Seeding organization...')
+    seed_organization()
+
     print('Seeding platforms...')
     seed_platforms()
 

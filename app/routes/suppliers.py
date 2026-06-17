@@ -3,14 +3,14 @@ from flask import (Blueprint, render_template, request, redirect, url_for,
 from ..extensions import db
 from ..models import Supplier, SBOM, Control
 from ..models.supplier import SUPPLIER_CRITICALITY, SUPPLIER_STATUSES
-from ..utils.auth import compliance_required
+from ..utils.auth import compliance_required, compliance_view_required
 from ..utils import sbom as sbom_util
 
 suppliers_bp = Blueprint('suppliers', __name__, url_prefix='/suppliers')
 
 
 @suppliers_bp.route('/')
-@compliance_required
+@compliance_view_required
 def list_suppliers():
     items = Supplier.query.order_by(Supplier.name).all()
     return render_template('suppliers/list.html', items=items)
@@ -46,7 +46,7 @@ def new_supplier():
 
 
 @suppliers_bp.route('/<int:supplier_id>')
-@compliance_required
+@compliance_view_required
 def supplier_detail(supplier_id):
     supplier = db.get_or_404(Supplier, supplier_id)
     return render_template('suppliers/detail.html', supplier=supplier,
@@ -86,7 +86,7 @@ def upload_sbom(supplier_id):
 
 
 @suppliers_bp.route('/<int:supplier_id>/sbom/<int:sbom_id>')
-@compliance_required
+@compliance_view_required
 def sbom_detail(supplier_id, sbom_id):
     supplier = db.get_or_404(Supplier, supplier_id)
     sbom = db.get_or_404(SBOM, sbom_id)

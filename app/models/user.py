@@ -5,12 +5,15 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from ..extensions import db, login_manager
 
 
-VALID_ROLES = ['admin', 'auditor', 'security_engineer', 'user']
+VALID_ROLES = ['admin', 'lead_auditor', 'auditor', 'security_engineer', 'viewer', 'user']
 
+# 'compliance' = write access to the compliance layer; 'compliance_view' = read-only.
 ROLE_PERMISSIONS = {
-    'admin': {'audits', 'hardening', 'pentests', 'compliance', 'admin'},
-    'auditor': {'audits', 'hardening', 'pentests', 'compliance'},
+    'admin': {'audits', 'hardening', 'pentests', 'compliance', 'compliance_view', 'admin'},
+    'lead_auditor': {'audits', 'hardening', 'pentests', 'compliance', 'compliance_view'},
+    'auditor': {'audits', 'hardening', 'pentests', 'compliance', 'compliance_view'},
     'security_engineer': {'hardening'},
+    'viewer': {'compliance_view'},
     'user': set(),
 }
 
@@ -62,6 +65,10 @@ class User(UserMixin, db.Model):
     @property
     def can_compliance(self):
         return self.can_access('compliance')
+
+    @property
+    def can_compliance_view(self):
+        return self.can_access('compliance_view')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

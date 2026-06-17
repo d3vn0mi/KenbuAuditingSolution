@@ -6,7 +6,7 @@ from flask_login import current_user
 from ..extensions import db
 from ..models import Control, Evidence, EvidenceVersion
 from ..models.evidence import EVIDENCE_TYPES
-from ..utils.auth import compliance_required
+from ..utils.auth import compliance_required, compliance_view_required
 from ..utils import evidence_store, crypto
 
 evidence_bp = Blueprint('evidence', __name__, url_prefix='/evidence')
@@ -45,7 +45,7 @@ def _add_version(evidence, file_storage, note=None):
 
 
 @evidence_bp.route('/')
-@compliance_required
+@compliance_view_required
 def list_evidence():
     items = Evidence.query.order_by(Evidence.created_at.desc()).all()
     return render_template('evidence/list.html', items=items)
@@ -89,7 +89,7 @@ def new_evidence():
 
 
 @evidence_bp.route('/<int:evidence_id>')
-@compliance_required
+@compliance_view_required
 def evidence_detail(evidence_id):
     evidence = db.get_or_404(Evidence, evidence_id)
     if not _authorize(evidence):
@@ -114,7 +114,7 @@ def add_version(evidence_id):
 
 
 @evidence_bp.route('/<int:evidence_id>/version/<int:version_id>/download')
-@compliance_required
+@compliance_view_required
 def download_version(evidence_id, version_id):
     evidence = db.get_or_404(Evidence, evidence_id)
     if not _authorize(evidence):

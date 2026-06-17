@@ -4,7 +4,7 @@ from flask import (Blueprint, render_template, request, redirect, url_for,
 from ..extensions import db
 from ..models import Incident, Regulation
 from ..models.incident import INCIDENT_SEVERITIES, INCIDENT_STATUSES
-from ..utils.auth import compliance_required
+from ..utils.auth import compliance_required, compliance_view_required
 from ..utils import incidents as inc_service
 
 incidents_bp = Blueprint('incidents', __name__, url_prefix='/incidents')
@@ -29,7 +29,7 @@ def _parse_dt(value):
 
 
 @incidents_bp.route('/')
-@compliance_required
+@compliance_view_required
 def list_incidents():
     items = Incident.query.order_by(Incident.detected_at.desc()).all()
     rows = [{'i': i, 'overdue': inc_service.overdue_stage_count(i)} for i in items]
@@ -65,7 +65,7 @@ def new_incident():
 
 
 @incidents_bp.route('/<int:incident_id>')
-@compliance_required
+@compliance_view_required
 def incident_detail(incident_id):
     incident = db.get_or_404(Incident, incident_id)
     clock = inc_service.incident_clock(incident)
@@ -99,7 +99,7 @@ def update_incident(incident_id):
 
 
 @incidents_bp.route('/<int:incident_id>/report/<stage>')
-@compliance_required
+@compliance_view_required
 def report(incident_id, stage):
     incident = db.get_or_404(Incident, incident_id)
     if stage not in _STAGE_FIELDS:

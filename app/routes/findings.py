@@ -8,14 +8,14 @@ from ..extensions import db
 from ..models import Control, Finding
 from ..models.finding import FINDING_SOURCES, FINDING_STATUSES
 from ..models.pentest import SEVERITY_LEVELS, PentestFinding
-from ..utils.auth import compliance_required
+from ..utils.auth import compliance_required, compliance_view_required
 from ..utils import findings as findings_service
 
 findings_bp = Blueprint('findings', __name__, url_prefix='/findings')
 
 
 @findings_bp.route('/')
-@compliance_required
+@compliance_view_required
 def list_findings():
     items = Finding.query.order_by(Finding.created_at.desc()).all()
     return render_template('findings/list.html', items=items,
@@ -54,7 +54,7 @@ def new_finding():
 
 
 @findings_bp.route('/<int:finding_id>')
-@compliance_required
+@compliance_view_required
 def finding_detail(finding_id):
     finding = db.get_or_404(Finding, finding_id)
     controls = Control.query.order_by(Control.code).all()

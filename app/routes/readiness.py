@@ -6,7 +6,7 @@ from flask_login import current_user
 from ..extensions import db
 from ..models import Regulation, Control, ReadinessAssessment, ControlStatus
 from ..models.readiness import CONTROL_STATUSES
-from ..utils.auth import compliance_required
+from ..utils.auth import compliance_required, compliance_view_required
 from ..utils import readiness as scoring
 from ..utils import pack as pack_util
 from ..utils.excel_export import export_readiness_to_excel
@@ -38,7 +38,7 @@ def _summary(a):
 
 
 @readiness_bp.route('/')
-@compliance_required
+@compliance_view_required
 def list_assessments():
     assessments = ReadinessAssessment.query.order_by(
         ReadinessAssessment.created_at.desc()).all()
@@ -79,7 +79,7 @@ def new_assessment():
 
 
 @readiness_bp.route('/<int:assessment_id>')
-@compliance_required
+@compliance_view_required
 def assessment_detail(assessment_id):
     a = db.get_or_404(ReadinessAssessment, assessment_id)
     statuses = a.control_statuses.join(Control).order_by(
@@ -94,7 +94,7 @@ def _slug(a):
 
 
 @readiness_bp.route('/<int:assessment_id>/export.xlsx')
-@compliance_required
+@compliance_view_required
 def export_excel(assessment_id):
     a = db.get_or_404(ReadinessAssessment, assessment_id)
     out = export_readiness_to_excel(a, generated_at=datetime.now(timezone.utc))
@@ -104,7 +104,7 @@ def export_excel(assessment_id):
 
 
 @readiness_bp.route('/<int:assessment_id>/export.pdf')
-@compliance_required
+@compliance_view_required
 def export_pdf(assessment_id):
     a = db.get_or_404(ReadinessAssessment, assessment_id)
     data = pack_util.render_pdf(a, generated_at=datetime.now(timezone.utc))

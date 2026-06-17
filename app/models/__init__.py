@@ -11,6 +11,7 @@ from .evidence import Evidence, EvidenceVersion
 from .finding import Finding
 from .incident import Incident
 from .supplier import Supplier, SBOM, SBOMComponent
+from .activity import ActivityLog
 from .audit import AuditSession, AuditAsset, AuditAssetBenchmark, AuditResult
 from .hardening import HardeningTask, HardeningAsset, HardeningAssetBenchmark, HardeningCheckResult
 from .pentest import (PentestAssessment, PentestPhase, PentestChecklistItem,
@@ -38,6 +39,7 @@ __all__ = [
     'Supplier',
     'SBOM',
     'SBOMComponent',
+    'ActivityLog',
     'AuditSession',
     'AuditAsset',
     'AuditAssetBenchmark',

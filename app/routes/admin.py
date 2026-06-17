@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, abort, r
 from flask_login import current_user
 from ..extensions import db
 from ..models.user import User, VALID_ROLES
+from ..models import ActivityLog
 from ..utils.auth import admin_required
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -13,6 +14,13 @@ def users():
     pending = User.query.filter_by(is_approved=False).order_by(User.created_at.desc()).all()
     approved = User.query.filter_by(is_approved=True).order_by(User.created_at.desc()).all()
     return render_template('admin/users.html', pending=pending, approved=approved)
+
+
+@admin_bp.route('/activity')
+@admin_required
+def activity():
+    entries = ActivityLog.query.order_by(ActivityLog.created_at.desc()).limit(200).all()
+    return render_template('admin/activity.html', entries=entries)
 
 
 @admin_bp.route('/users/<int:user_id>/approve', methods=['POST'])
