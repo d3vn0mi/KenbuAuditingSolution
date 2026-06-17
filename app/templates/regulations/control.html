@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}{{ control.code }} - Kenbu{% endblock %}
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('regulations.list_regulations') }}" class="text-xs text-text-muted hover:text-accent-cyan">&larr; Regulations</a>
+</div>
+
+<div class="bg-cyber-card border border-cyber-border rounded-lg p-6 mb-6">
+    <div class="flex flex-wrap items-baseline gap-3">
+        <span class="text-accent-cyan text-xl font-bold">{{ control.code }}</span>
+        <h1 class="text-xl font-semibold text-text-primary">{{ control.title }}</h1>
+        {% if control.domain %}
+        <span class="inline-flex items-center rounded-md bg-purple-900/20 text-accent-purple ring-1 ring-inset ring-purple-500/30 px-2 py-0.5 text-xs font-medium">{{ control.domain }}</span>
+        {% endif %}
+    </div>
+    {% if control.description %}<p class="mt-3 text-sm text-text-secondary max-w-3xl">{{ control.description }}</p>{% endif %}
+    {% if control.guidance %}<p class="mt-2 text-sm text-text-muted max-w-3xl">{{ control.guidance }}</p>{% endif %}
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Cross-mapping -->
+    <div class="bg-cyber-card border border-cyber-border rounded-lg p-5">
+        <h2 class="text-sm font-semibold uppercase tracking-wider text-text-muted mb-3">Satisfies (cross-framework)</h2>
+        {% if control.obligations %}
+        <ul class="space-y-2">
+            {% for o in control.obligations %}
+            <li class="text-sm">
+                <a href="{{ url_for('regulations.regulation_detail', slug=o.regulation.slug) }}" class="text-accent-purple font-semibold hover:text-accent-cyan">{{ o.regulation.short_code or o.regulation.name }}</a>
+                <span class="text-accent-cyan">{{ o.ref }}</span>
+                <span class="text-text-muted">— {{ o.title }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-text-muted text-sm">Not yet mapped to any obligation.</p>
+        {% endif %}
+
+        {% if control.references|list %}
+        <h3 class="text-xs font-semibold uppercase tracking-wider text-text-muted mt-5 mb-2">Standard references</h3>
+        <div class="flex flex-wrap gap-1.5">
+            {% for r in control.references %}
+            <span class="inline-flex items-center rounded-md bg-gray-800 text-gray-300 ring-1 ring-inset ring-gray-600/40 px-2 py-0.5 text-xs">{{ r.framework }}{% if r.ref_code %} {{ r.ref_code }}{% endif %}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Technical evidence -->
+    <div class="bg-cyber-card border border-cyber-border rounded-lg p-5">
+        <h2 class="text-sm font-semibold uppercase tracking-wider text-text-muted mb-3">Evidenced by technical checks</h2>
+        {% if control.checks %}
+        <ul class="space-y-1.5">
+            {% for c in control.checks %}
+            <li class="text-sm">
+                <a href="{{ url_for('checks.detail', check_id=c.id) }}" class="text-accent-cyan hover:text-accent-cyan-dim font-medium">{{ c.check_number }}</a>
+                <span class="text-text-secondary">{{ c.title }}</span>
+                <span class="text-text-muted text-xs">({{ c.section.benchmark.platform.name }})</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-text-muted text-sm">Process control — proven by evidence/findings, not an automated check.</p>
+        {% endif %}
+
+        {% if control.evidence_requirements|list %}
+        <h3 class="text-xs font-semibold uppercase tracking-wider text-text-muted mt-5 mb-2">Evidence requirements</h3>
+        <ul class="space-y-1">
+            {% for er in control.evidence_requirements %}
+            <li class="text-sm text-text-secondary">
+                {{ er.title }}
+                {% if er.type %}<span class="text-text-muted text-xs">[{{ er.type }}]</span>{% endif %}
+                {% if er.cadence_days %}<span class="text-text-muted text-xs">· review every {{ er.cadence_days }}d</span>{% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
