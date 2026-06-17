@@ -3,6 +3,7 @@ from datetime import date
 from flask import (Blueprint, render_template, request, redirect, url_for,
                    flash, abort, send_file)
 from flask_login import current_user
+from cryptography.fernet import InvalidToken
 from ..extensions import db
 from ..models import Control, Evidence, EvidenceVersion
 from ..models.evidence import EVIDENCE_TYPES
@@ -123,7 +124,12 @@ def download_version(evidence_id, version_id):
     if version.evidence_id != evidence.id:
         abort(404)
 
-    data = evidence_store.load_evidence_file(version.storage_name)  # raises if tampered
+    try:
+        data = evidence_store.load_evidence_file(version.storage_name)
+    except InvalidToken:
+        abort(409)  # tampered / undecryptable
+    except FileNotFoundError:
+        abort(404)
     # Integrity check before serving — proves the file is what was uploaded.
     if crypto.sha256_hex(data) != version.content_hash:
         abort(409)  # integrity mismatch

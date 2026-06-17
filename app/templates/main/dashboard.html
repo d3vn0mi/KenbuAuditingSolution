@@ -6,6 +6,38 @@
     <p class="mt-1 text-sm text-text-secondary">Welcome back, {{ current_user.display_name or current_user.username }}.</p>
 </div>
 
+{% if compliance %}
+<div class="mb-8">
+    <h2 class="text-sm font-semibold uppercase tracking-wider text-text-muted mb-3">Compliance</h2>
+    <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+        <a href="{{ url_for('regulations.list_regulations') }}" class="bg-cyber-card border border-cyber-border rounded-lg p-4 card-glow">
+            <dt class="text-xs text-text-muted">Regulations</dt>
+            <dd class="mt-1 text-2xl font-bold text-text-primary">{{ compliance.regulations }}</dd>
+        </a>
+        <a href="{{ url_for('regulations.list_regulations') }}" class="bg-cyber-card border border-cyber-border rounded-lg p-4 card-glow">
+            <dt class="text-xs text-text-muted">Controls</dt>
+            <dd class="mt-1 text-2xl font-bold text-text-primary">{{ compliance.controls }}</dd>
+        </a>
+        <a href="{{ url_for('readiness.list_assessments') }}" class="bg-cyber-card border border-cyber-border rounded-lg p-4 card-glow">
+            <dt class="text-xs text-text-muted">Assessments</dt>
+            <dd class="mt-1 text-2xl font-bold text-text-primary">{{ compliance.assessments }}</dd>
+        </a>
+        <a href="{{ url_for('findings.list_findings') }}" class="bg-cyber-card border border-cyber-border rounded-lg p-4 card-glow">
+            <dt class="text-xs text-text-muted">Open findings</dt>
+            <dd class="mt-1 text-2xl font-bold {% if compliance.open_findings %}text-accent-red{% else %}text-text-primary{% endif %}">{{ compliance.open_findings }}</dd>
+        </a>
+        <a href="{{ url_for('incidents.list_incidents') }}" class="bg-cyber-card border border-cyber-border rounded-lg p-4 card-glow">
+            <dt class="text-xs text-text-muted">Overdue incidents</dt>
+            <dd class="mt-1 text-2xl font-bold {% if compliance.overdue_incidents %}text-accent-red{% else %}text-text-primary{% endif %}">{{ compliance.overdue_incidents }}</dd>
+        </a>
+        <a href="{{ url_for('evidence.list_evidence') }}" class="bg-cyber-card border border-cyber-border rounded-lg p-4 card-glow">
+            <dt class="text-xs text-text-muted">Evidence to review</dt>
+            <dd class="mt-1 text-2xl font-bold {% if compliance.expiring_evidence %}text-accent-yellow{% else %}text-text-primary{% endif %}">{{ compliance.expiring_evidence }}</dd>
+        </a>
+    </div>
+</div>
+{% endif %}
+
 <!-- Stats Cards -->
 <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 mb-8">
     <div class="bg-cyber-card overflow-hidden border border-cyber-border rounded-lg">

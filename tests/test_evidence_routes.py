@@ -56,6 +56,21 @@ def test_second_version_increments(app, auth_client, db_session, tmp_path):
     assert ev.current_version.version == 2
 
 
+def test_tampered_download_returns_409(app, auth_client, db_session, tmp_path):
+    app.config['EVIDENCE_DIR'] = str(tmp_path)
+    auth_client.post('/evidence/new', data={
+        'title': 'Doc', 'file': (io.BytesIO(b'real'), 'd.txt'),
+    }, content_type='multipart/form-data', follow_redirects=True)
+    ev = Evidence.query.filter_by(title='Doc').one()
+    v = ev.current_version
+    # corrupt the encrypted file on disk
+    from app.utils import evidence_store
+    with open(evidence_store.storage_path(v.storage_name), 'wb') as f:
+        f.write(b'tampered')
+    resp = auth_client.get(f'/evidence/{ev.id}/version/{v.id}/download')
+    assert resp.status_code == 409
+
+
 def test_expired_evidence_flagged(auth_client, db_session):
     ev = Evidence(title='Old cert', valid_until=date.today() - timedelta(days=1))
     db_session.session.add(ev)

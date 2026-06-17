@@ -34,6 +34,13 @@ def test_parse_cyclonedx():
     assert openssl['license'] == 'Apache-2.0'
 
 
+def test_parse_non_dict_json_is_unknown():
+    # a bare JSON array must not raise (was an AttributeError -> 500)
+    parsed = sbom_util.parse_sbom('[1, 2, 3]')
+    assert parsed['format'] == 'unknown'
+    assert parsed['components'] == []
+
+
 def test_parse_spdx():
     parsed = sbom_util.parse_sbom(SPDX)
     assert parsed['format'] == 'spdx'

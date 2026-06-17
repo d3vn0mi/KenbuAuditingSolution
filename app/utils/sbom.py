@@ -50,6 +50,8 @@ def _spdx_components(doc):
 def parse_sbom(raw):
     """Parse a CycloneDX or SPDX JSON SBOM. Returns {format, components}."""
     doc = json.loads(_as_text(raw))
+    if not isinstance(doc, dict):
+        return {'format': 'unknown', 'components': []}
     if doc.get('bomFormat') == 'CycloneDX' or 'components' in doc:
         return {'format': 'cyclonedx', 'components': _cyclonedx_components(doc)}
     if 'spdxVersion' in doc or 'packages' in doc:

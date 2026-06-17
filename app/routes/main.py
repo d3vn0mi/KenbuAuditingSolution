@@ -1,11 +1,29 @@
 from flask import Blueprint, render_template
 from flask_login import login_required, current_user
 from ..extensions import db
-from ..models import Platform, Benchmark, Check, AuditSession
+from ..models import (Platform, Benchmark, Check, AuditSession,
+                      Regulation, Control, ReadinessAssessment, Finding,
+                      Incident, Evidence)
 from ..models.hardening import HardeningTask
 from ..models.pentest import PentestAssessment, PentestTeamMember
+from ..utils.incidents import overdue_stage_count
 
 main_bp = Blueprint('main', __name__)
+
+
+def _compliance_stats():
+    """Summary counts for the compliance layer (dashboard band)."""
+    incidents = Incident.query.all()
+    evidence_items = Evidence.query.all()
+    return {
+        'regulations': Regulation.query.count(),
+        'controls': Control.query.count(),
+        'assessments': ReadinessAssessment.query.count(),
+        'open_findings': Finding.query.filter_by(status='open').count(),
+        'overdue_incidents': sum(1 for i in incidents if overdue_stage_count(i) > 0),
+        'expiring_evidence': sum(1 for e in evidence_items
+                                 if e.is_expired or e.expiring_soon),
+    }
 
 
 @main_bp.route('/')
@@ -14,6 +32,8 @@ def dashboard():
     platforms = Platform.query.order_by(Platform.name).all()
     benchmarks = Benchmark.query.all()
     total_checks = Check.query.count()
+
+    compliance = _compliance_stats() if current_user.can_compliance_view else None
 
     recent_audits = []
     my_pentests = []
@@ -55,6 +75,7 @@ def dashboard():
                            platforms=platforms,
                            benchmarks=benchmarks,
                            total_checks=total_checks,
+                           compliance=compliance,
                            recent_audits=recent_audits,
                            my_hardening=my_hardening,
                            my_pentests=my_pentests,
