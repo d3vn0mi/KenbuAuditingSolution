@@ -150,3 +150,20 @@ Regulatory content is starter-level — flagged for RAVEN expert review.
   all work. entrypoint.sh fresh/legacy/normal DB paths reviewed — correct.
 - Final: **138 tests green**, validator green, single Alembic head, app =
   18 blueprints / 117 routes. Considered production-ready (content pending RAVEN).
+
+## 2026-06-17 — Deploy-blocking migration bug found & fixed
+
+- Advisor review surfaced (and a faithful repro confirmed) that m1's hardcoded
+  `RENAME CONSTRAINT fk_audit_sessions_standard` aborts `flask db upgrade` on a
+  DB built by `db.create_all()` (entrypoint 'fresh' path), where Postgres
+  auto-names the FK `audit_sessions_standard_id_fkey`. The earlier migration test
+  had hand-built the explicit name, masking it (circular check).
+- **Fix:** m1 now resolves the actual FK on `audit_sessions(standard_id)` via
+  `pg_constraint` (using `to_regclass()` to avoid `::regclass`/bindparam clash) and
+  renames whatever it finds; downgrade is symmetric on `regulation_id`.
+- **Faithful repro proof:** worktree at pre-compliance commit 5deba0e →
+  `create_all` + `db stamp head` on fresh Postgres → checkout main →
+  `flask db upgrade` reaches head `e1f2a3b4c5d6` cleanly; full downgrade to
+  `c3d4e5f6a7b8` restores `standard_id` + original FK; re-upgrade clean.
+- HTMX inline status edits post CSRF via the `X-CSRFToken` header (base.html) which
+  Flask-WTF accepts by default — same mechanism as existing audit inline updates.
