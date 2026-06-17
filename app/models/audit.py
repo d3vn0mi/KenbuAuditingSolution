@@ -9,7 +9,7 @@ class AuditSession(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=True)
-    standard_id = db.Column(db.Integer, db.ForeignKey('standards.id'), nullable=True)
+    regulation_id = db.Column(db.Integer, db.ForeignKey('regulations.id'), nullable=True)
     status = db.Column(db.String(20), default='draft')  # draft, in_progress, completed
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     started_at = db.Column(db.DateTime, nullable=True)
@@ -18,7 +18,7 @@ class AuditSession(db.Model):
 
     # Relationships
     user = db.relationship('User', lazy='joined', overlaps='audit_sessions,auditor')
-    standard = db.relationship('Standard', lazy='joined')
+    regulation = db.relationship('Regulation', lazy='joined')
     assets = db.relationship('AuditAsset', backref='session', lazy='dynamic',
                              cascade='all, delete-orphan')
 

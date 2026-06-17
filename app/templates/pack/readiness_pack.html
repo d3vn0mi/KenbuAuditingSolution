@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Readiness Pack — {{ assessment.title }}</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; @bottom-center { content: "Kenbu — confidential — page " counter(page) " of " counter(pages); font-size: 8pt; color: #777; } }
+  body { font-family: "Helvetica Neue", Arial, sans-serif; color: #1a1a2e; font-size: 10pt; }
+  h1 { font-size: 20pt; margin: 0 0 2mm; }
+  h2 { font-size: 13pt; margin: 8mm 0 2mm; border-bottom: 1.5pt solid #16213e; padding-bottom: 1mm; }
+  .muted { color: #555; font-size: 9pt; }
+  .stamp { margin: 4mm 0; padding: 3mm; background: #f4f6fb; border: 0.5pt solid #ccd; border-radius: 2mm; }
+  .stamp td { padding: 0.6mm 4mm 0.6mm 0; font-size: 9pt; }
+  .score { font-size: 30pt; font-weight: bold; }
+  table.data { width: 100%; border-collapse: collapse; margin-top: 2mm; }
+  table.data th { background: #16213e; color: #fff; text-align: left; padding: 1.5mm 2mm; font-size: 8.5pt; }
+  table.data td { border-bottom: 0.4pt solid #dde; padding: 1.5mm 2mm; font-size: 8.5pt; vertical-align: top; }
+  .bar { height: 6pt; background: #e3e7ef; border-radius: 3pt; overflow: hidden; }
+  .bar > span { display: block; height: 6pt; }
+  .ok { background: #28a745; } .mid { background: #eab308; } .bad { background: #dc3545; }
+  .hash { font-family: "Courier New", monospace; font-size: 7pt; word-break: break-all; }
+  .pill { padding: 0.3mm 1.5mm; border-radius: 2mm; font-size: 7.5pt; }
+  .warn { color: #b45309; font-size: 8.5pt; }
+</style>
+</head>
+<body>
+{% macro cls(score) %}{% if score >= 0.8 %}ok{% elif score >= 0.5 %}mid{% else %}bad{% endif %}{% endmacro %}
+
+<h1>Compliance Readiness Pack</h1>
+<div class="muted">{{ assessment.title }}</div>
+
+<div class="stamp">
+  <table>
+    <tr><td><strong>Regulation</strong></td><td>{{ regulation.name if regulation else 'Cross-regulation' }}</td>
+        <td><strong>Version</strong></td><td>{{ regulation.version if regulation and regulation.version else 'n/a' }}</td></tr>
+    <tr><td><strong>Reg. status</strong></td><td>{{ regulation.status if regulation else 'n/a' }}</td>
+        <td><strong>Generated</strong></td><td>{{ generated_at.strftime('%Y-%m-%d %H:%M UTC') }}</td></tr>
+    <tr><td><strong>Owner</strong></td><td>{{ (assessment.owner.display_name or assessment.owner.username) if assessment.owner else '—' }}</td>
+        <td><strong>Assessment</strong></td><td>{{ assessment.status }}</td></tr>
+  </table>
+  {% if regulation and regulation.status in ('in_trilogue', 'proposal') %}
+  <div class="warn">⚠ Provisional regulation text — obligations/article numbers may change before adoption.</div>
+  {% endif %}
+</div>
+
+<h2>Readiness scorecard</h2>
+<p class="score {{ cls(overall) }}" style="color:#16213e">{{ (overall * 100) | round | int }}%</p>
+{% if coverage %}<p class="muted">Obligation coverage: {{ coverage.covered }}/{{ coverage.total }} ({{ (coverage.ratio * 100) | round | int }}%) · Open gaps: {{ roadmap | length }}</p>{% else %}<p class="muted">Open gaps: {{ roadmap | length }}</p>{% endif %}
+<table class="data">
+  <tr><th style="width:40%">Domain</th><th>Readiness</th><th style="width:12%">Score</th></tr>
+  {% for domain, score in domains | dictsort %}
+  <tr>
+    <td>{{ domain }}</td>
+    <td><div class="bar"><span class="{{ cls(score) }}" style="width: {{ (score * 100) | round | int }}%"></span></div></td>
+    <td>{{ (score * 100) | round | int }}%</td>
+  </tr>
+  {% endfor %}
+</table>
+
+<h2>Control register</h2>
+<table class="data">
+  <tr><th>Control</th><th>Title</th><th>Domain</th><th>Status</th><th>Mapped obligations</th></tr>
+  {% for cs in statuses %}
+  <tr>
+    <td>{{ cs.control.code }}</td>
+    <td>{{ cs.control.title }}</td>
+    <td>{{ cs.control.domain or '' }}</td>
+    <td>{{ cs.status.replace('_', ' ') }}</td>
+    <td>{% for o in cs.control.obligations %}{{ o.regulation.short_code or o.regulation.slug }} {{ o.ref }}{% if not loop.last %}; {% endif %}{% endfor %}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+<h2>Evidence index</h2>
+<table class="data">
+  <tr><th>Control</th><th>Evidence</th><th>Valid until</th><th>Status</th><th>Integrity (sha256)</th></tr>
+  {% for entry in evidence_index %}
+    {% for ev in entry.evidence %}
+    <tr>
+      <td>{{ entry.control.code }}</td>
+      <td>{{ ev.title }}</td>
+      <td>{{ ev.valid_until or '—' }}</td>
+      <td>{{ 'expired' if ev.is_expired else 'current' }}</td>
+      <td class="hash">{{ ev.current_version.content_hash if ev.current_version else '—' }}</td>
+    </tr>
+    {% endfor %}
+  {% else %}
+  <tr><td colspan="5" class="muted">No evidence linked to in-scope controls.</td></tr>
+  {% endfor %}
+</table>
+
+<h2>Remediation plan</h2>
+<table class="data">
+  <tr><th>Priority</th><th>Control</th><th>Title</th><th>Status</th><th>Impact</th><th>Target</th></tr>
+  {% for item in roadmap %}
+  <tr>
+    <td>P{{ item.priority }}</td>
+    <td>{{ item.control.code }}</td>
+    <td>{{ item.control.title }}</td>
+    <td>{{ item.effective_status.replace('_', ' ') }}</td>
+    <td>{{ item.impact }}</td>
+    <td>{{ item.target_date or '—' }}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="6" class="muted">No open gaps — all in-scope controls implemented.</td></tr>
+  {% endfor %}
+</table>
+
+</body>
+</html>

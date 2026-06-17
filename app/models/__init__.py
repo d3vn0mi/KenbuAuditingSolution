@@ -2,7 +2,16 @@ from .user import User
 from .platform import Platform
 from .benchmark import Benchmark, BenchmarkSection
 from .check import Check
-from .standard import Standard, StandardCheck
+from .regulation import (
+    Regulation, RegulationCheck, Obligation, Control,
+    EvidenceRequirement, ControlReference,
+)
+from .readiness import Organization, ReadinessAssessment, ControlStatus
+from .evidence import Evidence, EvidenceVersion
+from .finding import Finding
+from .incident import Incident
+from .supplier import Supplier, SBOM, SBOMComponent
+from .activity import ActivityLog
 from .audit import AuditSession, AuditAsset, AuditAssetBenchmark, AuditResult
 from .hardening import HardeningTask, HardeningAsset, HardeningAssetBenchmark, HardeningCheckResult
 from .pentest import (PentestAssessment, PentestPhase, PentestChecklistItem,
@@ -14,8 +23,23 @@ __all__ = [
     'Benchmark',
     'BenchmarkSection',
     'Check',
-    'Standard',
-    'StandardCheck',
+    'Regulation',
+    'RegulationCheck',
+    'Obligation',
+    'Control',
+    'EvidenceRequirement',
+    'ControlReference',
+    'Organization',
+    'ReadinessAssessment',
+    'ControlStatus',
+    'Evidence',
+    'EvidenceVersion',
+    'Finding',
+    'Incident',
+    'Supplier',
+    'SBOM',
+    'SBOMComponent',
+    'ActivityLog',
     'AuditSession',
     'AuditAsset',
     'AuditAssetBenchmark',

@@ -1,0 +1,48 @@
+regulation:
+  short_code: NIS2
+  name: "NIS2 — Directive (EU) 2022/2555"
+  slug: nis2
+  version: "2022/2555"
+  status: in_force
+  effective_date: "2024-10-17"
+  source_url: "https://eur-lex.europa.eu/eli/dir/2022/2555"
+  description: >
+    Directive on measures for a high common level of cybersecurity across the
+    Union. Article 21 sets the risk-management measures; Article 23 the
+    incident-reporting obligations.
+
+obligations:
+  - ref: "Art.21"
+    title: "Cybersecurity risk-management measures"
+    text: "Essential and important entities shall take appropriate and proportionate technical, operational and organisational measures."
+    children:
+      - ref: "Art.21(2)(a)"
+        title: "Risk analysis and information system security policies"
+      - ref: "Art.21(2)(b)"
+        title: "Incident handling"
+      - ref: "Art.21(2)(c)"
+        title: "Business continuity, backup management and crisis management"
+      - ref: "Art.21(2)(d)"
+        title: "Supply chain security"
+        text: "Security related to the acquisition, development and maintenance, including supplier and service-provider relationships."
+      - ref: "Art.21(2)(e)"
+        title: "Security in network and information systems acquisition, development and maintenance, including vulnerability handling and disclosure"
+      - ref: "Art.21(2)(f)"
+        title: "Policies and procedures to assess the effectiveness of risk-management measures"
+      - ref: "Art.21(2)(g)"
+        title: "Basic cyber hygiene practices and cybersecurity training"
+      - ref: "Art.21(2)(h)"
+        title: "Policies and procedures regarding the use of cryptography and, where appropriate, encryption"
+      - ref: "Art.21(2)(i)"
+        title: "Human resources security, access control policies and asset management"
+      - ref: "Art.21(2)(j)"
+        title: "Multi-factor authentication, secured communications and secured emergency communications"
+  - ref: "Art.23"
+    title: "Reporting obligations"
+    children:
+      - ref: "Art.23(4)(a)"
+        title: "Early warning within 24 hours of becoming aware of a significant incident"
+      - ref: "Art.23(4)(b)"
+        title: "Incident notification within 72 hours"
+      - ref: "Art.23(4)(d)"
+        title: "Final report not later than one month after the incident notification"

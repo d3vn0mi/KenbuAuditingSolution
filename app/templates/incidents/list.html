@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Incidents - Kenbu{% endblock %}
+{% block content %}
+<div class="mb-6 flex items-center justify-between">
+    <div>
+        <h1 class="text-2xl font-bold text-text-primary">Incidents</h1>
+        <p class="mt-1 text-sm text-text-secondary">NIS2 Article 23 reporting clock: 24h early warning · 72h notification · 1-month final report.</p>
+    </div>
+    <a href="{{ url_for('incidents.new_incident') }}" class="rounded-md bg-accent-cyan/10 border border-accent-cyan/40 text-accent-cyan px-4 py-2 text-sm font-medium hover:bg-accent-cyan/20">+ Log incident</a>
+</div>
+
+<div class="bg-cyber-card border border-cyber-border rounded-lg overflow-x-auto">
+    <table class="min-w-full divide-y divide-cyber-border">
+        <thead class="bg-cyber-card-hover">
+            <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase">Title</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase">Severity</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase">Detected</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase">Status</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase">Overdue</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-cyber-border">
+            {% for row in rows %}
+            <tr class="hover:bg-cyber-card-hover">
+                <td class="px-6 py-4 whitespace-nowrap"><a href="{{ url_for('incidents.incident_detail', incident_id=row.i.id) }}" class="text-sm font-medium text-accent-cyan hover:text-accent-cyan-dim">{{ row.i.title }}</a></td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-text-muted">{{ row.i.severity }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-text-muted">{{ row.i.detected_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-text-muted">{{ row.i.status }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    {% if row.overdue %}<span class="inline-flex items-center rounded-full bg-red-900/20 text-red-400 ring-1 ring-inset ring-red-500/30 px-2.5 py-0.5 text-xs font-medium">{{ row.overdue }} overdue</span>
+                    {% else %}<span class="text-text-muted">—</span>{% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="px-6 py-6 text-sm text-text-muted">No incidents logged.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

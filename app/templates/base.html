@@ -101,6 +101,14 @@
                             <div class="flex items-baseline space-x-1">
                                 <a href="{{ url_for('main.dashboard') }}" class="{% if request.endpoint == 'main.dashboard' %}text-accent-cyan{% else %}text-text-muted hover:text-text-primary{% endif %} rounded-md px-3 py-2 text-xs font-medium uppercase tracking-wider">{% if request.endpoint == 'main.dashboard' %}<span class="text-accent-red mr-1">></span>{% endif %}Dashboard</a>
                                 <a href="{{ url_for('benchmarks.list_benchmarks') }}" class="{% if request.endpoint and request.endpoint.startswith('benchmarks.') %}text-accent-cyan{% else %}text-text-muted hover:text-text-primary{% endif %} rounded-md px-3 py-2 text-xs font-medium uppercase tracking-wider">{% if request.endpoint and request.endpoint.startswith('benchmarks.') %}<span class="text-accent-red mr-1">></span>{% endif %}Benchmarks</a>
+                                <a href="{{ url_for('regulations.list_regulations') }}" class="{% if request.endpoint and request.endpoint.startswith('regulations.') %}text-accent-cyan{% else %}text-text-muted hover:text-text-primary{% endif %} rounded-md px-3 py-2 text-xs font-medium uppercase tracking-wider">{% if request.endpoint and request.endpoint.startswith('regulations.') %}<span class="text-accent-red mr-1">></span>{% endif %}Regulations</a>
+                                {% if current_user.can_compliance_view %}
+                                <a href="{{ url_for('readiness.list_assessments') }}" class="{% if request.endpoint and request.endpoint.startswith('readiness.') %}text-accent-cyan{% else %}text-text-muted hover:text-text-primary{% endif %} rounded-md px-3 py-2 text-xs font-medium uppercase tracking-wider">{% if request.endpoint and request.endpoint.startswith('readiness.') %}<span class="text-accent-red mr-1">></span>{% endif %}Readiness</a>
+                                <a href="{{ url_for('evidence.list_evidence') }}" class="{% if request.endpoint and request.endpoint.startswith('evidence.') %}text-accent-cyan{% else %}text-text-muted hover:text-text-primary{% endif %} rounded-md px-3 py-2 text-xs font-medium uppercase tracking-wider">{% if request.endpoint and request.endpoint.startswith('evidence.') %}<span class="text-accent-red mr-1">></span>{% endif %}Evidence</a>
+                                <a href="{{ url_for('findings.list_findings') }}" class="{% if request.endpoint and request.endpoint.startswith('findings.') %}text-accent-cyan{% else %}text-text-muted hover:text-text-primary{% endif %} rounded-md px-3 py-2 text-xs font-medium uppercase tracking-wider">{% if request.endpoint and request.endpoint.startswith('findings.') %}<span class="text-accent-red mr-1">></span>{% endif %}Findings</a>
+                                <a href="{{ url_for('incidents.list_incidents') }}" class="{% if request.endpoint and request.endpoint.startswith('incidents.') %}text-accent-cyan{% else %}text-text-muted hover:text-text-primary{% endif %} rounded-md px-3 py-2 text-xs font-medium uppercase tracking-wider">{% if request.endpoint and request.endpoint.startswith('incidents.') %}<span class="text-accent-red mr-1">></span>{% endif %}Incidents</a>
+                                <a href="{{ url_for('suppliers.list_suppliers') }}" class="{% if request.endpoint and request.endpoint.startswith('suppliers.') %}text-accent-cyan{% else %}text-text-muted hover:text-text-primary{% endif %} rounded-md px-3 py-2 text-xs font-medium uppercase tracking-wider">{% if request.endpoint and request.endpoint.startswith('suppliers.') %}<span class="text-accent-red mr-1">></span>{% endif %}Suppliers</a>
+                                {% endif %}
                                 <a href="{{ url_for('platforms.list_platforms') }}" class="{% if request.endpoint and request.endpoint.startswith('platforms.') %}text-accent-cyan{% else %}text-text-muted hover:text-text-primary{% endif %} rounded-md px-3 py-2 text-xs font-medium uppercase tracking-wider">{% if request.endpoint and request.endpoint.startswith('platforms.') %}<span class="text-accent-red mr-1">></span>{% endif %}Platforms</a>
                                 <a href="{{ url_for('checks.search') }}" class="{% if request.endpoint and request.endpoint.startswith('checks.') %}text-accent-cyan{% else %}text-text-muted hover:text-text-primary{% endif %} rounded-md px-3 py-2 text-xs font-medium uppercase tracking-wider">{% if request.endpoint and request.endpoint.startswith('checks.') %}<span class="text-accent-red mr-1">></span>{% endif %}Checks</a>
                                 {% if current_user.can_audit %}
@@ -113,7 +121,8 @@
                                 <a href="{{ url_for('pentests.list_assessments') }}" class="{% if request.endpoint and request.endpoint.startswith('pentests.') %}text-accent-cyan{% else %}text-text-muted hover:text-text-primary{% endif %} rounded-md px-3 py-2 text-xs font-medium uppercase tracking-wider">{% if request.endpoint and request.endpoint.startswith('pentests.') %}<span class="text-accent-red mr-1">></span>{% endif %}Pentests</a>
                                 {% endif %}
                                 {% if current_user.is_admin %}
-                                <a href="{{ url_for('admin.users') }}" class="{% if request.endpoint and request.endpoint.startswith('admin.') %}text-accent-cyan{% else %}text-text-muted hover:text-text-primary{% endif %} rounded-md px-3 py-2 text-xs font-medium uppercase tracking-wider">{% if request.endpoint and request.endpoint.startswith('admin.') %}<span class="text-accent-red mr-1">></span>{% endif %}Admin</a>
+                                <a href="{{ url_for('admin.users') }}" class="{% if request.endpoint == 'admin.users' %}text-accent-cyan{% else %}text-text-muted hover:text-text-primary{% endif %} rounded-md px-3 py-2 text-xs font-medium uppercase tracking-wider">{% if request.endpoint == 'admin.users' %}<span class="text-accent-red mr-1">></span>{% endif %}Admin</a>
+                                <a href="{{ url_for('admin.activity') }}" class="{% if request.endpoint == 'admin.activity' %}text-accent-cyan{% else %}text-text-muted hover:text-text-primary{% endif %} rounded-md px-3 py-2 text-xs font-medium uppercase tracking-wider">{% if request.endpoint == 'admin.activity' %}<span class="text-accent-red mr-1">></span>{% endif %}Activity</a>
                                 {% endif %}
                             </div>
                         </div>
@@ -159,6 +168,14 @@
             <div class="md:hidden px-4 pb-3 space-y-1 border-t border-cyber-border">
                 <a href="{{ url_for('main.dashboard') }}" class="text-text-secondary hover:text-accent-cyan block rounded-md px-3 py-2 text-sm font-medium">Dashboard</a>
                 <a href="{{ url_for('benchmarks.list_benchmarks') }}" class="text-text-secondary hover:text-accent-cyan block rounded-md px-3 py-2 text-sm font-medium">Benchmarks</a>
+                <a href="{{ url_for('regulations.list_regulations') }}" class="text-text-secondary hover:text-accent-cyan block rounded-md px-3 py-2 text-sm font-medium">Regulations</a>
+                {% if current_user.can_compliance_view %}
+                <a href="{{ url_for('readiness.list_assessments') }}" class="text-text-secondary hover:text-accent-cyan block rounded-md px-3 py-2 text-sm font-medium">Readiness</a>
+                <a href="{{ url_for('evidence.list_evidence') }}" class="text-text-secondary hover:text-accent-cyan block rounded-md px-3 py-2 text-sm font-medium">Evidence</a>
+                <a href="{{ url_for('findings.list_findings') }}" class="text-text-secondary hover:text-accent-cyan block rounded-md px-3 py-2 text-sm font-medium">Findings</a>
+                <a href="{{ url_for('incidents.list_incidents') }}" class="text-text-secondary hover:text-accent-cyan block rounded-md px-3 py-2 text-sm font-medium">Incidents</a>
+                <a href="{{ url_for('suppliers.list_suppliers') }}" class="text-text-secondary hover:text-accent-cyan block rounded-md px-3 py-2 text-sm font-medium">Suppliers</a>
+                {% endif %}
                 <a href="{{ url_for('platforms.list_platforms') }}" class="text-text-secondary hover:text-accent-cyan block rounded-md px-3 py-2 text-sm font-medium">Platforms</a>
                 <a href="{{ url_for('checks.search') }}" class="text-text-secondary hover:text-accent-cyan block rounded-md px-3 py-2 text-sm font-medium">Checks Library</a>
                 {% if current_user.can_audit %}
@@ -172,6 +189,7 @@
                 {% endif %}
                 {% if current_user.is_admin %}
                 <a href="{{ url_for('admin.users') }}" class="text-text-secondary hover:text-accent-cyan block rounded-md px-3 py-2 text-sm font-medium">Admin</a>
+                <a href="{{ url_for('admin.activity') }}" class="text-text-secondary hover:text-accent-cyan block rounded-md px-3 py-2 text-sm font-medium">Activity</a>
                 {% endif %}
             </div>
         </nav>

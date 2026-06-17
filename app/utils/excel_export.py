@@ -210,7 +210,7 @@ def _write_audit_cover_sheet(workbook, formats, session):
     fields = [
         ('Title:', session.title),
         ('Description:', session.description or ''),
-        ('Standard:', session.standard.name if session.standard else 'All Checks'),
+        ('Regulation:', session.regulation.name if session.regulation else 'All Checks'),
         ('', ''),
         ('Auditor:', session.user.display_name or session.user.username),
         ('Created:', session.created_at.strftime('%Y-%m-%d %H:%M UTC') if session.created_at else ''),
@@ -387,6 +387,143 @@ def _write_audit_summary_sheet(workbook, formats, session, assets):
         chart.set_title({'name': 'Results Distribution'})
         chart.set_size({'width': 480, 'height': 360})
         sheet.insert_chart(row, 0, chart)
+
+
+def export_readiness_to_excel(assessment, generated_at=None):
+    """Export a readiness assessment as an evidence/readiness pack workbook."""
+    from . import pack as pack_util
+    if generated_at is None:
+        generated_at = datetime.now(timezone.utc)
+    ctx = pack_util.build_context(assessment, generated_at)
+
+    output = io.BytesIO()
+    workbook = xlsxwriter.Workbook(output, {'in_memory': True})
+    formats = _create_formats(workbook)
+    formats['pct'] = workbook.add_format({'num_format': '0%', 'font_size': 11})
+
+    _write_readiness_cover(workbook, formats, ctx)
+    _write_readiness_scorecard(workbook, formats, ctx)
+    _write_readiness_register(workbook, formats, ctx)
+    _write_readiness_evidence_index(workbook, formats, ctx)
+    _write_readiness_remediation(workbook, formats, ctx)
+
+    workbook.close()
+    output.seek(0)
+    return output
+
+
+def _write_readiness_cover(workbook, formats, ctx):
+    sheet = workbook.add_worksheet('Cover')
+    sheet.hide_gridlines(2)
+    sheet.set_column('A:A', 26)
+    sheet.set_column('B:B', 60)
+    a = ctx['assessment']
+    reg = ctx['regulation']
+    row = 1
+    sheet.merge_range(row, 0, row, 1, f'Readiness Pack: {a.title}', formats['title'])
+    row += 2
+    cov = ctx['coverage']
+    fields = [
+        ('Regulation:', (reg.name if reg else 'Cross-regulation')),
+        ('Regulation version:', (reg.version if reg and reg.version else 'n/a')),
+        ('Regulation status:', (reg.status if reg else 'n/a')),
+        ('Assessment status:', a.status),
+        ('Owner:', (a.owner.display_name or a.owner.username) if a.owner else ''),
+        ('', ''),
+        ('Readiness score:', f"{round(ctx['overall'] * 100)}%"),
+        ('Obligation coverage:', (f"{cov['covered']}/{cov['total']} "
+                                  f"({round(cov['ratio'] * 100)}%)") if cov else 'n/a'),
+        ('Open gaps:', str(len(ctx['roadmap']))),
+        ('', ''),
+        ('Generated:', ctx['generated_at'].strftime('%Y-%m-%d %H:%M UTC')),
+    ]
+    for label, value in fields:
+        if label:
+            sheet.write(row, 0, label, formats['label'])
+            sheet.write(row, 1, value, formats['value'])
+        row += 1
+
+
+def _write_readiness_scorecard(workbook, formats, ctx):
+    sheet = workbook.add_worksheet('Scorecard')
+    sheet.set_column('A:A', 30)
+    sheet.set_column('B:B', 14)
+    sheet.write(0, 0, 'Domain', formats['header'])
+    sheet.write(0, 1, 'Readiness', formats['header'])
+    row = 1
+    sheet.write(row, 0, 'OVERALL', formats['label'])
+    sheet.write(row, 1, ctx['overall'], formats['pct'])
+    row += 1
+    for domain, score in sorted(ctx['domains'].items()):
+        sheet.write(row, 0, domain, formats['cell'])
+        sheet.write(row, 1, score, formats['pct'])
+        row += 1
+
+
+def _write_readiness_register(workbook, formats, ctx):
+    sheet = workbook.add_worksheet('Control Register')
+    widths = [14, 40, 16, 14, 10, 16, 40]
+    headers = ['Control', 'Title', 'Domain', 'Status', 'Maturity',
+               'Target date', 'Mapped obligations']
+    for i, (w, h) in enumerate(zip(widths, headers)):
+        sheet.set_column(i, i, w)
+        sheet.write(0, i, h, formats['header'])
+    sheet.freeze_panes(1, 0)
+    for idx, cs in enumerate(ctx['statuses'], start=1):
+        fmt = formats['cell_alt'] if idx % 2 == 0 else formats['cell']
+        obligations = ', '.join(
+            f'{o.regulation.short_code or o.regulation.slug} {o.ref}'
+            for o in cs.control.obligations)
+        sheet.write(idx, 0, cs.control.code, fmt)
+        sheet.write(idx, 1, cs.control.title, fmt)
+        sheet.write(idx, 2, cs.control.domain or '', fmt)
+        sheet.write(idx, 3, cs.status, fmt)
+        sheet.write(idx, 4, cs.maturity if cs.maturity is not None else '', fmt)
+        sheet.write(idx, 5, cs.target_date.isoformat() if cs.target_date else '', fmt)
+        sheet.write(idx, 6, obligations, fmt)
+    if ctx['statuses']:
+        sheet.autofilter(0, 0, len(ctx['statuses']), len(headers) - 1)
+
+
+def _write_readiness_evidence_index(workbook, formats, ctx):
+    sheet = workbook.add_worksheet('Evidence Index')
+    widths = [14, 40, 16, 16, 66]
+    headers = ['Control', 'Evidence', 'Collected/Valid until', 'Status', 'Integrity (sha256)']
+    for i, (w, h) in enumerate(zip(widths, headers)):
+        sheet.set_column(i, i, w)
+        sheet.write(0, i, h, formats['header'])
+    sheet.freeze_panes(1, 0)
+    row = 1
+    for entry in ctx['evidence_index']:
+        for ev in entry['evidence']:
+            fmt = formats['cell_alt'] if row % 2 == 0 else formats['cell']
+            cv = ev.current_version
+            sheet.write(row, 0, entry['control'].code, fmt)
+            sheet.write(row, 1, ev.title, fmt)
+            sheet.write(row, 2, ev.valid_until.isoformat() if ev.valid_until else '', fmt)
+            sheet.write(row, 3, 'expired' if ev.is_expired else 'current', fmt)
+            sheet.write(row, 4, cv.content_hash if cv else '', fmt)
+            row += 1
+    if row == 1:
+        sheet.write(1, 0, 'No evidence linked.', formats['cell'])
+
+
+def _write_readiness_remediation(workbook, formats, ctx):
+    sheet = workbook.add_worksheet('Remediation')
+    widths = [10, 14, 40, 16, 10, 16]
+    headers = ['Priority', 'Control', 'Title', 'Status', 'Impact', 'Target date']
+    for i, (w, h) in enumerate(zip(widths, headers)):
+        sheet.set_column(i, i, w)
+        sheet.write(0, i, h, formats['header'])
+    sheet.freeze_panes(1, 0)
+    for idx, item in enumerate(ctx['roadmap'], start=1):
+        fmt = formats['cell_alt'] if idx % 2 == 0 else formats['cell']
+        sheet.write(idx, 0, item['priority'], fmt)
+        sheet.write(idx, 1, item['control'].code, fmt)
+        sheet.write(idx, 2, item['control'].title, fmt)
+        sheet.write(idx, 3, item['effective_status'], fmt)
+        sheet.write(idx, 4, item['impact'], fmt)
+        sheet.write(idx, 5, item['target_date'].isoformat() if item['target_date'] else '', fmt)
 
 
 def export_hardening_to_excel(task):

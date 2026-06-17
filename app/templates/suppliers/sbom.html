@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}SBOM - {{ supplier.name }}{% endblock %}
+{% block content %}
+<div class="mb-4"><a href="{{ url_for('suppliers.supplier_detail', supplier_id=supplier.id) }}" class="text-xs text-text-muted hover:text-accent-cyan">&larr; {{ supplier.name }}</a></div>
+
+<div class="bg-cyber-card border border-cyber-border rounded-lg p-6 mb-6">
+    <h1 class="text-xl font-bold text-text-primary">{{ sbom.name or ('SBOM #' ~ sbom.id) }}</h1>
+    <p class="mt-1 text-xs text-text-muted">{{ sbom.format }} · {{ sbom.component_count }} components · uploaded {{ sbom.uploaded_at.strftime('%Y-%m-%d') if sbom.uploaded_at else '' }}</p>
+</div>
+
+<div class="bg-cyber-card border border-cyber-border rounded-lg overflow-x-auto">
+    <table class="min-w-full divide-y divide-cyber-border">
+        <thead class="bg-cyber-card-hover">
+            <tr>
+                <th class="px-4 py-2 text-left text-xs font-medium text-text-muted uppercase">Component</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-text-muted uppercase">Version</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-text-muted uppercase">License</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-text-muted uppercase">purl</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-cyber-border">
+            {% for c in components %}
+            <tr class="hover:bg-cyber-card-hover">
+                <td class="px-4 py-2 text-sm text-text-primary">{{ c.name }}</td>
+                <td class="px-4 py-2 text-sm text-text-muted">{{ c.version or '—' }}</td>
+                <td class="px-4 py-2 text-sm text-text-muted">{{ c.license or '—' }}</td>
+                <td class="px-4 py-2 text-xs text-text-muted font-mono break-all">{{ c.purl or '—' }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="px-4 py-4 text-sm text-text-muted">No components parsed.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

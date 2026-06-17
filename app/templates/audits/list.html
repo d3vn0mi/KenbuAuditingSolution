@@ -20,7 +20,7 @@
         <thead class="bg-[#0d1220]">
             <tr>
                 <th class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase">Title</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase">Standard</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase">Regulation</th>
                 <th class="px-6 py-3 text-center text-xs font-medium text-text-muted uppercase">Assets</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase">Progress</th>
                 <th class="px-6 py-3 text-center text-xs font-medium text-text-muted uppercase">Pass</th>
@@ -40,8 +40,8 @@
                     {% endif %}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-text-muted">
-                    {% if session.standard %}
-                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-purple-900/30 border border-purple-500/40 text-purple-400">{{ session.standard.name }}</span>
+                    {% if session.regulation %}
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-purple-900/30 border border-purple-500/40 text-purple-400">{{ session.regulation.name }}</span>
                     {% else %}
                     <span class="text-text-muted">-</span>
                     {% endif %}

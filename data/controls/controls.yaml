@@ -1,0 +1,127 @@
+# Starter control library (cross-framework hub). Best-effort mappings authored
+# from public regulatory text + the existing NIS2->CIS mappings; representative,
+# not exhaustive — flagged for RAVEN expert review and expansion.
+#
+# `checks` are existing CIS check_number values: a passing check evidences the
+# control. Process controls (TLPT, incident reporting) have no check and are
+# proven by evidence/findings instead.
+controls:
+  - code: IS-01
+    title: "Information security management system and policies"
+    domain: ISMS
+    description: "Documented ISMS, security policies and filesystem integrity baseline."
+    checks: ["1.3.1", "1.3.2"]
+    evidence_requirements:
+      - {title: "Approved information security policy", type: document, cadence_days: 365}
+      - {title: "ISMS scope and statement of applicability", type: document, cadence_days: 365}
+    references:
+      - {framework: ISO27001, ref_code: "A.5.1", title: "Policies for information security"}
+
+  - code: IAM-01
+    title: "Remote access control (SSH/admin interfaces)"
+    domain: IAM
+    description: "Restrict and harden remote administrative access."
+    checks: ["5.2.1", "5.2.2", "5.2.3", "5.2.4"]
+    evidence_requirements:
+      - {title: "Access control policy", type: document, cadence_days: 365}
+      - {title: "Privileged access review", type: attestation, cadence_days: 180}
+    references:
+      - {framework: ISO27001, ref_code: "A.5.15", title: "Access control"}
+      - {framework: NIST_IR_8401, ref_code: "GS-AC", title: "Ground-segment access control"}
+
+  - code: IAM-02
+    title: "Privileged and emergency access management"
+    domain: IAM
+    description: "sudo/su restriction, logging of privileged actions."
+    checks: ["5.4.1", "5.4.2", "5.5.1"]
+    references:
+      - {framework: ISO27001, ref_code: "A.8.2", title: "Privileged access rights"}
+
+  - code: IAM-03
+    title: "Authentication strength and MFA"
+    domain: IAM
+    description: "Password policy, lockout, and multi-factor authentication."
+    checks: ["5.3.1", "5.3.2", "5.3.3"]
+    evidence_requirements:
+      - {title: "MFA enrolment evidence for privileged accounts", type: config, cadence_days: 180}
+    references:
+      - {framework: ISO27001, ref_code: "A.8.5", title: "Secure authentication"}
+
+  - code: CR-01
+    title: "Cryptography and key management"
+    domain: Crypto
+    description: "System-wide crypto policy, strong transport ciphers, disk encryption."
+    checks: ["1.4.1", "5.2.5", "5.2.6", "2.4.2"]
+    evidence_requirements:
+      - {title: "Cryptographic key management procedure", type: document, cadence_days: 365}
+    references:
+      - {framework: ISO27001, ref_code: "A.8.24", title: "Use of cryptography"}
+
+  - code: LOG-01
+    title: "Logging and incident detection"
+    domain: IncidentMgmt
+    description: "System auditing, log collection and retention for detection."
+    checks: ["4.1.1", "4.1.2", "4.2.1"]
+    evidence_requirements:
+      - {title: "Log retention and monitoring procedure", type: document, cadence_days: 365}
+    references:
+      - {framework: ISO27001, ref_code: "A.8.15", title: "Logging"}
+
+  - code: IR-01
+    title: "Incident reporting (24h / 72h / 1 month)"
+    domain: IncidentMgmt
+    description: "Statutory incident-reporting workflow and timelines (NIS2 Art.23)."
+    evidence_requirements:
+      - {title: "Incident response plan", type: document, cadence_days: 365}
+      - {title: "Incident register with statutory timestamps", type: document, cadence_days: 90}
+
+  - code: SC-01
+    title: "Supply-chain risk management"
+    domain: SupplyChain
+    description: "Package/source integrity, supplier assessment and SBOM intake."
+    checks: ["1.2.1", "1.4.2", "1.6.2"]
+    evidence_requirements:
+      - {title: "Approved supplier register", type: document, cadence_days: 365}
+      - {title: "SBOM for critical ICT components", type: document, cadence_days: 180}
+    references:
+      - {framework: ISO27001, ref_code: "A.5.19", title: "Supplier relationships"}
+      - {framework: NIST_IR_8401, ref_code: "GS-SC", title: "Ground-segment supply chain"}
+
+  - code: TLPT-01
+    title: "Threat-Led Penetration Testing"
+    domain: TLPT
+    description: "TLPT before launch and at least every 3 years (offensive-led assurance)."
+    evidence_requirements:
+      - {title: "TLPT scope and rules of engagement", type: document, cadence_days: 1095}
+      - {title: "TLPT report and remediation evidence", type: test_result, cadence_days: 1095}
+    references:
+      - {framework: NIST_IR_8270, ref_code: "SAT-TEST", title: "Commercial satellite operations testing"}
+
+  - code: BC-01
+    title: "Business continuity and disaster recovery"
+    domain: BCDR
+    description: "Resilient partitioning, backups and recovery procedures."
+    checks: ["1.1.7"]
+    evidence_requirements:
+      - {title: "Business continuity and DR plan", type: document, cadence_days: 365}
+      - {title: "Backup restore test results", type: test_result, cadence_days: 180}
+    references:
+      - {framework: ISO27001, ref_code: "A.5.29", title: "Information security during disruption"}
+
+  - code: VM-01
+    title: "Vulnerability and malware handling"
+    domain: RiskManagement
+    description: "Anti-malware, vulnerability identification and patching."
+    checks: ["9.1.1", "9.1.2", "9.1.3"]
+    references:
+      - {framework: ISO27001, ref_code: "A.8.8", title: "Management of technical vulnerabilities"}
+
+  - code: PR-01
+    title: "Physical resilience of ground-segment facilities"
+    domain: PhysicalResilience
+    description: "Physical protection and operational resilience of critical premises."
+    evidence_requirements:
+      - {title: "Facility physical security and access policy", type: document, cadence_days: 365}
+    references:
+      - {framework: NIST_IR_8401, ref_code: "GS-PHYS", title: "Ground-segment physical protection"}
+      - {framework: ISO27001, ref_code: "A.7.1", title: "Physical security perimeters"}

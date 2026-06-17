@@ -1,0 +1,45 @@
+{% set hx = {
+  'post': url_for('readiness.update_control_status', assessment_id=a.id, control_id=cs.control_id),
+} %}
+<tr id="cs-row-{{ cs.id }}" class="hover:bg-cyber-card-hover align-top">
+    <td class="px-3 py-2 whitespace-nowrap">
+        <a href="{{ url_for('regulations.control_detail', code=cs.control.code) }}" class="text-accent-cyan hover:text-accent-cyan-dim text-sm font-medium">{{ cs.control.code }}</a>
+        <p class="text-xs text-text-muted max-w-xs truncate">{{ cs.control.title }}</p>
+    </td>
+    <td class="px-3 py-2 whitespace-nowrap">
+        <span class="inline-flex items-center rounded-md bg-purple-900/20 text-accent-purple ring-1 ring-inset ring-purple-500/30 px-2 py-0.5 text-xs">{{ cs.control.domain or '—' }}</span>
+    </td>
+    <td class="px-3 py-2">
+        <select name="status"
+                hx-post="{{ hx.post }}" hx-trigger="change" hx-include="closest tr"
+                hx-target="closest tr" hx-swap="outerHTML"
+                class="rounded-md bg-cyber-card-hover border border-cyber-border text-text-primary text-xs px-2 py-1 focus:ring-1 focus:ring-accent-cyan">
+            {% for s in CONTROL_STATUSES %}
+            <option value="{{ s }}" {% if cs.status == s %}selected{% endif %}>{{ s.replace('_', ' ') }}</option>
+            {% endfor %}
+        </select>
+    </td>
+    <td class="px-3 py-2">
+        <select name="maturity"
+                hx-post="{{ hx.post }}" hx-trigger="change" hx-include="closest tr"
+                hx-target="closest tr" hx-swap="outerHTML"
+                class="rounded-md bg-cyber-card-hover border border-cyber-border text-text-primary text-xs px-2 py-1 focus:ring-1 focus:ring-accent-cyan">
+            <option value="" {% if cs.maturity is none %}selected{% endif %}>—</option>
+            {% for m in range(0, 6) %}
+            <option value="{{ m }}" {% if cs.maturity == m %}selected{% endif %}>{{ m }}</option>
+            {% endfor %}
+        </select>
+    </td>
+    <td class="px-3 py-2">
+        <input type="date" name="target_date" value="{{ cs.target_date.isoformat() if cs.target_date else '' }}"
+               hx-post="{{ hx.post }}" hx-trigger="change" hx-include="closest tr"
+               hx-target="closest tr" hx-swap="outerHTML"
+               class="rounded-md bg-cyber-card-hover border border-cyber-border text-text-secondary text-xs px-2 py-1 focus:ring-1 focus:ring-accent-cyan">
+    </td>
+    <td class="px-3 py-2">
+        <input type="text" name="notes" value="{{ cs.notes or '' }}" placeholder="notes"
+               hx-post="{{ hx.post }}" hx-trigger="change" hx-include="closest tr"
+               hx-target="closest tr" hx-swap="outerHTML"
+               class="w-full rounded-md bg-cyber-card-hover border border-cyber-border text-text-secondary text-xs px-2 py-1 focus:ring-1 focus:ring-accent-cyan">
+    </td>
+</tr>

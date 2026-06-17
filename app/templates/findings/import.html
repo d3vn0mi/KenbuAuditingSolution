@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Import findings - Kenbu{% endblock %}
+{% block content %}
+<div class="mb-4"><a href="{{ url_for('findings.list_findings') }}" class="text-xs text-text-muted hover:text-accent-cyan">&larr; Findings</a></div>
+<div class="max-w-2xl">
+    <h1 class="text-2xl font-bold text-text-primary mb-4">Import findings</h1>
+    <p class="text-sm text-text-secondary mb-4">Upload a JSON array or a CSV. Recognised fields: <code class="text-accent-cyan">title</code>, <code class="text-accent-cyan">severity</code>, <code class="text-accent-cyan">source</code>, <code class="text-accent-cyan">status</code>, <code class="text-accent-cyan">description</code>, <code class="text-accent-cyan">remediation</code>, <code class="text-accent-cyan">discovered_at</code>, <code class="text-accent-cyan">controls</code> (control codes; in CSV separate with <code>;</code>).</p>
+    <form method="POST" enctype="multipart/form-data" class="space-y-4">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="file" name="file" accept=".json,.csv" required class="block w-full text-sm text-text-secondary file:mr-3 file:rounded-md file:border-0 file:bg-accent-cyan/10 file:text-accent-cyan file:px-3 file:py-1.5">
+        <button type="submit" class="rounded-md bg-accent-cyan/10 border border-accent-cyan/40 text-accent-cyan px-4 py-2 text-sm font-medium hover:bg-accent-cyan/20">Import</button>
+    </form>
+    <pre class="mt-6 text-xs text-text-muted bg-cyber-card border border-cyber-border rounded-lg p-4 overflow-x-auto">[
+  {"title": "Auth bypass on ground station API", "severity": "high",
+   "source": "tlpt", "description": "...", "controls": ["IAM-01"]}
+]</pre>
+</div>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}{{ stage_label }} - {{ incident.title }}{% endblock %}
+{% block content %}
+<div class="mb-4 flex items-center justify-between">
+    <a href="{{ url_for('incidents.incident_detail', incident_id=incident.id) }}" class="text-xs text-text-muted hover:text-accent-cyan">&larr; Incident</a>
+    <button onclick="window.print()" class="text-xs text-accent-cyan hover:text-accent-cyan-dim">Print</button>
+</div>
+
+<div class="bg-cyber-card border border-cyber-border rounded-lg p-6 max-w-3xl">
+    <h1 class="text-xl font-bold text-text-primary">{{ stage_label }}</h1>
+    <p class="text-xs text-text-muted mt-1">Generated {{ incident.created_at.strftime('%Y-%m-%d') if incident.created_at else '' }} — draft for the national CSIRT / competent authority.</p>
+
+    <dl class="mt-5 space-y-3 text-sm">
+        <div><dt class="text-text-muted text-xs uppercase">Incident title</dt><dd class="text-text-primary">{{ incident.title }}</dd></div>
+        <div><dt class="text-text-muted text-xs uppercase">Reference</dt><dd class="text-text-primary">{{ incident.reference or ('INC-' ~ incident.id) }}</dd></div>
+        <div><dt class="text-text-muted text-xs uppercase">Severity</dt><dd class="text-text-primary">{{ incident.severity }}</dd></div>
+        <div><dt class="text-text-muted text-xs uppercase">Detected at</dt><dd class="text-text-primary">{{ incident.detected_at.strftime('%Y-%m-%d %H:%M UTC') }}</dd></div>
+        <div><dt class="text-text-muted text-xs uppercase">Description</dt><dd class="text-text-primary whitespace-pre-wrap">{{ incident.description or '—' }}</dd></div>
+        <div><dt class="text-text-muted text-xs uppercase">Affected systems</dt><dd class="text-text-primary whitespace-pre-wrap">{{ incident.affected_systems or '—' }}</dd></div>
+        {% if stage == 'early_warning' %}
+        <div><dt class="text-text-muted text-xs uppercase">Suspected cause</dt><dd class="text-text-muted">[To complete — suspected unlawful/malicious cause and possible cross-border impact.]</dd></div>
+        {% elif stage == 'notification' %}
+        <div><dt class="text-text-muted text-xs uppercase">Initial assessment</dt><dd class="text-text-muted">[To complete — severity, impact, indicators of compromise.]</dd></div>
+        {% else %}
+        <div><dt class="text-text-muted text-xs uppercase">Root cause &amp; mitigation</dt><dd class="text-text-muted">[To complete — detailed root cause, applied/ongoing mitigation, cross-border impact.]</dd></div>
+        {% endif %}
+    </dl>
+</div>
+{% endblock %}

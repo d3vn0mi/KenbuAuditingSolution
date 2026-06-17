@@ -29,3 +29,5 @@ def admin_required(f):
 auditor_required = role_required('audits')
 hardening_required = role_required('hardening')
 pentest_required = role_required('pentests')
+compliance_required = role_required('compliance')          # write
+compliance_view_required = role_required('compliance_view')  # read (viewer+)

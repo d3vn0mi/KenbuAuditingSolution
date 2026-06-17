@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}{{ evidence.title }} - Evidence{% endblock %}
+{% block content %}
+<div class="mb-4 flex items-center justify-between">
+    <a href="{{ url_for('evidence.list_evidence') }}" class="text-xs text-text-muted hover:text-accent-cyan">&larr; Evidence</a>
+    <form method="POST" action="{{ url_for('evidence.delete_evidence', evidence_id=evidence.id) }}" onsubmit="return confirm('Delete this evidence and all versions?');" hx-boost="false">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="text-xs text-text-muted hover:text-accent-red">Delete</button>
+    </form>
+</div>
+
+<div class="bg-cyber-card border border-cyber-border rounded-lg p-6 mb-6">
+    <h1 class="text-xl font-bold text-text-primary">{{ evidence.title }}</h1>
+    <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-text-muted">
+        <span class="inline-flex items-center rounded-md bg-gray-800 text-gray-300 ring-1 ring-inset ring-gray-600/40 px-2 py-0.5">{{ evidence.evidence_type }}</span>
+        {% if evidence.owner %}<span>owner {{ evidence.owner.display_name or evidence.owner.username }}</span>{% endif %}
+        {% if evidence.valid_until %}<span>· valid until {{ evidence.valid_until }}</span>{% endif %}
+        {% if evidence.is_expired %}<span class="text-accent-red">· expired</span>{% elif evidence.expiring_soon %}<span class="text-accent-yellow">· expiring soon</span>{% endif %}
+    </div>
+    {% if evidence.description %}<p class="mt-3 text-sm text-text-secondary">{{ evidence.description }}</p>{% endif %}
+    {% if evidence.controls %}
+    <div class="mt-3 flex flex-wrap gap-1.5">
+        {% for c in evidence.controls %}
+        <a href="{{ url_for('regulations.control_detail', code=c.code) }}" class="inline-flex items-center rounded-md bg-cyan-900/20 text-accent-cyan ring-1 ring-inset ring-cyan-500/30 px-2 py-0.5 text-xs hover:bg-cyan-900/40">{{ c.code }}</a>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-cyber-card border border-cyber-border rounded-lg p-5">
+        <h2 class="text-sm font-semibold uppercase tracking-wider text-text-muted mb-3">Versions</h2>
+        {% set versions = evidence.versions.all() %}
+        {% if versions %}
+        <ul class="space-y-2">
+            {% for v in versions %}
+            <li class="text-sm flex items-center justify-between gap-3 border-b border-cyber-border pb-2">
+                <div>
+                    <span class="text-text-primary font-medium">v{{ v.version }}</span>
+                    <span class="text-text-muted text-xs">{{ v.original_filename }}{% if v.size %} · {{ v.size }} B{% endif %}</span>
+                    <p class="text-text-muted text-[10px] font-mono break-all">sha256:{{ v.content_hash }}</p>
+                </div>
+                <a href="{{ url_for('evidence.download_version', evidence_id=evidence.id, version_id=v.id) }}" class="text-accent-cyan hover:text-accent-cyan-dim text-xs shrink-0">download</a>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-text-muted text-sm">No file uploaded.</p>
+        {% endif %}
+    </div>
+
+    <div class="bg-cyber-card border border-cyber-border rounded-lg p-5">
+        <h2 class="text-sm font-semibold uppercase tracking-wider text-text-muted mb-3">Upload new version</h2>
+        <form method="POST" action="{{ url_for('evidence.add_version', evidence_id=evidence.id) }}" enctype="multipart/form-data" class="space-y-3" hx-boost="false">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="file" name="file" required class="block w-full text-sm text-text-secondary file:mr-3 file:rounded-md file:border-0 file:bg-accent-cyan/10 file:text-accent-cyan file:px-3 file:py-1.5">
+            <input type="text" name="note" placeholder="version note (optional)" class="block w-full rounded-md border border-cyber-border bg-cyber-card-hover text-text-secondary px-3 py-2 text-sm focus:border-accent-cyan focus:outline-none focus:ring-1 focus:ring-accent-cyan">
+            <button type="submit" class="rounded-md bg-accent-cyan/10 border border-accent-cyan/40 text-accent-cyan px-4 py-2 text-sm font-medium hover:bg-accent-cyan/20">Upload version</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

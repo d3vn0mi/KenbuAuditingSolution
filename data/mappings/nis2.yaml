@@ -1,0 +1,22 @@
+regulation_slug: nis2
+mappings:
+  - control: IS-01
+    obligations: ["Art.21(2)(a)", "Art.21(2)(f)"]
+  - control: IAM-01
+    obligations: ["Art.21(2)(i)"]
+  - control: IAM-02
+    obligations: ["Art.21(2)(i)"]
+  - control: IAM-03
+    obligations: ["Art.21(2)(j)"]
+  - control: CR-01
+    obligations: ["Art.21(2)(h)"]
+  - control: LOG-01
+    obligations: ["Art.21(2)(b)"]
+  - control: IR-01
+    obligations: ["Art.21(2)(b)", "Art.23(4)(a)", "Art.23(4)(b)", "Art.23(4)(d)"]
+  - control: SC-01
+    obligations: ["Art.21(2)(d)"]
+  - control: BC-01
+    obligations: ["Art.21(2)(c)"]
+  - control: VM-01
+    obligations: ["Art.21(2)(e)", "Art.21(2)(g)"]

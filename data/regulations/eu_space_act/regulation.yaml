@@ -1,0 +1,36 @@
+# PROVISIONAL — the EU Space Act is a Commission proposal still in trilogue
+# (Council vs Parliament divergence). Article numbers in the ~75–95 resilience
+# chapter are best-effort placeholders and MUST be reconciled with the adopted
+# text. status=in_trilogue and version flag this; delta detection (content_hash)
+# will surface what changes when the final text lands. Flagged for RAVEN review.
+regulation:
+  short_code: EUSA
+  name: "EU Space Act — resilience chapter (proposal)"
+  slug: eu-space-act
+  version: "COM-2025-proposal"
+  status: in_trilogue
+  source_url: "https://defence-industry-space.ec.europa.eu/eu-space/eu-space-law_en"
+  description: >
+    Proposed Regulation establishing Union requirements for the safety,
+    resilience and sustainability of space activities. The resilience chapter
+    (~Art. 75–95) sets cybersecurity obligations for space operators.
+
+obligations:
+  - ref: "Art.75"
+    title: "Resilience — scope and all-hazard risk management"
+    text: "All-hazard, lifecycle risk management for space systems (provisional numbering)."
+    children:
+      - ref: "Art.76"
+        title: "Information security management system"
+      - ref: "Art.77"
+        title: "Identity and access management"
+      - ref: "Art.78"
+        title: "Encryption and cryptographic key management"
+      - ref: "Art.79"
+        title: "Supply-chain risk management"
+      - ref: "Art.80"
+        title: "Threat-Led Penetration Testing (before launch and at least every 3 years)"
+      - ref: "Art.81"
+        title: "Incident detection, handling and reporting"
+      - ref: "Art.82"
+        title: "Business continuity and disaster recovery"

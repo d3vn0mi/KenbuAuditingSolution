@@ -1,0 +1,24 @@
+# Skeleton — expand with RAVEN. CER governs physical/operational resilience of
+# critical entities; relevant to ground-segment facilities.
+regulation:
+  short_code: CER
+  name: "CER — Directive (EU) 2022/2557"
+  slug: cer
+  version: "2022/2557"
+  status: in_force
+  effective_date: "2024-10-18"
+  source_url: "https://eur-lex.europa.eu/eli/dir/2022/2557"
+  description: >
+    Directive on the resilience of critical entities — physical and operational
+    resilience measures (ground-segment relevance).
+
+obligations:
+  - ref: "Art.13"
+    title: "Resilience measures of critical entities"
+    children:
+      - ref: "Art.13(1)(a)"
+        title: "Prevent incidents from occurring (physical and risk-based measures)"
+      - ref: "Art.13(1)(c)"
+        title: "Respond to, resist and mitigate the consequences of incidents"
+      - ref: "Art.13(1)(e)"
+        title: "Ensure adequate physical protection of premises and critical infrastructure"

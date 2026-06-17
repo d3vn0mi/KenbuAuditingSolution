@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}{{ supplier.name }} - Supplier{% endblock %}
+{% block content %}
+<div class="mb-4 flex items-center justify-between">
+    <a href="{{ url_for('suppliers.list_suppliers') }}" class="text-xs text-text-muted hover:text-accent-cyan">&larr; Suppliers</a>
+    <form method="POST" action="{{ url_for('suppliers.delete_supplier', supplier_id=supplier.id) }}" onsubmit="return confirm('Delete supplier?');" hx-boost="false">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="text-xs text-text-muted hover:text-accent-red">Delete</button>
+    </form>
+</div>
+
+<div class="bg-cyber-card border border-cyber-border rounded-lg p-6 mb-6">
+    <h1 class="text-xl font-bold text-text-primary">{{ supplier.name }}</h1>
+    <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-text-muted">
+        <span>criticality {{ supplier.criticality }}</span>
+        {% if supplier.country %}<span>· {{ supplier.country }}</span>{% endif %}
+        {% if supplier.contact %}<span>· {{ supplier.contact }}</span>{% endif %}
+        <span>· {{ supplier.status }}</span>
+    </div>
+    {% if supplier.description %}<p class="mt-3 text-sm text-text-secondary">{{ supplier.description }}</p>{% endif %}
+    {% if supplier.controls %}
+    <div class="mt-3 flex flex-wrap gap-1.5">
+        {% for c in supplier.controls %}
+        <a href="{{ url_for('regulations.control_detail', code=c.code) }}" class="inline-flex items-center rounded-md bg-cyan-900/20 text-accent-cyan ring-1 ring-inset ring-cyan-500/30 px-2 py-0.5 text-xs hover:bg-cyan-900/40">{{ c.code }}</a>
+        {% endfor %}
+    </div>
+    {% endif %}
+    <form method="POST" action="{{ url_for('suppliers.update_supplier', supplier_id=supplier.id) }}" class="mt-4 flex items-end gap-3">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div>
+            <label for="status" class="block text-xs font-medium text-text-muted uppercase">Status</label>
+            <select name="status" id="status" class="mt-1 rounded-md border border-cyber-border bg-cyber-card-hover text-text-primary px-3 py-2 text-sm focus:border-accent-cyan focus:outline-none focus:ring-1 focus:ring-accent-cyan">
+                {% for s in statuses %}<option value="{{ s }}" {% if supplier.status == s %}selected{% endif %}>{{ s }}</option>{% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="rounded-md bg-cyber-card-hover border border-cyber-border text-text-secondary px-4 py-2 text-sm hover:text-accent-cyan">Update</button>
+    </form>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-cyber-card border border-cyber-border rounded-lg p-5">
+        <h2 class="text-sm font-semibold uppercase tracking-wider text-text-muted mb-3">SBOMs</h2>
+        {% if sboms %}
+        <ul class="space-y-2">
+            {% for s in sboms %}
+            <li class="text-sm flex items-center justify-between border-b border-cyber-border pb-2">
+                <a href="{{ url_for('suppliers.sbom_detail', supplier_id=supplier.id, sbom_id=s.id) }}" class="text-accent-cyan hover:text-accent-cyan-dim">{{ s.name or ('SBOM #' ~ s.id) }}</a>
+                <span class="text-text-muted text-xs">{{ s.format }} · {{ s.component_count }} components</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-text-muted text-sm">No SBOMs yet.</p>
+        {% endif %}
+    </div>
+    <div class="bg-cyber-card border border-cyber-border rounded-lg p-5">
+        <h2 class="text-sm font-semibold uppercase tracking-wider text-text-muted mb-3">Ingest SBOM</h2>
+        <form method="POST" action="{{ url_for('suppliers.upload_sbom', supplier_id=supplier.id) }}" enctype="multipart/form-data" class="space-y-3" hx-boost="false">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="file" name="file" accept=".json" required class="block w-full text-sm text-text-secondary file:mr-3 file:rounded-md file:border-0 file:bg-accent-cyan/10 file:text-accent-cyan file:px-3 file:py-1.5">
+            <p class="text-xs text-text-muted">CycloneDX or SPDX JSON.</p>
+            <button type="submit" class="rounded-md bg-accent-cyan/10 border border-accent-cyan/40 text-accent-cyan px-4 py-2 text-sm font-medium hover:bg-accent-cyan/20">Ingest SBOM</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

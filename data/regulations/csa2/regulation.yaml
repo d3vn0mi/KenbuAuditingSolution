@@ -1,0 +1,22 @@
+# PROVISIONAL skeleton — CSA2 is a proposed instrument (Jan 2026). Article ~110–111
+# concern a trusted ICT supply-chain framework for satellite electronic
+# communications networks. Numbering provisional; flagged for RAVEN review.
+regulation:
+  short_code: CSA2
+  name: "CSA2 — trusted ICT supply chain for satellite networks (proposal)"
+  slug: csa2
+  version: "2026-proposal"
+  status: proposal
+  source_url: "https://digital-strategy.ec.europa.eu/"
+  description: >
+    Proposed framework for a trusted ICT supply chain for satellite electronic
+    communications networks.
+
+obligations:
+  - ref: "Art.110"
+    title: "Trusted ICT supply-chain framework for satellite networks"
+    children:
+      - ref: "Art.110(1)"
+        title: "Supplier trustworthiness assessment for satellite ICT components"
+      - ref: "Art.111"
+        title: "SBOM and provenance requirements for ICT in satellite networks"
