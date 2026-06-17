@@ -54,3 +54,22 @@ Running log of significant decisions. ADRs in `docs/adr/`.
 - **Next:** YAML schema (`data/regulations/`, `data/controls/`, `data/mappings/`)
   + `scripts/validate_regulations.py` + seed loader + starter content (NIS2 from
   existing mappings, EUSA in_trilogue skeleton), then browse UI.
+
+## 2026-06-17 — Phase 1 complete
+
+- **m3** data pipeline: idempotent YAML loader (regulations/controls/mappings) with
+  obligation content_hash; `scripts/validate_regulations.py` (jsonschema +
+  referential integrity). Starter data: NIS2 (in_force), EU Space Act
+  (in_trilogue, provisional Art. numbers), CER + CSA2 skeletons; 12-control
+  starter library linked to real CIS checks + ISO/NIST IR refs. Smoke: 5 regs,
+  30 obligations, 12 controls, 213 control↔check links; SC-01 spans NIS2+EUSA+CSA2.
+- **m4** browse UI: regulations blueprint + templates (list, regulation detail with
+  recursive obligation tree + mapped controls, control detail with cross-framework
+  mapping + linked checks + references + evidence requirements); nav links.
+- **CI**: `.github/workflows/ci.yml` (deps, validate YAML, pytest).
+- Test suite: **89 passed**. All four migrations PG-validated; existing CIS audit
+  functionality unaffected.
+- **Content is starter-level — flagged for RAVEN expert review/expansion** (esp.
+  EUSA/CSA2 article numbers, CER/CSA2 obligations, full control coverage).
+- **Phase 1 done. Awaiting review before Phase 2** (readiness assessment, scoring,
+  evidence repository, finding→control linkage).
