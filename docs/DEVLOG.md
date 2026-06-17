@@ -73,3 +73,25 @@ Running log of significant decisions. ADRs in `docs/adr/`.
   EUSA/CSA2 article numbers, CER/CSA2 obligations, full control coverage).
 - **Phase 1 done. Awaiting review before Phase 2** (readiness assessment, scoring,
   evidence repository, finding→control linkage).
+
+## 2026-06-17 — Phase 2 complete
+
+- **m5** readiness: Organization, ReadinessAssessment, ControlStatus + scoring
+  service (overall/domain score, obligation coverage, remediation roadmap;
+  `effective_status` hook for finding impact). `compliance` permission feature.
+  UI: dashboard (score, domain heatmap, coverage, gaps) + control register with
+  inline HTMX status editing.
+- **m6** evidence repository: Evidence + EvidenceVersion (+ link tables),
+  Fernet-encrypted at rest via `app/utils/crypto.py` (MultiFernet) +
+  `evidence_store.py` (hash plaintext before encrypt, UUID storage names,
+  integrity-verify on download, fail-closed prod key). UI: list w/ freshness,
+  upload, versions, download. Advisor crypto checklist applied; ADR 0003 updated
+  with honest threat model.
+- **m7** findings (offensive moat): Finding + finding_controls +
+  promoted_from_pentest_finding; open high/critical finding caps linked control
+  readiness. findings service (import JSON/CSV, promote pentest finding). UI:
+  list/new/detail/import + promote; control detail shows findings + evidence.
+- Migrations m5–m7 all validated upgrade+downgrade on throwaway Postgres.
+- Test suite: **111 passed**. Existing CIS functionality unaffected.
+- **Phase 2 done.** Remaining: Phase 3 (Excel + PDF evidence/readiness pack),
+  Phase 4 (NIS2 incident workflow, CSA2 supplier/SBOM, RBAC + activity log).
