@@ -109,3 +109,26 @@ Running log of significant decisions. ADRs in `docs/adr/`.
 - No new migration. Test suite: **117 passed**.
 - **Phase 3 done.** Remaining: Phase 4 (NIS2 incident workflow, CSA2
   supplier/SBOM, RBAC + activity log + tenant hardening).
+
+## 2026-06-17 — Phase 4 complete (operational extensions)
+
+- **m8** NIS2 incident workflow: Incident model + statutory clock (24h/72h/1-month
+  due dates, per-stage sent timestamps), incident_clock service, UI (log, clock
+  timeline, mark-sent, printable per-stage report templates citing Art.23(4)).
+- **m9** CSA2 supply chain: Supplier + SBOM + SBOMComponent (+ supplier_controls);
+  SBOM parser for CycloneDX + SPDX JSON; UI (supplier register, SBOM upload →
+  component table).
+- **m10** RBAC + audit trail + tenancy: roles lead_auditor + viewer; split
+  compliance into write (`compliance`) vs read (`compliance_view`) — viewer is
+  read-only across the compliance layer; ActivityLog via after_request hook +
+  admin activity view; default Organization seeded (single-tenant anchor).
+- Migrations m8–m10 validated upgrade+downgrade on Postgres.
+- Test suite: **135 passed**. App boots: 18 blueprints, 117 routes. Validator green.
+
+## Summary — Phases 0–4 delivered
+
+Branch `feat/compliance-layer`. Full loop: browse regulations → readiness
+assessment + scoring → encrypted evidence + offensive findings (cap readiness) →
+Excel/PDF pack → NIS2 incidents, CSA2 suppliers/SBOM, RBAC + activity log.
+10 migrations (m1–m10), all PG-validated; existing CIS audit functionality intact.
+Regulatory content is starter-level — flagged for RAVEN expert review.
