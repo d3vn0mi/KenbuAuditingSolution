@@ -34,3 +34,23 @@ Running log of significant decisions. ADRs in `docs/adr/`.
   expert review.
 - **Phase 1 started.** Sequence: m1 promote Standard→Regulation → m2 regulatory
   layer (Obligation/Control/joins) → YAML + validator + seed → browse UI.
+
+## 2026-06-17 — Phase 1: m1 + m2 implemented (TDD)
+
+- Branch `feat/compliance-layer`.
+- **m1** (`d4e5f6a7b8c9`): promoted `Standard`→`Regulation` (+ short_code, status,
+  effective_date, source_url), `StandardCheck`→`RegulationCheck`, repointed
+  `AuditSession.regulation_id`. Updated routes/templates/seed/export. Migration
+  validated upgrade+downgrade on a throwaway Postgres 16 (data preserved,
+  constraints renamed, fully reversible).
+- **m2** (`e5f6a7b8c9d0`): Control hub — `Obligation` (hierarchical, content_hash),
+  `Control` (M:N to obligations across regs + M:N to existing `Check`),
+  `EvidenceRequirement`, `ControlReference`. 6 new tables; up+down validated on PG.
+- Test suite green: **77 passed** (added test_regulations, test_controls).
+- Note: project migrations are PG-targeted deltas on a `create_all` base (the base
+  Alembic revision already ALTERs `users`); dev/test SQLite uses create_all+seed.
+- Note: local pytest needs `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1` (broken global
+  `anchorpy` plugin in this env); CI will use a clean venv.
+- **Next:** YAML schema (`data/regulations/`, `data/controls/`, `data/mappings/`)
+  + `scripts/validate_regulations.py` + seed loader + starter content (NIS2 from
+  existing mappings, EUSA in_trilogue skeleton), then browse UI.
