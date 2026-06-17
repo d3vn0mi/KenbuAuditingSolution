@@ -10,6 +10,7 @@ def register_blueprints(app):
     from .evidence import evidence_bp
     from .findings import findings_bp
     from .incidents import incidents_bp
+    from .suppliers import suppliers_bp
     from .platforms import platforms_bp
     from .checks import checks_bp
     from .audits import audits_bp
@@ -28,6 +29,7 @@ def register_blueprints(app):
     app.register_blueprint(evidence_bp)
     app.register_blueprint(findings_bp)
     app.register_blueprint(incidents_bp)
+    app.register_blueprint(suppliers_bp)
     app.register_blueprint(platforms_bp)
     app.register_blueprint(checks_bp)
     app.register_blueprint(audits_bp)

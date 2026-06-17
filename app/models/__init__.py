@@ -10,6 +10,7 @@ from .readiness import Organization, ReadinessAssessment, ControlStatus
 from .evidence import Evidence, EvidenceVersion
 from .finding import Finding
 from .incident import Incident
+from .supplier import Supplier, SBOM, SBOMComponent
 from .audit import AuditSession, AuditAsset, AuditAssetBenchmark, AuditResult
 from .hardening import HardeningTask, HardeningAsset, HardeningAssetBenchmark, HardeningCheckResult
 from .pentest import (PentestAssessment, PentestPhase, PentestChecklistItem,
@@ -34,6 +35,9 @@ __all__ = [
     'EvidenceVersion',
     'Finding',
     'Incident',
+    'Supplier',
+    'SBOM',
+    'SBOMComponent',
     'AuditSession',
     'AuditAsset',
     'AuditAssetBenchmark',
