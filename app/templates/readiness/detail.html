@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}{{ a.title }} - Readiness{% endblock %}
+{% block content %}
+<div class="mb-4 flex items-center justify-between">
+    <a href="{{ url_for('readiness.list_assessments') }}" class="text-xs text-text-muted hover:text-accent-cyan">&larr; Readiness</a>
+    <form method="POST" action="{{ url_for('readiness.delete_assessment', assessment_id=a.id) }}" onsubmit="return confirm('Delete this assessment?');" hx-boost="false">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="text-xs text-text-muted hover:text-accent-red">Delete</button>
+    </form>
+</div>
+
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-text-primary">{{ a.title }}</h1>
+    <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-muted">
+        {% if a.regulation %}
+        <a href="{{ url_for('regulations.regulation_detail', slug=a.regulation.slug) }}" class="text-accent-purple hover:text-accent-cyan">{{ a.regulation.short_code or a.regulation.name }}</a>
+        {% else %}<span>Cross-regulation</span>{% endif %}
+        <span>· {{ a.status }}</span>
+        {% if a.owner %}<span>· owner {{ a.owner.display_name or a.owner.username }}</span>{% endif %}
+    </div>
+</div>
+
+{% include 'readiness/_score_summary.html' %}
+
+<!-- Remediation roadmap -->
+{% if roadmap %}
+<div class="bg-cyber-card border border-cyber-border rounded-lg p-5 mb-6">
+    <h2 class="text-sm font-semibold uppercase tracking-wider text-text-muted mb-3">Remediation roadmap (top gaps)</h2>
+    <ol class="space-y-1.5">
+        {% for item in roadmap[:10] %}
+        <li class="text-sm flex items-baseline gap-2">
+            <span class="text-accent-red text-xs font-mono">P{{ item.priority }}</span>
+            <a href="{{ url_for('regulations.control_detail', code=item.control.code) }}" class="text-accent-cyan hover:text-accent-cyan-dim font-medium">{{ item.control.code }}</a>
+            <span class="text-text-secondary">{{ item.control.title }}</span>
+            <span class="text-text-muted text-xs">— {{ item.effective_status.replace('_', ' ') }}, {{ item.impact }} obligation(s)</span>
+        </li>
+        {% endfor %}
+    </ol>
+</div>
+{% endif %}
+
+<!-- Control register -->
+<h2 class="text-sm font-semibold uppercase tracking-wider text-text-muted mb-2">Control register</h2>
+<div class="bg-cyber-card border border-cyber-border rounded-lg overflow-x-auto">
+    <table class="min-w-full divide-y divide-cyber-border">
+        <thead class="bg-cyber-card-hover">
+            <tr>
+                <th class="px-3 py-2 text-left text-xs font-medium text-text-muted uppercase">Control</th>
+                <th class="px-3 py-2 text-left text-xs font-medium text-text-muted uppercase">Domain</th>
+                <th class="px-3 py-2 text-left text-xs font-medium text-text-muted uppercase">Status</th>
+                <th class="px-3 py-2 text-left text-xs font-medium text-text-muted uppercase">Maturity</th>
+                <th class="px-3 py-2 text-left text-xs font-medium text-text-muted uppercase">Target</th>
+                <th class="px-3 py-2 text-left text-xs font-medium text-text-muted uppercase">Notes</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-cyber-border">
+            {% for cs in statuses %}
+                {% include 'readiness/_control_row.html' %}
+            {% else %}
+            <tr><td colspan="6" class="px-3 py-4 text-sm text-text-muted">No controls in scope for this assessment.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

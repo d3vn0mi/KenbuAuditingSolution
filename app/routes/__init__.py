@@ -6,6 +6,7 @@ def register_blueprints(app):
     from .main import main_bp
     from .benchmarks import benchmarks_bp
     from .regulations import regulations_bp
+    from .readiness import readiness_bp
     from .platforms import platforms_bp
     from .checks import checks_bp
     from .audits import audits_bp
@@ -20,6 +21,7 @@ def register_blueprints(app):
     app.register_blueprint(main_bp)
     app.register_blueprint(benchmarks_bp)
     app.register_blueprint(regulations_bp)
+    app.register_blueprint(readiness_bp)
     app.register_blueprint(platforms_bp)
     app.register_blueprint(checks_bp)
     app.register_blueprint(audits_bp)

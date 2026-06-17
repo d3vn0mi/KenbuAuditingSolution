@@ -8,8 +8,8 @@ from ..extensions import db, login_manager
 VALID_ROLES = ['admin', 'auditor', 'security_engineer', 'user']
 
 ROLE_PERMISSIONS = {
-    'admin': {'audits', 'hardening', 'pentests', 'admin'},
-    'auditor': {'audits', 'hardening', 'pentests'},
+    'admin': {'audits', 'hardening', 'pentests', 'compliance', 'admin'},
+    'auditor': {'audits', 'hardening', 'pentests', 'compliance'},
     'security_engineer': {'hardening'},
     'user': set(),
 }
@@ -58,6 +58,10 @@ class User(UserMixin, db.Model):
     @property
     def can_pentest(self):
         return self.can_access('pentests')
+
+    @property
+    def can_compliance(self):
+        return self.can_access('compliance')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
