@@ -3,10 +3,14 @@
 {% block content %}
 <div class="mb-4 flex items-center justify-between">
     <a href="{{ url_for('readiness.list_assessments') }}" class="text-xs text-text-muted hover:text-accent-cyan">&larr; Readiness</a>
-    <form method="POST" action="{{ url_for('readiness.delete_assessment', assessment_id=a.id) }}" onsubmit="return confirm('Delete this assessment?');" hx-boost="false">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit" class="text-xs text-text-muted hover:text-accent-red">Delete</button>
-    </form>
+    <div class="flex items-center gap-3">
+        <a href="{{ url_for('readiness.export_excel', assessment_id=a.id) }}" class="text-xs text-accent-cyan hover:text-accent-cyan-dim">Export Excel</a>
+        <a href="{{ url_for('readiness.export_pdf', assessment_id=a.id) }}" class="text-xs text-accent-cyan hover:text-accent-cyan-dim">Export PDF pack</a>
+        <form method="POST" action="{{ url_for('readiness.delete_assessment', assessment_id=a.id) }}" onsubmit="return confirm('Delete this assessment?');" hx-boost="false">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="text-xs text-text-muted hover:text-accent-red">Delete</button>
+        </form>
+    </div>
 </div>
 
 <div class="mb-6">

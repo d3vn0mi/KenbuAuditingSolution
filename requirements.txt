@@ -10,6 +10,7 @@ xlsxwriter==3.2.0
 PyYAML==6.0.2
 jsonschema==4.23.0
 cryptography==44.0.0
+weasyprint==63.1
 gunicorn==23.0.0
 pyotp==2.9.0
 qrcode==8.0

@@ -2,8 +2,12 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install PostgreSQL client for pg_isready in entrypoint
-RUN apt-get update && apt-get install -y --no-install-recommends postgresql-client \
+# PostgreSQL client (pg_isready in entrypoint) + WeasyPrint native libraries
+# (pango/cairo/harfbuzz) for PDF pack export.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        postgresql-client \
+        libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0 \
+        libgdk-pixbuf-2.0-0 fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
 
 # Install dependencies

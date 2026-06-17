@@ -1,11 +1,15 @@
-from datetime import date
-from flask import Blueprint, render_template, request, redirect, url_for, flash, abort
+import io
+from datetime import date, datetime, timezone
+from flask import (Blueprint, render_template, request, redirect, url_for,
+                   flash, abort, send_file)
 from flask_login import current_user
 from ..extensions import db
 from ..models import Regulation, Control, ReadinessAssessment, ControlStatus
 from ..models.readiness import CONTROL_STATUSES
 from ..utils.auth import compliance_required
 from ..utils import readiness as scoring
+from ..utils import pack as pack_util
+from ..utils.excel_export import export_readiness_to_excel
 
 readiness_bp = Blueprint('readiness', __name__, url_prefix='/readiness')
 
@@ -82,6 +86,31 @@ def assessment_detail(assessment_id):
         Control.domain, Control.code).all()
     return render_template('readiness/detail.html', a=a, statuses=statuses,
                            CONTROL_STATUSES=CONTROL_STATUSES, **_summary(a))
+
+
+def _slug(a):
+    base = (a.regulation.short_code or a.regulation.slug) if a.regulation else 'cross-reg'
+    return f'readiness-{base}-{a.id}'.lower()
+
+
+@readiness_bp.route('/<int:assessment_id>/export.xlsx')
+@compliance_required
+def export_excel(assessment_id):
+    a = db.get_or_404(ReadinessAssessment, assessment_id)
+    out = export_readiness_to_excel(a, generated_at=datetime.now(timezone.utc))
+    return send_file(
+        out, as_attachment=True, download_name=f'{_slug(a)}.xlsx',
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+
+@readiness_bp.route('/<int:assessment_id>/export.pdf')
+@compliance_required
+def export_pdf(assessment_id):
+    a = db.get_or_404(ReadinessAssessment, assessment_id)
+    data = pack_util.render_pdf(a, generated_at=datetime.now(timezone.utc))
+    return send_file(
+        io.BytesIO(data), as_attachment=True, download_name=f'{_slug(a)}.pdf',
+        mimetype='application/pdf')
 
 
 @readiness_bp.route('/<int:assessment_id>/delete', methods=['POST'])
