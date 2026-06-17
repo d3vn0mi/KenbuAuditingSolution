@@ -132,3 +132,21 @@ assessment + scoring → encrypted evidence + offensive findings (cap readiness)
 Excel/PDF pack → NIS2 incidents, CSA2 suppliers/SBOM, RBAC + activity log.
 10 migrations (m1–m10), all PG-validated; existing CIS audit functionality intact.
 Regulatory content is starter-level — flagged for RAVEN expert review.
+
+## 2026-06-17 — Merged to main + hardening + full verification
+
+- **Merged `feat/compliance-layer` → main** (no-ff) after a pre-merge gate:
+  full suite green + end-to-end smoke rendering all compliance pages.
+- **Adversarial review** (3 independent reviewers over models/migrations,
+  routes/auth, logic/templates): no correctness or security bugs found.
+- **Hardening fixes:** evidence download → 409 on tampered/undecryptable file
+  (was 500), 404 on missing; SBOM parser tolerates non-dict JSON (was 500);
+  dashboard compliance summary band for compliance viewers.
+- **Fresh production-deploy simulation on Postgres 16:** create_all + `db stamp
+  head` + `seed.py` → 5 regulations, 12 controls, 1035 checks, 213 control↔check
+  links; SC-01 cross-maps NIS2+EUSA+CSA2. Authenticated drive (CSRF on,
+  ProductionConfig) of all 19 pages = 200; create-assessment (auto-populates
+  mapped controls) + Excel(PK) + PDF(%PDF-) + log-incident + activity-log(4 rows)
+  all work. entrypoint.sh fresh/legacy/normal DB paths reviewed — correct.
+- Final: **138 tests green**, validator green, single Alembic head, app =
+  18 blueprints / 117 routes. Considered production-ready (content pending RAVEN).
