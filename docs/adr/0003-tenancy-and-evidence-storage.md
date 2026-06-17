@@ -28,9 +28,28 @@ sensitive/defence customers) while keeping a path to full multi-tenancy.
 3. **EU residency:** keep self-hosting (Caddy + Docker) unchanged; no third-party
    data processors introduced by this layer.
 
+## Threat model (state this accurately in compliance packs)
+
+App-level Fernet encryption protects a **stolen disk or backup** — the files are
+unreadable without the key, which lives in the environment, not the database. It
+does **not** protect against an attacker who already has application + environment
+access (they hold the key). The integrity hash (sha256 of plaintext, verified on
+download) detects tampering of stored files. Do not imply stronger at-rest
+guarantees than this.
+
+## Implementation notes (m6)
+
+- `app/utils/crypto.py` is the single key reader; uses `MultiFernet` (primary key
+  + optional `EVIDENCE_ENCRYPTION_KEYS_OLD`) so rotation is a config change, not a
+  data migration.
+- Plaintext is hashed **before** encryption; files are named by random UUID (never
+  the user's filename) under `<instance>/evidence/`.
+- `ProductionConfig` raises if `EVIDENCE_ENCRYPTION_KEY` is unset (fail closed);
+  testing/dev use fixed keys.
+
 ## Consequences
 
 - Minimal tenancy overhead now; clean upgrade path.
-- A Fernet key becomes a required production secret (add to `.env.example`,
-  document key-rotation as a follow-up).
+- A Fernet key becomes a required production secret (in `.env.example`; rotation
+  supported via `EVIDENCE_ENCRYPTION_KEYS_OLD`).
 - Filesystem evidence must be on a persistent, backed-up volume in the deploy.

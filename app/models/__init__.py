@@ -7,6 +7,7 @@ from .regulation import (
     EvidenceRequirement, ControlReference,
 )
 from .readiness import Organization, ReadinessAssessment, ControlStatus
+from .evidence import Evidence, EvidenceVersion
 from .audit import AuditSession, AuditAsset, AuditAssetBenchmark, AuditResult
 from .hardening import HardeningTask, HardeningAsset, HardeningAssetBenchmark, HardeningCheckResult
 from .pentest import (PentestAssessment, PentestPhase, PentestChecklistItem,
@@ -27,6 +28,8 @@ __all__ = [
     'Organization',
     'ReadinessAssessment',
     'ControlStatus',
+    'Evidence',
+    'EvidenceVersion',
     'AuditSession',
     'AuditAsset',
     'AuditAssetBenchmark',
