@@ -1,0 +1,6 @@
+regulation_slug: cer
+mappings:
+  - control: PR-01
+    obligations: ["Art.13(1)(a)", "Art.13(1)(e)"]
+  - control: BC-01
+    obligations: ["Art.13(1)(c)"]

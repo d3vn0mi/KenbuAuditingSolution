@@ -1,9 +1,13 @@
 import os
+import hashlib
 import yaml
 from datetime import date
 from ..extensions import db
 from ..models import User, Platform, Benchmark, BenchmarkSection, Check
-from ..models.regulation import Regulation, RegulationCheck
+from ..models.regulation import (
+    Regulation, RegulationCheck, Obligation, Control,
+    EvidenceRequirement, ControlReference,
+)
 
 
 def load_yaml(filepath):
@@ -337,6 +341,176 @@ def _seed_regulation_checks(filepath):
         print(f'  Loaded {added} check mappings for {regulation.name}')
 
 
+# ---------------------------------------------------------------------------
+# Regulatory layer (Control hub) — versioned YAML under data/regulations,
+# data/controls, data/mappings. Loading is idempotent so reseeding only applies
+# deltas. See DESIGN_compliance §5.
+# ---------------------------------------------------------------------------
+
+def _obligation_content_hash(ref, title, text):
+    """sha256 of the obligation's identifying text — used for delta detection."""
+    raw = f"{ref}|{title}|{text or ''}"
+    return hashlib.sha256(raw.encode('utf-8')).hexdigest()
+
+
+def _upsert_obligation(regulation_id, parent_id, ob_data, sort_order):
+    ref = ob_data['ref']
+    title = ob_data['title']
+    text = ob_data.get('text')
+
+    ob = Obligation.query.filter_by(regulation_id=regulation_id, ref=ref).first()
+    if not ob:
+        ob = Obligation(regulation_id=regulation_id, ref=ref)
+        db.session.add(ob)
+    ob.parent_id = parent_id
+    ob.title = title
+    ob.text = text
+    ob.sort_order = sort_order
+    ob.content_hash = _obligation_content_hash(ref, title, text)
+    db.session.flush()
+
+    for i, child in enumerate(ob_data.get('children', [])):
+        _upsert_obligation(regulation_id, ob.id, child, i)
+
+
+def seed_regulation_file(filepath):
+    """Upsert a regulation and its obligation tree from a regulation.yaml file."""
+    data = load_yaml(filepath)
+    if not data:
+        return
+
+    reg_data = data['regulation']
+    slug = reg_data['slug']
+
+    effective_date = reg_data.get('effective_date')
+    if isinstance(effective_date, str):
+        effective_date = date.fromisoformat(effective_date)
+
+    fields = dict(
+        name=reg_data['name'],
+        short_code=reg_data.get('short_code'),
+        description=reg_data.get('description'),
+        version=reg_data.get('version'),
+        status=reg_data.get('status', 'in_force'),
+        effective_date=effective_date,
+        source_url=reg_data.get('source_url'),
+    )
+
+    reg = Regulation.query.filter_by(slug=slug).first()
+    if not reg:
+        reg = Regulation(slug=slug, **fields)
+        db.session.add(reg)
+    else:
+        for key, value in fields.items():
+            setattr(reg, key, value)
+    db.session.flush()
+
+    for i, ob_data in enumerate(data.get('obligations', [])):
+        _upsert_obligation(reg.id, None, ob_data, i)
+
+    db.session.commit()
+
+
+def seed_controls_file(filepath):
+    """Upsert controls (+ check links, evidence requirements, references)."""
+    data = load_yaml(filepath)
+    if not data:
+        return
+
+    for c_data in data.get('controls', []):
+        code = c_data['code']
+        control = Control.query.filter_by(code=code).first()
+        if not control:
+            control = Control(code=code)
+            db.session.add(control)
+        control.title = c_data['title']
+        control.domain = c_data.get('domain')
+        control.description = c_data.get('description')
+        control.guidance = c_data.get('guidance')
+        db.session.flush()
+
+        # Link to existing technical checks by check_number.
+        for number in c_data.get('checks', []):
+            for check in Check.query.filter_by(check_number=number).all():
+                if check not in control.checks:
+                    control.checks.append(check)
+
+        # Evidence requirements (idempotent by title).
+        existing_titles = {er.title for er in control.evidence_requirements}
+        for er in c_data.get('evidence_requirements', []):
+            if er['title'] not in existing_titles:
+                control.evidence_requirements.append(EvidenceRequirement(
+                    title=er['title'],
+                    description=er.get('description'),
+                    type=er.get('type'),
+                    cadence_days=er.get('cadence_days'),
+                ))
+
+        # Cross-framework references (idempotent by framework + ref_code).
+        existing_refs = {(r.framework, r.ref_code) for r in control.references}
+        for r in c_data.get('references', []):
+            key = (r['framework'], r.get('ref_code'))
+            if key not in existing_refs:
+                control.references.append(ControlReference(
+                    framework=r['framework'],
+                    ref_code=r.get('ref_code'),
+                    title=r.get('title'),
+                ))
+        db.session.flush()
+
+    db.session.commit()
+
+
+def seed_mappings_file(filepath):
+    """Link controls to obligations from a mappings.yaml file."""
+    data = load_yaml(filepath)
+    if not data:
+        return
+
+    slug = data.get('regulation_slug')
+    reg = Regulation.query.filter_by(slug=slug).first()
+    if not reg:
+        print(f'  WARNING: Regulation {slug} not found, skipping {os.path.basename(filepath)}')
+        return
+
+    linked = 0
+    for mapping in data.get('mappings', []):
+        control = Control.query.filter_by(code=mapping['control']).first()
+        if not control:
+            continue
+        for ref in mapping.get('obligations', []):
+            ob = Obligation.query.filter_by(regulation_id=reg.id, ref=ref).first()
+            if ob and ob not in control.obligations:
+                control.obligations.append(ob)
+                linked += 1
+
+    db.session.commit()
+    if linked:
+        print(f'  Linked {linked} control->obligation mappings for {reg.short_code or reg.name}')
+
+
+def seed_regulatory_layer(data_dir):
+    """Load regulations, controls and mappings (in dependency order)."""
+    reg_dir = os.path.join(data_dir, 'regulations')
+    if os.path.isdir(reg_dir):
+        for slug in sorted(os.listdir(reg_dir)):
+            filepath = os.path.join(reg_dir, slug, 'regulation.yaml')
+            if os.path.exists(filepath):
+                seed_regulation_file(filepath)
+
+    controls_dir = os.path.join(data_dir, 'controls')
+    if os.path.isdir(controls_dir):
+        for filename in sorted(os.listdir(controls_dir)):
+            if filename.endswith(('.yaml', '.yml')):
+                seed_controls_file(os.path.join(controls_dir, filename))
+
+    mappings_dir = os.path.join(data_dir, 'mappings')
+    if os.path.isdir(mappings_dir):
+        for filename in sorted(os.listdir(mappings_dir)):
+            if filename.endswith(('.yaml', '.yml')):
+                seed_mappings_file(os.path.join(mappings_dir, filename))
+
+
 def seed_all(data_dir):
     """Run all seed operations."""
     print('Seeding platforms...')
@@ -358,6 +532,10 @@ def seed_all(data_dir):
     else:
         print('  No benchmarks directory found')
 
+    # Regulatory layer depends on checks existing (control->check links).
+    print('Seeding regulatory layer (obligations, controls, mappings)...')
+    seed_regulatory_layer(data_dir)
+
     # Print summary
     print('\n--- Seed Summary ---')
     print(f'  Platforms: {Platform.query.count()}')
@@ -366,3 +544,5 @@ def seed_all(data_dir):
     print(f'  Checks: {Check.query.count()}')
     print(f'  Users: {User.query.count()}')
     print(f'  Regulations: {Regulation.query.count()}')
+    print(f'  Obligations: {Obligation.query.count()}')
+    print(f'  Controls: {Control.query.count()}')

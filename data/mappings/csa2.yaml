@@ -1,0 +1,5 @@
+# PROVISIONAL mappings — CSA2 article numbers are placeholders (see regulation.yaml).
+regulation_slug: csa2
+mappings:
+  - control: SC-01
+    obligations: ["Art.110(1)", "Art.111"]

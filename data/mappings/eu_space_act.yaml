@@ -1,0 +1,25 @@
+# PROVISIONAL mappings — EUSA article numbers are placeholders (see regulation.yaml).
+regulation_slug: eu-space-act
+mappings:
+  - control: IS-01
+    obligations: ["Art.75", "Art.76"]
+  - control: IAM-01
+    obligations: ["Art.77"]
+  - control: IAM-02
+    obligations: ["Art.77"]
+  - control: IAM-03
+    obligations: ["Art.77"]
+  - control: CR-01
+    obligations: ["Art.78"]
+  - control: SC-01
+    obligations: ["Art.79"]
+  - control: TLPT-01
+    obligations: ["Art.80"]
+  - control: LOG-01
+    obligations: ["Art.81"]
+  - control: IR-01
+    obligations: ["Art.81"]
+  - control: BC-01
+    obligations: ["Art.82"]
+  - control: VM-01
+    obligations: ["Art.75"]
